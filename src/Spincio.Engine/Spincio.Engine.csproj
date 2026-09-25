@@ -3,6 +3,8 @@
   <PropertyGroup>
     <RootNamespace>Spincio.Engine</RootNamespace>
     <IsTrimmable>true</IsTrimmable>
+    <!-- CA1716: "Declare" is a VB keyword; the engine is consumed from C# only and the name comes from SPEC section 3. -->
+    <NoWarn>$(NoWarn);CA1716</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="Spincio.Engine.Tests" />

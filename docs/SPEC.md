@@ -1,7 +1,14 @@
-# Spincio — Specifica (Regolamento v1.1)
+# Spincio — Specifica (Regolamento v1.2)
 
 > **Fonte di verità.** Queste sono le regole di casa dello Spincio (variante dello Spazzino). In caso di conflitto con qualunque altra fonte, vale questo documento.
 > Ogni modifica alle regole richiede: aggiornamento di questo file, nuova versione del regolamento, test `AT-xx` corrispondenti.
+
+## Changelog
+
+| Versione | Data | Modifica |
+|---|---|---|
+| v1.1 | 24/09/2026 | Regolamento confermato (Fasi 0–3) |
+| v1.2 | 25/09/2026 | **Chiarimento F7** (confermato dal proprietario): vale anche nelle partite di spareggio. **Correzione di una deduzione** in §5 (invariante sulle carte di pari valore). `NewMatch` restituisce una `Transition`. Nessuna regola di gioco cambiata. |
 
 ## 0. Notazione
 
@@ -48,7 +55,7 @@ Esempi: `KD` = re di denari (**rebello**), `7D` = **settebello**.
 | F4 | Settebello (`7D`). |
 | F5 | Primiera = **più 7**. |
 | F6 | **Napola di denari**: scala consecutiva che parte dall'asso (A,2,3,4,5,6,7,J,N,K), lunga almeno 3 carte; vale quanto la sua lunghezza (A–5 = 5). |
-| F7 | **Tutti i 10 denari** presi = **vittoria immediata** della partita, qualunque sia il punteggio. |
+| F7 | **Tutti i 10 denari** presi = **vittoria immediata** della partita, qualunque sia il punteggio. Vale anche nelle partite di spareggio. |
 | — | Tutti i punti si **cumulano** (il `7D` conta per denari, settebello, primiera e napola). |
 
 ### 1.5 Fine partita
@@ -88,7 +95,8 @@ public sealed record Declare(Seat Seat) : Command(Seat);
 
 public static class SpincioEngine
 {
-    public static MatchState NewMatch(ulong seed, Seat? firstDealer = null);
+    // Restituisce una Transition (non solo lo stato) per non perdere gli eventi della prima distribuzione.
+    public static Transition NewMatch(ulong seed, Seat? firstDealer = null);
     public static Result<Transition> Apply(MatchState state, Command command);
     public static IReadOnlyList<Command> LegalCommands(MatchState state, Seat seat);
     public static PlayerView ViewFor(MatchState state, Seat seat);
@@ -132,7 +140,7 @@ LegalPlays(hand, table):
 ```
 
 - Le opzioni sono insiemi di **carte**, non di valori.
-- **Invariante (deduzione):** dopo la prima giocata non ci sono in tavola due carte di pari valore; carte uguali possono esserci solo nella tavola iniziale.
+- **Invariante (deduzione, corretta in v1.2):** due carte di pari valore possono stare insieme in tavola **solo se entrambe vengono dalla tavola iniziale** della smazzata. Una carta calata non può mai avere lo stesso valore di una carta in tavola, altrimenti avrebbe dovuto prendere (P2, P4). La formulazione precedente ("dopo la prima giocata non ci sono carte di pari valore") era sbagliata: se la tavola iniziale è `[5C,5S,…]` e il primo giocatore cala un `K` che non prende, i due 5 restano in tavola.
 - **Dopo una presa:**
   1. le carte vanno nel mazzetto della squadra;
   2. `LastCapturingTeam` = squadra del giocatore;
@@ -160,7 +168,7 @@ LegalPlays(hand, table):
 
 ## 7. Test di accettazione
 
-Ogni test nel codice porta lo stesso ID (es. `AT_05_EqualValueForbidsSum`).
+Ogni test nel codice porta lo stesso ID (es. `AT_05_equal_value_forbids_sum`).
 
 ### Setup e determinismo
 - **AT-01** Nuova smazzata → ogni posto ha 3 carte, la tavola 4, il mazzo 24.
