@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Pure rules engine: ZERO package or project dependencies (see CLAUDE.md). -->
+  <PropertyGroup>
+    <RootNamespace>Spincio.Engine</RootNamespace>
+    <IsTrimmable>true</IsTrimmable>
+  </PropertyGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Spincio.Engine.Tests" />
+  </ItemGroup>
+</Project>

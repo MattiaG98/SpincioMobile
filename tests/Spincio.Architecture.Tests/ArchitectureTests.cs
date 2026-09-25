@@ -1,0 +1,55 @@
+using System.Reflection;
+using NetArchTest.Rules;
+using Spincio.Engine;
+
+namespace Spincio.Architecture.Tests;
+
+public class ArchitectureTests
+{
+    private static readonly Assembly Engine = typeof(Card).Assembly;
+    private static readonly Assembly Bots = typeof(Spincio.Bots.BotsAssembly).Assembly;
+
+    [Fact]
+    public void Engine_references_only_the_base_class_library()
+    {
+        var foreign = Engine.GetReferencedAssemblies()
+            .Select(a => a.Name!)
+            .Where(n => !n.StartsWith("System", StringComparison.Ordinal) && n != "netstandard" && n != "mscorlib")
+            .ToList();
+
+        foreign.ShouldBeEmpty();
+    }
+
+    [Theory]
+    [InlineData("System.Random")]
+    [InlineData("System.DateTime")]
+    [InlineData("System.DateTimeOffset")]
+    [InlineData("System.TimeProvider")]
+    [InlineData("System.Guid")]
+    [InlineData("System.Environment")]
+    [InlineData("System.IO")]
+    [InlineData("System.Net")]
+    [InlineData("System.Threading")]
+    [InlineData("System.Security.Cryptography")]
+    [InlineData("System.Diagnostics.Stopwatch")]
+    [InlineData("Microsoft.AspNetCore")]
+    [InlineData("Spincio.Bots")]
+    [InlineData("Spincio.Client")]
+    public void Engine_does_not_depend_on(string forbidden)
+    {
+        var result = Types.InAssembly(Engine).ShouldNot().HaveDependencyOn(forbidden).GetResult();
+
+        result.IsSuccessful.ShouldBeTrue(string.Join(", ", result.FailingTypeNames ?? []));
+    }
+
+    [Theory]
+    [InlineData("Spincio.Engine.MatchState")] // bots see only PlayerView (CLAUDE.md rule 5)
+    [InlineData("Spincio.Client")]
+    [InlineData("Microsoft.AspNetCore")]
+    public void Bots_do_not_depend_on(string forbidden)
+    {
+        var result = Types.InAssembly(Bots).ShouldNot().HaveDependencyOn(forbidden).GetResult();
+
+        result.IsSuccessful.ShouldBeTrue(string.Join(", ", result.FailingTypeNames ?? []));
+    }
+}
