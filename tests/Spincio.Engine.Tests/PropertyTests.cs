@@ -61,6 +61,20 @@ public class PropertyTests
     }
 
     [Property(MaxTest = 50)]
+    public void Legal_commands_from_the_view_match_those_from_the_state(ulong seed)
+    {
+        Playout.RandomMatch(seed, step =>
+        {
+            foreach (var seat in Seat.All)
+            {
+                var fromView = SpincioEngine.LegalCommands(SpincioEngine.ViewFor(step.State, seat));
+                var fromState = SpincioEngine.LegalCommands(step.State, seat);
+                fromView.SequenceEqual(fromState).ShouldBeTrue();
+            }
+        });
+    }
+
+    [Property(MaxTest = 50)]
     public void Every_round_has_three_deals_and_36_plays(ulong seed)
     {
         int plays = 0, deals = 0;

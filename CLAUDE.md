@@ -12,7 +12,7 @@ Digital card game "Spincio" (house-rules variant of Spazzino), 2v2. Blazor WebAs
 2. All randomness goes through `Pcg32`, whose state lives inside `MatchState`.
 3. Engine is pure and immutable: `Apply(state, command) → Result<Transition(state, events)>`. Developed in TDD.
 4. Every `GameEvent` carries an `Audience` (`All` / `Only(seat)`); hidden information is filtered in the engine, never in the UI.
-5. Bots only see `PlayerView` + public-event memory. They never receive `MatchState`.
+5. Bots only see `PlayerView` + public-event memory. They never receive `MatchState`. The bot harness (`MatchRunner`) therefore lives in `tools/Spincio.Simulator`, not in `Spincio.Bots` (ADR 0007).
 6. Project references (verified with NetArchTest): `Bots → Engine`; `Client → Engine, Bots, Contracts`; `Server → Engine, Bots, Contracts`. `Client` and `Server` never reference each other.
 7. Persistence = seed + command log (ADR 0003).
 
@@ -26,6 +26,7 @@ Digital card game "Spincio" (house-rules variant of Spazzino), 2v2. Blazor WebAs
 - Build: `dotnet build Spincio.slnx`
 - Test: `dotnet test Spincio.slnx`
 - AT ↔ test map: `docs/AT-MAP.md` (keep it updated when adding AT tests).
+- Bot tournament: `dotnet run --project tools/Spincio.Simulator -c Release -- --x Greedy --y Random --matches 1000 --seed 1`
 
 ## Conventions
 - Language: code, identifiers, commit messages in **English**; discussion and docs for the owner in **Italian**.

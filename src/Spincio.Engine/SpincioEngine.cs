@@ -49,15 +49,33 @@ public static class SpincioEngine
             return [];
         }
 
+        return BuildLegalCommands(seat, state.HandOf(seat), state.Table, DeclarableNow(state, seat));
+    }
+
+    /// <summary>
+    /// Same result as <see cref="LegalCommands(MatchState, Seat)"/> for the viewing seat, computed only from
+    /// what that seat may know. This is what bots and clients use.
+    /// </summary>
+    public static IReadOnlyList<Command> LegalCommands(PlayerView view)
+    {
+        ArgumentNullException.ThrowIfNull(view);
+        return view.IsMyTurn
+            ? BuildLegalCommands(view.Seat, view.Hand, view.Table, view.AvailableDeclaration)
+            : [];
+    }
+
+    private static List<Command> BuildLegalCommands(
+        Seat seat, ImmutableArray<Card> hand, ImmutableArray<Card> table, DeclarationValue declarable)
+    {
         var commands = new List<Command>();
-        if (DeclarableNow(state, seat).Points > 0)
+        if (declarable.Points > 0)
         {
             commands.Add(new Declare(seat));
         }
 
-        foreach (var card in state.HandOf(seat))
+        foreach (var card in hand)
         {
-            var options = Captures.Options(card, state.Table);
+            var options = Captures.Options(card, table);
             if (options.IsEmpty)
             {
                 commands.Add(new PlayCard(seat, card));

@@ -1,5 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
+    <PackageReference Include="FsCheck.Xunit" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\..\src\Spincio.Bots\Spincio.Bots.csproj" />
+    <ProjectReference Include="..\..\tools\Spincio.Simulator\Spincio.Simulator.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\Spincio.Engine.Tests\Support\Cards.cs" Link="Support\Cards.cs" />
   </ItemGroup>
 </Project>

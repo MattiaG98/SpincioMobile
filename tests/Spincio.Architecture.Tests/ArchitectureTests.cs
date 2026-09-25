@@ -7,7 +7,7 @@ namespace Spincio.Architecture.Tests;
 public class ArchitectureTests
 {
     private static readonly Assembly Engine = typeof(Card).Assembly;
-    private static readonly Assembly Bots = typeof(Spincio.Bots.BotsAssembly).Assembly;
+    private static readonly Assembly Bots = typeof(Spincio.Bots.IBot).Assembly;
 
     [Fact]
     public void Engine_references_only_the_base_class_library()
