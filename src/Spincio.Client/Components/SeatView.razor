@@ -1,0 +1,22 @@
+@using Spincio.Client.Game
+<div class="seat seat-@Seat.Index @(IsTurn ? "turn" : "")">
+    <div class="seat-name">@GameText.SeatName(Seat) @(IsDealer ? "· mazziere" : "")</div>
+    <div class="seat-cards">
+        @for (int i = 0; i < CardCount; i++)
+        {
+            <CardView FaceDown="true" Small="true" />
+        }
+    </div>
+    @foreach (var d in Declarations)
+    {
+        <div class="badge">@GameText.DeclarationName(d.Kind) +@d.Points</div>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public Seat Seat { get; set; }
+    [Parameter] public int CardCount { get; set; }
+    [Parameter] public bool IsTurn { get; set; }
+    [Parameter] public bool IsDealer { get; set; }
+    [Parameter] public IEnumerable<DeclarationRecord> Declarations { get; set; } = [];
+}

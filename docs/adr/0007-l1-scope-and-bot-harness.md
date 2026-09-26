@@ -1,6 +1,6 @@
 # ADR 0007 — Perimetro del bot L1 e harness dei bot
 
-- **Stato:** Proposto (M2, 25/09/2026) — in attesa di conferma del proprietario sul punto 2
+- **Stato:** Accettato (M2, 25/09/2026; confermato dal proprietario il 26/09/2026)
 - **Integra:** ADR 0005
 
 ## Contesto

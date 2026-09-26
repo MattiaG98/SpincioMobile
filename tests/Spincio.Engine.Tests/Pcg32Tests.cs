@@ -45,3 +45,26 @@ public class Pcg32Tests
         first.ShouldNotBe(Card.FullDeck);
     }
 }
+
+public class CardNotationTests
+{
+    [Fact]
+    public void Every_card_round_trips_through_its_notation()
+    {
+        foreach (var card in Card.FullDeck)
+        {
+            Card.Parse(card.ToString()).ShouldBe(card);
+        }
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("8D")]
+    [InlineData("KX")]
+    [InlineData("10D")]
+    [InlineData(null)]
+    public void Invalid_notation_is_rejected(string? notation)
+    {
+        Card.TryParse(notation, out _).ShouldBeFalse();
+    }
+}

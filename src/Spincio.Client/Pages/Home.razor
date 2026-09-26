@@ -1,6 +1,211 @@
 @page "/"
+@using Spincio.Client.Game
+@implements IDisposable
+@inject LocalGameSession Session
 
 <PageTitle>Spincio</PageTitle>
 
-<h1>Spincio</h1>
-<p>Coming soon: 2v2 against the CPU.</p>
+@if (!Session.IsStarted)
+{
+    <section class="start">
+        <h1>Spincio</h1>
+        <p>2 contro 2: tu e il compagno contro due avversari. Si vince a 31.</p>
+        @if (_hasSave)
+        {
+            <button type="button" class="primary" @onclick="ResumeAsync">Riprendi la partita</button>
+        }
+        <button type="button" class="@(_hasSave ? "" : "primary")" @onclick="NewGameAsync">Nuova partita</button>
+    </section>
+}
+else
+{
+    var view = Session.View;
+    var legal = Session.LegalCommands;
+    var highlighted = _choices.SelectMany(c => c.Capture?.Cards ?? []).ToHashSet();
+
+    <header class="scorebar">
+        <div class="score"><span>Noi</span><strong>@view.Score.A</strong></div>
+        <div class="info">
+            @(view.MatchNumber > 0 ? $"Spareggio {view.MatchNumber} · " : "")Smazzata @view.RoundNumber · Mazzo @view.DeckCount
+        </div>
+        <div class="score"><span>Loro</span><strong>@view.Score.B</strong></div>
+    </header>
+
+    <main class="board">
+        <SeatView Seat="new Seat(2)" CardCount="view.HandCounts[2]" IsTurn="view.ToPlay.Index == 2" IsDealer="view.Dealer.Index == 2" Declarations="DeclarationsOf(view, 2)" />
+        <div class="middle">
+            <SeatView Seat="new Seat(3)" CardCount="view.HandCounts[3]" IsTurn="view.ToPlay.Index == 3" IsDealer="view.Dealer.Index == 3" Declarations="DeclarationsOf(view, 3)" />
+            <div class="table" aria-label="Tavola">
+                @if (view.Table.IsEmpty)
+                {
+                    <span class="empty">Tavola vuota</span>
+                }
+                @foreach (var card in view.Table)
+                {
+                    <CardView Card="card" Highlighted="highlighted.Contains(card)" />
+                }
+            </div>
+            <SeatView Seat="new Seat(1)" CardCount="view.HandCounts[1]" IsTurn="view.ToPlay.Index == 1" IsDealer="view.Dealer.Index == 1" Declarations="DeclarationsOf(view, 1)" />
+        </div>
+
+        <ol class="feed" aria-live="polite">
+            @foreach (var line in Session.Feed.TakeLast(4))
+            {
+                <li>@line</li>
+            }
+        </ol>
+
+        <section class="me @(view.IsMyTurn ? "turn" : "")">
+            <div class="status">
+                @if (view.IsMyTurn)
+                {
+                    <span>Tocca a te @(view.Dealer.Index == 0 ? "· sei il mazziere" : "")</span>
+                }
+                else if (view.Phase == MatchPhase.AwaitingPlay)
+                {
+                    <span>Tocca a @GameText.SeatName(view.ToPlay)…</span>
+                }
+                @foreach (var d in DeclarationsOf(view, 0))
+                {
+                    <span class="badge">@GameText.DeclarationName(d.Kind) +@d.Points</span>
+                }
+            </div>
+
+            @if (legal.OfType<Declare>().Any())
+            {
+                <button type="button" class="declare" @onclick="() => Session.PlayAsync(new Declare(LocalGameSession.Human))">
+                    Accusa: @GameText.DeclarationName(view.AvailableDeclaration.Kind) (+@view.AvailableDeclaration.Points)
+                </button>
+            }
+
+            <div class="hand">
+                @foreach (var card in view.Hand)
+                {
+                    <CardView Card="card" Playable="CanPlay(legal, card)" Highlighted="_choosing == card" OnClick="OnCardClickAsync" />
+                }
+            </div>
+
+            @if (Session.Error is { } error)
+            {
+                <p class="error">@error</p>
+            }
+        </section>
+    </main>
+
+    <footer class="footer">
+        Partita n. @Session.Seed ·
+        <button type="button" class="link" @onclick="AbandonAsync">Abbandona</button>
+    </footer>
+
+    @if (_choosing is { } chosen)
+    {
+        <div class="overlay" role="dialog" aria-modal="true" aria-labelledby="choice-title">
+            <div class="panel">
+                <h2 id="choice-title">Cosa prendi con @GameText.CardName(chosen)?</h2>
+                @foreach (var option in _choices)
+                {
+                    <button type="button" class="choice" @onclick="() => ChooseAsync(option)">
+                        @foreach (var card in option.Capture!.Cards)
+                        {
+                            <CardView Card="card" />
+                        }
+                    </button>
+                }
+                <button type="button" class="link" @onclick="CancelChoice">Annulla</button>
+            </div>
+        </div>
+    }
+
+    @if (Session.PendingSummary is { } scored)
+    {
+        <RoundSummary Scored="scored" OnClose="Session.AcknowledgeSummaryAsync" />
+    }
+    else if (Session.Result is { } result)
+    {
+        <div class="overlay" role="dialog" aria-modal="true" aria-labelledby="result-title">
+            <div class="panel">
+                <h2 id="result-title">@(result.Winner == Team.A ? "Avete vinto!" : "Hanno vinto loro")</h2>
+                <p>@result.FinalScore.A – @result.FinalScore.B (@GameText.WinReasonText(result.Reason))</p>
+                <button type="button" class="primary" @onclick="NewGameAsync">Nuova partita</button>
+            </div>
+        </div>
+    }
+}
+
+@code {
+    /// <summary>Optional <c>?seed=</c> to replay a specific deal (bug reports, tests).</summary>
+    [SupplyParameterFromQuery(Name = "seed")] public string? SeedParameter { get; set; }
+
+    private bool _hasSave;
+    private Card? _choosing;
+    private IReadOnlyList<PlayCard> _choices = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        Session.Changed += OnSessionChanged;
+        if (!Session.IsStarted)
+        {
+            _hasSave = await Session.HasSavedGameAsync();
+        }
+    }
+
+    private void OnSessionChanged() => InvokeAsync(StateHasChanged);
+
+    private static IEnumerable<DeclarationRecord> DeclarationsOf(PlayerView view, int seat) =>
+        view.Declarations.Where(d => d.Seat.Index == seat);
+
+    private static bool CanPlay(IReadOnlyList<Command> legal, Card card) =>
+        legal.OfType<PlayCard>().Any(p => p.Card == card);
+
+    private async Task OnCardClickAsync(Card card)
+    {
+        var options = Session.LegalCommands.OfType<PlayCard>().Where(p => p.Card == card).ToList();
+        if (options.Count == 1)
+        {
+            await Session.PlayAsync(options[0]);
+        }
+        else if (options.Count > 1)
+        {
+            _choosing = card; // P3: the player chooses the capture
+            _choices = options;
+        }
+    }
+
+    private async Task ChooseAsync(PlayCard play)
+    {
+        CancelChoice();
+        await Session.PlayAsync(play);
+    }
+
+    private void CancelChoice()
+    {
+        _choosing = null;
+        _choices = [];
+    }
+
+    private Task NewGameAsync()
+    {
+        ulong seed = ulong.TryParse(SeedParameter, System.Globalization.CultureInfo.InvariantCulture, out var requested)
+            ? requested
+            : (ulong)Random.Shared.NextInt64(long.MaxValue);
+        SeedParameter = null; // "Nuova partita" after the end gets a fresh deal
+        return Session.NewGameAsync(seed);
+    }
+
+    private async Task ResumeAsync()
+    {
+        if (!await Session.TryResumeAsync())
+        {
+            _hasSave = false;
+        }
+    }
+
+    private async Task AbandonAsync()
+    {
+        CancelChoice();
+        await Session.AbandonAsync();
+        _hasSave = false;
+    }
+
+    public void Dispose() => Session.Changed -= OnSessionChanged;
+}

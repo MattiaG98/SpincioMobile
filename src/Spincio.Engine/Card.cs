@@ -45,6 +45,44 @@ public readonly record struct Card(Rank Rank, Suit Suit) : IComparable<Card>
     /// <summary>Test notation from SPEC §0, e.g. "7D", "KC".</summary>
     public override string ToString() => $"{RankSymbol(Rank)}{SuitSymbol(Suit)}";
 
+    /// <summary>Parses the notation produced by <see cref="ToString"/> (SPEC §0).</summary>
+    public static Card Parse(string notation) =>
+        TryParse(notation, out var card) ? card : throw new FormatException($"Invalid card '{notation}'.");
+
+    public static bool TryParse(string? notation, out Card card)
+    {
+        card = default;
+        if (notation is not { Length: 2 })
+        {
+            return false;
+        }
+
+        Rank? rank = notation[0] switch
+        {
+            'A' => Rank.Ace,
+            'J' => Rank.Jack,
+            'N' => Rank.Knight,
+            'K' => Rank.King,
+            >= '2' and <= '7' => (Rank)(notation[0] - '0'),
+            _ => null,
+        };
+        Suit? suit = notation[1] switch
+        {
+            'D' => Suit.Coins,
+            'C' => Suit.Cups,
+            'S' => Suit.Swords,
+            'B' => Suit.Clubs,
+            _ => null,
+        };
+        if (rank is null || suit is null)
+        {
+            return false;
+        }
+
+        card = new Card(rank.Value, suit.Value);
+        return true;
+    }
+
     internal static char RankSymbol(Rank rank) => rank switch
     {
         Rank.Ace => 'A',

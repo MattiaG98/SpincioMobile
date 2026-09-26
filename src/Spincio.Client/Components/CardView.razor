@@ -1,0 +1,34 @@
+@using Spincio.Client.Game
+@* Placeholder card (M6 replaces it with Piacentine art). Interactive only when OnClick is bound. *@
+@if (Card is { } card && !FaceDown)
+{
+    var css = $"card suit-{card.Suit.ToString().ToLowerInvariant()} {(Small ? "small" : "")} {(Highlighted ? "highlighted" : "")} {(Playable ? "playable" : "")}";
+    if (OnClick.HasDelegate)
+    {
+        <button type="button" class="@css" disabled="@(!Playable)" title="@GameText.CardName(card)" aria-label="@GameText.CardName(card)"
+                @onclick="() => OnClick.InvokeAsync(card)">
+            <span class="rank">@GameText.RankLabel(card.Rank)</span>
+            <span class="suit">@GameText.SuitName(card.Suit)</span>
+        </button>
+    }
+    else
+    {
+        <span class="@css" role="img" title="@GameText.CardName(card)" aria-label="@GameText.CardName(card)">
+            <span class="rank">@GameText.RankLabel(card.Rank)</span>
+            <span class="suit">@GameText.SuitName(card.Suit)</span>
+        </span>
+    }
+}
+else
+{
+    <span class="card back @(Small ? "small" : "")" aria-hidden="true"></span>
+}
+
+@code {
+    [Parameter] public Card? Card { get; set; }
+    [Parameter] public bool FaceDown { get; set; }
+    [Parameter] public bool Small { get; set; }
+    [Parameter] public bool Highlighted { get; set; }
+    [Parameter] public bool Playable { get; set; }
+    [Parameter] public EventCallback<Card> OnClick { get; set; }
+}
