@@ -99,6 +99,53 @@ public class LocalGameSessionTests
         JsonSerializer.Serialize(session.View).ShouldBe(view); // no input accepted until the summary is closed
     }
 
+    private static ulong SeedWhereCpuPlaysFirst() =>
+        Enumerable.Range(0, 100).Select(s => (ulong)s).First(s => SpincioEngine.NewMatch(s).State.ToPlay != LocalGameSession.Human);
+
+    [Fact]
+    public async Task Abandoning_while_a_cpu_is_thinking_does_not_resurrect_the_match()
+    {
+        var gate = new TaskCompletionSource();
+        var store = new InMemoryGameStore();
+        var session = new LocalGameSession(store, delay: _ => gate.Task);
+        var running = session.NewGameAsync(SeedWhereCpuPlaysFirst());
+        session.IsCpuThinking.ShouldBeTrue();
+
+        await session.AbandonAsync();
+        gate.SetResult();
+        await running;
+
+        session.IsStarted.ShouldBeFalse();
+        store.Json.ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task New_game_started_while_the_old_cpu_loop_sleeps_still_gets_its_cpu_turns()
+    {
+        var gate = new TaskCompletionSource();
+        bool first = true;
+        var session = new LocalGameSession(new InMemoryGameStore(), delay: _ =>
+        {
+            if (!first)
+            {
+                return Task.CompletedTask;
+            }
+
+            first = false;
+            return gate.Task;
+        });
+        ulong seed = SeedWhereCpuPlaysFirst();
+        var running = session.NewGameAsync(seed);
+
+        await session.AbandonAsync();
+        await session.NewGameAsync(seed);
+        gate.SetResult();
+        await running;
+
+        session.Seed.ShouldBe(seed);
+        session.View.IsMyTurn.ShouldBeTrue();
+    }
+
     [Fact]
     public async Task Saved_match_resumes_exactly_where_it_was()
     {
@@ -116,6 +163,32 @@ public class LocalGameSessionTests
 
         second.Seed.ShouldBe(21UL);
         JsonSerializer.Serialize(second.View).ShouldBe(JsonSerializer.Serialize(first.View));
+    }
+
+    [Fact]
+    public async Task Difficulty_is_saved_and_restored()
+    {
+        var store = new InMemoryGameStore();
+        var first = new LocalGameSession(store, delay: _ => Task.CompletedTask);
+        await first.NewGameAsync(seed: 21, BotLevel.Pimc);
+
+        var second = NewSession(store);
+        (await second.TryResumeAsync()).ShouldBeTrue();
+
+        second.Difficulty.ShouldBe(BotLevel.Pimc);
+        JsonSerializer.Serialize(second.View).ShouldBe(JsonSerializer.Serialize(first.View));
+    }
+
+    [Fact]
+    public async Task Saves_from_before_difficulty_existed_resume_at_normal_level()
+    {
+        var store = new InMemoryGameStore();
+        await store.SaveAsync("""{"RulesVersion":"1.2","Seed":21,"Commands":[]}""");
+
+        var session = NewSession(store);
+
+        (await session.TryResumeAsync()).ShouldBeTrue();
+        session.Difficulty.ShouldBe(BotLevel.Greedy);
     }
 
     [Fact]

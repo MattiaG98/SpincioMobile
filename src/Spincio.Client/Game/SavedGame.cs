@@ -1,10 +1,12 @@
 using System.Text.Json;
 using Microsoft.JSInterop;
+using Spincio.Bots;
 
 namespace Spincio.Client.Game;
 
 /// <summary>A match persisted as seed + command log (ADR 0003), tagged with the rules version.</summary>
-public sealed record SavedGame(string RulesVersion, ulong Seed, IReadOnlyList<string> Commands)
+/// <param name="Difficulty">CPU level; saves from before M5 have none and default to L1.</param>
+public sealed record SavedGame(string RulesVersion, ulong Seed, IReadOnlyList<string> Commands, BotLevel Difficulty = BotLevel.Greedy)
 {
     public string ToJson() => JsonSerializer.Serialize(this);
 

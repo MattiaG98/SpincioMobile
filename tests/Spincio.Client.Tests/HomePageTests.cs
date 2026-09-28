@@ -1,4 +1,5 @@
 using Bunit;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Spincio.Client.Game;
 using Spincio.Client.Pages;
@@ -13,6 +14,16 @@ public class HomePageTests : BunitContext
     public HomePageTests()
     {
         Services.AddSingleton(_session);
+        Services.AddSingleton(new GameHost(_session));
+        Services.AddSingleton<IConfiguration>(new ConfigurationBuilder().Build());
+    }
+
+    [Fact]
+    public void Online_link_is_hidden_without_a_server()
+    {
+        var page = Render<Home>();
+
+        page.FindAll("a[href='online']").ShouldBeEmpty();
     }
 
     [Fact]

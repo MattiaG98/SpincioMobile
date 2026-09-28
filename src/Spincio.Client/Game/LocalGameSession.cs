@@ -1,4 +1,5 @@
 using Spincio.Bots;
+using Spincio.Contracts;
 using Spincio.Engine;
 
 namespace Spincio.Client.Game;
@@ -8,30 +9,35 @@ namespace Spincio.Client.Game;
 /// <see cref="MatchState"/>; the UI only ever gets the human's <see cref="PlayerView"/> and the events
 /// addressed to the human (CLAUDE.md rule 4). Every accepted command is saved (seed + log, ADR 0003).
 /// </summary>
-public sealed class LocalGameSession
+public sealed class LocalGameSession : IGameSession
 {
     public const string RulesVersion = "1.2";
     public const int FeedLength = 8;
     public static readonly Seat Human = new(0);
     public static readonly TimeSpan DefaultCpuDelay = TimeSpan.FromMilliseconds(700);
 
+    /// <summary>L2 budget in the browser: WebAssembly runs interpreted, so fewer worlds than the simulator.</summary>
+    public static readonly PimcOptions BrowserPimc = PimcOptions.Default with { Worlds = 8 };
+
     private readonly ISavedGameStore _store;
     private readonly Func<TimeSpan, Task> _delay;
     private readonly TimeSpan _cpuDelay;
-    private readonly IBot _bot;
+    private readonly IBot? _botOverride;
+    private IBot _bot = new GreedyBot();
     private readonly List<string> _feed = [];
     private readonly List<string> _commands = [];
     private BotMemory[] _memories = [];
     private Pcg32[] _rngs = [];
     private MatchState? _state;
     private bool _cpuLoopRunning;
+    private int _generation;
 
     public LocalGameSession(ISavedGameStore store, Func<TimeSpan, Task>? delay = null, TimeSpan? cpuDelay = null, IBot? bot = null)
     {
         _store = store;
         _delay = delay ?? Task.Delay;
         _cpuDelay = cpuDelay ?? DefaultCpuDelay;
-        _bot = bot ?? new GreedyBot();
+        _botOverride = bot;
     }
 
     /// <summary>Raised after every visible change; the UI re-renders.</summary>
@@ -40,6 +46,9 @@ public sealed class LocalGameSession
     public bool IsStarted => _state is not null;
 
     public ulong Seed { get; private set; }
+
+    /// <summary>Level of the three CPUs (partner included).</summary>
+    public BotLevel Difficulty { get; private set; } = BotLevel.Greedy;
 
     public PlayerView View => SpincioEngine.ViewFor(State, Human);
 
@@ -56,11 +65,25 @@ public sealed class LocalGameSession
 
     public bool IsCpuThinking => _cpuLoopRunning;
 
+    public Seat Me => Human;
+
+    public bool IsWaiting => _cpuLoopRunning;
+
+    public int SweepCount { get; private set; }
+
+    public string Footer => $"Partita n. {Seed} · CPU {(Difficulty == BotLevel.Pimc ? "difficile" : "normale")}";
+
+    public bool CanRestart => true;
+
+    public string SeatName(Seat seat) => GameText.SeatName(seat, Human);
+
+    public Task LeaveAsync() => AbandonAsync();
+
     private MatchState State => _state ?? throw new InvalidOperationException("No match in progress.");
 
-    public async Task NewGameAsync(ulong seed)
+    public async Task NewGameAsync(ulong seed, BotLevel difficulty = BotLevel.Greedy)
     {
-        Reset(seed);
+        Reset(seed, difficulty);
         Accept(SpincioEngine.NewMatch(seed), command: null);
         await SaveAsync();
         await RunCpusAsync();
@@ -80,7 +103,7 @@ public sealed class LocalGameSession
 
         try
         {
-            Reset(saved.Seed);
+            Reset(saved.Seed, saved.Difficulty);
             Accept(SpincioEngine.NewMatch(saved.Seed), command: null);
             foreach (var text in saved.Commands)
             {
@@ -141,14 +164,18 @@ public sealed class LocalGameSession
 
     public async Task AbandonAsync()
     {
-        await _store.ClearAsync();
+        _generation++;
         _state = null;
+        await _store.ClearAsync();
         Changed?.Invoke();
     }
 
-    private void Reset(ulong seed)
+    private void Reset(ulong seed, BotLevel difficulty)
     {
+        _generation++;
         Seed = seed;
+        Difficulty = difficulty;
+        _bot = _botOverride ?? BotFactory.Create(difficulty, BrowserPimc);
         _feed.Clear();
         _commands.Clear();
         _memories = [.. Seat.All.Select(s => new BotMemory(s))];
@@ -156,6 +183,7 @@ public sealed class LocalGameSession
         PendingSummary = null;
         Result = null;
         Error = null;
+        SweepCount = 0;
     }
 
     private void Accept(Transition transition, string? command)
@@ -173,7 +201,12 @@ public sealed class LocalGameSession
 
         foreach (var e in transition.EventsFor(Human))
         {
-            if (GameText.Describe(e) is { } line)
+            if (e is CardPlayed { IsSweep: true })
+            {
+                SweepCount++;
+            }
+
+            if (GameText.Describe(e, Human, SeatName) is { } line)
             {
                 _feed.Add(line);
                 if (_feed.Count > FeedLength)
@@ -204,11 +237,19 @@ public sealed class LocalGameSession
         _cpuLoopRunning = true;
         try
         {
-            while (_state is { Phase: MatchPhase.AwaitingPlay } state && state.ToPlay != Human && PendingSummary is null)
+            while (_state is { Phase: MatchPhase.AwaitingPlay } before && before.ToPlay != Human && PendingSummary is null)
             {
+                int generation = _generation;
                 Changed?.Invoke();
                 await _delay(_cpuDelay);
 
+                // The match may have been abandoned or replaced while we waited: re-evaluate from scratch.
+                if (generation != _generation || !ReferenceEquals(before, _state))
+                {
+                    continue;
+                }
+
+                var state = before;
                 var seat = state.ToPlay;
                 var command = _bot.Choose(SpincioEngine.ViewFor(state, seat), _memories[seat.Index], ref _rngs[seat.Index]);
                 Accept(SpincioEngine.Apply(state, command).Value, CommandCodec.Encode(command));
@@ -228,5 +269,5 @@ public sealed class LocalGameSession
         Changed?.Invoke();
     }
 
-    private Task SaveAsync() => _store.SaveAsync(new SavedGame(RulesVersion, Seed, [.. _commands]).ToJson());
+    private Task SaveAsync() => _store.SaveAsync(new SavedGame(RulesVersion, Seed, [.. _commands], Difficulty).ToJson());
 }

@@ -9,5 +9,7 @@
     <EnforceCodeStyleInBuild>false</EnforceCodeStyleInBuild>
     <Deterministic>true</Deterministic>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <!-- CA1716: names such as Declare, Me, Error are VB keywords; the solution is C#-only. -->
+    <NoWarn>$(NoWarn);CA1716</NoWarn>
   </PropertyGroup>
 </Project>

@@ -6,5 +6,7 @@
     <ProjectReference Include="..\..\src\Spincio.Engine\Spincio.Engine.csproj" />
     <ProjectReference Include="..\..\src\Spincio.Bots\Spincio.Bots.csproj" />
     <ProjectReference Include="..\..\src\Spincio.Client\Spincio.Client.csproj" />
+    <ProjectReference Include="..\..\src\Spincio.Contracts\Spincio.Contracts.csproj" />
+    <ProjectReference Include="..\..\src\Spincio.Server\Spincio.Server.csproj" />
   </ItemGroup>
 </Project>

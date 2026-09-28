@@ -1,5 +1,5 @@
 using FsCheck.Xunit;
-using Spincio.Client.Game;
+using Spincio.Contracts;
 using Spincio.Engine;
 
 namespace Spincio.Client.Tests;

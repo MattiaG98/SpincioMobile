@@ -1,5 +1,5 @@
 @using Spincio.Client.Game
-@* Placeholder card (M6 replaces it with Piacentine art). Interactive only when OnClick is bound. *@
+@* A card: original SVG art (ADR 0009). Interactive only when OnClick is bound. *@
 @if (Card is { } card && !FaceDown)
 {
     var css = $"card suit-{card.Suit.ToString().ToLowerInvariant()} {(Small ? "small" : "")} {(Highlighted ? "highlighted" : "")} {(Playable ? "playable" : "")}";
@@ -7,15 +7,13 @@
     {
         <button type="button" class="@css" disabled="@(!Playable)" title="@GameText.CardName(card)" aria-label="@GameText.CardName(card)"
                 @onclick="() => OnClick.InvokeAsync(card)">
-            <span class="rank">@GameText.RankLabel(card.Rank)</span>
-            <span class="suit">@GameText.SuitName(card.Suit)</span>
+            <CardFace Card="card" />
         </button>
     }
     else
     {
         <span class="@css" role="img" title="@GameText.CardName(card)" aria-label="@GameText.CardName(card)">
-            <span class="rank">@GameText.RankLabel(card.Rank)</span>
-            <span class="suit">@GameText.SuitName(card.Suit)</span>
+            <CardFace Card="card" />
         </span>
     }
 }

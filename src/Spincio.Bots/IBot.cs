@@ -20,14 +20,18 @@ public enum BotLevel
 
     /// <summary>L1: one-ply greedy evaluation (MVP opponent).</summary>
     Greedy,
+
+    /// <summary>L2: Perfect Information Monte Carlo over sampled worlds with L1 rollouts.</summary>
+    Pimc,
 }
 
 public static class BotFactory
 {
-    public static IBot Create(BotLevel level) => level switch
+    public static IBot Create(BotLevel level, PimcOptions? pimc = null) => level switch
     {
         BotLevel.Random => new RandomBot(),
         BotLevel.Greedy => new GreedyBot(),
+        BotLevel.Pimc => new PimcBot(pimc),
         _ => throw new ArgumentOutOfRangeException(nameof(level), level, null),
     };
 }

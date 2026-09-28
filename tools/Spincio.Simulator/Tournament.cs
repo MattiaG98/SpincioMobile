@@ -29,13 +29,22 @@ public static class Tournament
         ArgumentNullException.ThrowIfNull(x);
         ArgumentNullException.ThrowIfNull(y);
 
+        // Matches are independent and bots are stateless, so they run in parallel; results are
+        // aggregated in match order, so the outcome does not depend on scheduling.
+        var results = new MatchResult[matches];
+        Parallel.For(0, matches, i =>
+        {
+            bool xIsTeamA = i % 2 == 0;
+            IBot[] seats = xIsTeamA ? [x, y, x, y] : [y, x, y, x];
+            results[i] = MatchRunner.Play(seed + (ulong)i, seats);
+        });
+
         int winsX = 0, allCoins = 0, rounds = 0, tiebreaks = 0;
         long scoreDiff = 0;
         for (int i = 0; i < matches; i++)
         {
             bool xIsTeamA = i % 2 == 0;
-            IBot[] seats = xIsTeamA ? [x, y, x, y] : [y, x, y, x];
-            var result = MatchRunner.Play(seed + (ulong)i, seats);
+            var result = results[i];
 
             var teamX = xIsTeamA ? Team.A : Team.B;
             var teamY = xIsTeamA ? Team.B : Team.A;

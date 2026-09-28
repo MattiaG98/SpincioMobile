@@ -1,7 +1,8 @@
 @page "/"
 @using Spincio.Client.Game
 @implements IDisposable
-@inject LocalGameSession Session
+@inject GameHost Host
+@inject IConfiguration Configuration
 
 <PageTitle>Spincio</PageTitle>
 
@@ -14,27 +15,44 @@
         {
             <button type="button" class="primary" @onclick="ResumeAsync">Riprendi la partita</button>
         }
+        <fieldset class="difficulty">
+            <legend>Livello della CPU</legend>
+            <label>
+                <input type="radio" name="difficulty" checked="@(_difficulty == BotLevel.Greedy)" @onchange="() => _difficulty = BotLevel.Greedy" />
+                Normale
+            </label>
+            <label>
+                <input type="radio" name="difficulty" checked="@(_difficulty == BotLevel.Pimc)" @onchange="() => _difficulty = BotLevel.Pimc" />
+                Difficile <small>(ragiona di più)</small>
+            </label>
+        </fieldset>
         <button type="button" class="@(_hasSave ? "" : "primary")" @onclick="NewGameAsync">Nuova partita</button>
+        @if (!string.IsNullOrWhiteSpace(Configuration["ServerUrl"]))
+        {
+            <a class="button-link" href="online">Gioca online con gli amici</a>
+        }
     </section>
 }
 else
 {
     var view = Session.View;
+    var me = Session.Me;
+    var us = me.Team;
     var legal = Session.LegalCommands;
     var highlighted = _choices.SelectMany(c => c.Capture?.Cards ?? []).ToHashSet();
 
     <header class="scorebar">
-        <div class="score"><span>Noi</span><strong>@view.Score.A</strong></div>
+        <div class="score"><span>Noi</span><strong>@view.Score.For(us)</strong></div>
         <div class="info">
             @(view.MatchNumber > 0 ? $"Spareggio {view.MatchNumber} · " : "")Smazzata @view.RoundNumber · Mazzo @view.DeckCount
         </div>
-        <div class="score"><span>Loro</span><strong>@view.Score.B</strong></div>
+        <div class="score"><span>Loro</span><strong>@view.Score.For(GameText.Other(us))</strong></div>
     </header>
 
     <main class="board">
-        <SeatView Seat="new Seat(2)" CardCount="view.HandCounts[2]" IsTurn="view.ToPlay.Index == 2" IsDealer="view.Dealer.Index == 2" Declarations="DeclarationsOf(view, 2)" />
+        @SeatAt(view, 2)
         <div class="middle">
-            <SeatView Seat="new Seat(3)" CardCount="view.HandCounts[3]" IsTurn="view.ToPlay.Index == 3" IsDealer="view.Dealer.Index == 3" Declarations="DeclarationsOf(view, 3)" />
+            @SeatAt(view, 3)
             <div class="table" aria-label="Tavola">
                 @if (view.Table.IsEmpty)
                 {
@@ -42,10 +60,10 @@ else
                 }
                 @foreach (var card in view.Table)
                 {
-                    <CardView Card="card" Highlighted="highlighted.Contains(card)" />
+                    <CardView @key="card" Card="card" Highlighted="highlighted.Contains(card)" />
                 }
             </div>
-            <SeatView Seat="new Seat(1)" CardCount="view.HandCounts[1]" IsTurn="view.ToPlay.Index == 1" IsDealer="view.Dealer.Index == 1" Declarations="DeclarationsOf(view, 1)" />
+            @SeatAt(view, 1)
         </div>
 
         <ol class="feed" aria-live="polite">
@@ -59,13 +77,13 @@ else
             <div class="status">
                 @if (view.IsMyTurn)
                 {
-                    <span>Tocca a te @(view.Dealer.Index == 0 ? "· sei il mazziere" : "")</span>
+                    <span>Tocca a te @(view.Dealer == me ? "· sei il mazziere" : "")</span>
                 }
                 else if (view.Phase == MatchPhase.AwaitingPlay)
                 {
-                    <span>Tocca a @GameText.SeatName(view.ToPlay)…</span>
+                    <span>Tocca a @Session.SeatName(view.ToPlay)…</span>
                 }
-                @foreach (var d in DeclarationsOf(view, 0))
+                @foreach (var d in view.Declarations.Where(d => d.Seat == me))
                 {
                     <span class="badge">@GameText.DeclarationName(d.Kind) +@d.Points</span>
                 }
@@ -73,7 +91,7 @@ else
 
             @if (legal.OfType<Declare>().Any())
             {
-                <button type="button" class="declare" @onclick="() => Session.PlayAsync(new Declare(LocalGameSession.Human))">
+                <button type="button" class="declare" @onclick="() => Session.PlayAsync(new Declare(me))">
                     Accusa: @GameText.DeclarationName(view.AvailableDeclaration.Kind) (+@view.AvailableDeclaration.Points)
                 </button>
             }
@@ -81,7 +99,7 @@ else
             <div class="hand">
                 @foreach (var card in view.Hand)
                 {
-                    <CardView Card="card" Playable="CanPlay(legal, card)" Highlighted="_choosing == card" OnClick="OnCardClickAsync" />
+                    <CardView @key="card" Card="card" Playable="CanPlay(legal, card)" Highlighted="_choosing == card" OnClick="OnCardClickAsync" />
                 }
             </div>
 
@@ -93,9 +111,14 @@ else
     </main>
 
     <footer class="footer">
-        Partita n. @Session.Seed ·
-        <button type="button" class="link" @onclick="AbandonAsync">Abbandona</button>
+        @Session.Footer ·
+        <button type="button" class="link" @onclick="LeaveAsync">@(Session.CanRestart ? "Abbandona" : "Esci")</button>
     </footer>
+
+    @if (Session.SweepCount > 0 && Session.SweepCount != _sweepsAtStart)
+    {
+        <div class="sweep-flash" @key="Session.SweepCount" aria-hidden="true">Spazzino!</div>
+    }
 
     @if (_choosing is { } chosen)
     {
@@ -118,15 +141,23 @@ else
 
     @if (Session.PendingSummary is { } scored)
     {
-        <RoundSummary Scored="scored" OnClose="Session.AcknowledgeSummaryAsync" />
+        <RoundSummary Scored="scored" Us="us" OnClose="Session.AcknowledgeSummaryAsync" />
     }
     else if (Session.Result is { } result)
     {
         <div class="overlay" role="dialog" aria-modal="true" aria-labelledby="result-title">
             <div class="panel">
-                <h2 id="result-title">@(result.Winner == Team.A ? "Avete vinto!" : "Hanno vinto loro")</h2>
-                <p>@result.FinalScore.A – @result.FinalScore.B (@GameText.WinReasonText(result.Reason))</p>
-                <button type="button" class="primary" @onclick="NewGameAsync">Nuova partita</button>
+                <h2 id="result-title">@(result.Winner == us ? "Avete vinto!" : "Hanno vinto loro")</h2>
+                <p>Noi @result.FinalScore.For(us) – Loro @result.FinalScore.For(GameText.Other(us)) (@GameText.WinReasonText(result.Reason))</p>
+                @if (Session.CanRestart)
+                {
+                    <button type="button" class="primary" @onclick="NewGameAsync">Nuova partita</button>
+                }
+                else
+                {
+                    <p>@Session.Footer</p>
+                    <button type="button" class="primary" @onclick="LeaveAsync">Torna all'inizio</button>
+                }
             </div>
         </div>
     }
@@ -136,23 +167,51 @@ else
     /// <summary>Optional <c>?seed=</c> to replay a specific deal (bug reports, tests).</summary>
     [SupplyParameterFromQuery(Name = "seed")] public string? SeedParameter { get; set; }
 
+    private IGameSession Session => Host.Current;
+    private IGameSession? _subscribed;
     private bool _hasSave;
+    private int _sweepsAtStart;
+    private BotLevel _difficulty = BotLevel.Greedy;
     private Card? _choosing;
     private IReadOnlyList<PlayCard> _choices = [];
 
     protected override async Task OnInitializedAsync()
     {
-        Session.Changed += OnSessionChanged;
+        Host.CurrentChanged += OnCurrentChanged;
+        Subscribe();
         if (!Session.IsStarted)
         {
-            _hasSave = await Session.HasSavedGameAsync();
+            _hasSave = await Host.Local.HasSavedGameAsync();
         }
     }
 
-    private void OnSessionChanged() => InvokeAsync(StateHasChanged);
+    private RenderFragment SeatAt(PlayerView view, int position)
+    {
+        var seat = GameText.AtPosition(Session.Me, position);
+        return @<SeatView Seat="seat" Position="position" Name="@Session.SeatName(seat)"
+                          CardCount="view.HandCounts[seat.Index]" IsTurn="view.ToPlay == seat" IsDealer="view.Dealer == seat"
+                          Declarations="view.Declarations.Where(d => d.Seat == seat)" />;
+    }
 
-    private static IEnumerable<DeclarationRecord> DeclarationsOf(PlayerView view, int seat) =>
-        view.Declarations.Where(d => d.Seat.Index == seat);
+    private void Subscribe()
+    {
+        if (_subscribed is not null)
+        {
+            _subscribed.Changed -= OnSessionChanged;
+        }
+
+        _subscribed = Session;
+        _subscribed.Changed += OnSessionChanged;
+        _sweepsAtStart = Session.SweepCount; // no animation for sweeps replayed on resume
+    }
+
+    private void OnCurrentChanged()
+    {
+        Subscribe();
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void OnSessionChanged() => InvokeAsync(StateHasChanged);
 
     private static bool CanPlay(IReadOnlyList<Command> legal, Card card) =>
         legal.OfType<PlayCard>().Any(p => p.Card == card);
@@ -189,23 +248,37 @@ else
             ? requested
             : (ulong)Random.Shared.NextInt64(long.MaxValue);
         SeedParameter = null; // "Nuova partita" after the end gets a fresh deal
-        return Session.NewGameAsync(seed);
+        var local = Host.Local;
+        _sweepsAtStart = 0;
+        return local.NewGameAsync(seed, local.IsStarted ? local.Difficulty : _difficulty);
     }
 
     private async Task ResumeAsync()
     {
-        if (!await Session.TryResumeAsync())
+        if (await Host.Local.TryResumeAsync())
+        {
+            _sweepsAtStart = Host.Local.SweepCount;
+        }
+        else
         {
             _hasSave = false;
         }
     }
 
-    private async Task AbandonAsync()
+    private async Task LeaveAsync()
     {
         CancelChoice();
-        await Session.AbandonAsync();
-        _hasSave = false;
+        await Session.LeaveAsync();
+        Host.UseOffline();
+        _hasSave = await Host.Local.HasSavedGameAsync();
     }
 
-    public void Dispose() => Session.Changed -= OnSessionChanged;
+    public void Dispose()
+    {
+        Host.CurrentChanged -= OnCurrentChanged;
+        if (_subscribed is not null)
+        {
+            _subscribed.Changed -= OnSessionChanged;
+        }
+    }
 }

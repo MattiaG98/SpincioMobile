@@ -3,7 +3,7 @@ using System.Collections.Immutable;
 namespace Spincio.Engine;
 
 /// <summary>Pure rules engine: <c>Apply(state, command) → (state, events)</c>. No I/O, no clock, no ambient randomness.</summary>
-public static class SpincioEngine
+public static partial class SpincioEngine
 {
     /// <summary>
     /// Starts a match: random first dealer unless given (S3), then the first round is dealt.

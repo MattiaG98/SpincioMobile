@@ -2,13 +2,16 @@
   <Folder Name="/src/">
     <Project Path="src/Spincio.Bots/Spincio.Bots.csproj" />
     <Project Path="src/Spincio.Client/Spincio.Client.csproj" />
+    <Project Path="src/Spincio.Contracts/Spincio.Contracts.csproj" />
     <Project Path="src/Spincio.Engine/Spincio.Engine.csproj" />
+    <Project Path="src/Spincio.Server/Spincio.Server.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Spincio.Architecture.Tests/Spincio.Architecture.Tests.csproj" />
     <Project Path="tests/Spincio.Bots.Tests/Spincio.Bots.Tests.csproj" />
     <Project Path="tests/Spincio.Client.Tests/Spincio.Client.Tests.csproj" />
     <Project Path="tests/Spincio.Engine.Tests/Spincio.Engine.Tests.csproj" />
+    <Project Path="tests/Spincio.Server.Tests/Spincio.Server.Tests.csproj" />
   </Folder>
   <Folder Name="/tools/">
     <Project Path="tools/Spincio.Simulator/Spincio.Simulator.csproj" />

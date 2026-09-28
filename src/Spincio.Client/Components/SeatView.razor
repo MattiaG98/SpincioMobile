@@ -1,6 +1,7 @@
 @using Spincio.Client.Game
-<div class="seat seat-@Seat.Index @(IsTurn ? "turn" : "")">
-    <div class="seat-name">@GameText.SeatName(Seat) @(IsDealer ? "· mazziere" : "")</div>
+@* Another seat at the table. Position is relative to the viewer: 1 = right, 2 = across (partner), 3 = left. *@
+<div class="seat seat-@Position @(IsTurn ? "turn" : "")">
+    <div class="seat-name">@Name @(IsDealer ? "· mazziere" : "")</div>
     <div class="seat-cards">
         @for (int i = 0; i < CardCount; i++)
         {
@@ -15,6 +16,8 @@
 
 @code {
     [Parameter, EditorRequired] public Seat Seat { get; set; }
+    [Parameter] public int Position { get; set; }
+    [Parameter] public string Name { get; set; } = "";
     [Parameter] public int CardCount { get; set; }
     [Parameter] public bool IsTurn { get; set; }
     [Parameter] public bool IsDealer { get; set; }
