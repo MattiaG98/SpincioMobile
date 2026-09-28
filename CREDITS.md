@@ -6,7 +6,7 @@ Spincio è un progetto hobby. Il regolamento (`docs/SPEC.md`) è scritto da zero
 | Elemento | Origine | Licenza |
 |---|---|---|
 | Carte (semi, pip, figure) | Disegni SVG originali in questo repository (`CardFace.razor`, `SuitGlyph.razor`, ADR 0009) | Stessa licenza del progetto |
-| Icone dell'app (`favicon.png`, `icon-192.png`, `icon-512.png`) | Template Blazor WebAssembly di .NET | MIT (© .NET Foundation) — da sostituire con icone proprie |
+| Icone dell'app (`favicon.png`, `icon-192.png`, `icon-512.png`) | Disegno originale (`src/Spincio.Client/Assets/icon.svg`, reso con `tools/browser-checks/render-icons.mjs`) | Stessa licenza del progetto |
 
 Non vengono usate grafiche né marchi di editori di carte da gioco (es. Dal Negro, Modiano).
 

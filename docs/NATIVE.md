@@ -21,7 +21,7 @@
 ## Raccomandazione (quando si vorrà fare)
 1. **Android per primo con TWA**: costo minimo, zero codice, usa il deploy di GitHub Pages.
 2. iOS solo se c'è domanda reale, preferibilmente con **MAUI Blazor Hybrid**, che rende anche L2 più forte grazie al codice nativo.
-3. Prima di pubblicare: verificare il marchio "Spincio" (EUIPO, UIBM), sostituire le icone del template .NET e preparare privacy policy e schede dello store.
+3. Prima di pubblicare: verificare il marchio "Spincio" (EUIPO, UIBM), preparare privacy policy e schede dello store.
 
 ## Lavoro preparatorio già fatto
 - Manifest PWA con nome, colori, icone 192/512 e `display: standalone`.

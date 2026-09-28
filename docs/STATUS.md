@@ -36,7 +36,7 @@
 | 1 | Attivare GitHub Pages | Settings → Pages → Source: **GitHub Actions**; poi merge su `main` | Proprietario |
 | 2 | Hosting del server online | Rimandato (ADR 0010). Opzioni gratuite o quasi in `RUNBOOK.md` | Proprietario |
 | 3 | Carte: tenere le SVG originali o passare a Wikimedia | Tenere le originali (nessun rischio di licenza) | Proprietario |
-| 4 | Icone dell'app | Sostituire quelle del template .NET con un'icona propria | Da fare |
+| 4 | ~~Icone dell'app~~ | ✅ Fatto il 28/09: icona originale (`Assets/icon.svg`) | — |
 | 5 | Verifica del marchio "Spincio" (EUIPO/UIBM) | Prima di qualsiasi pubblicazione sugli store | Proprietario |
 
 ## Prossimi passi consigliati
@@ -52,4 +52,4 @@
 | 24/09/2026 | Fasi 0–3 (regolamento, spec, mercato, architettura); setup del repo |
 | 25/09/2026 | M0, M1, M2 |
 | 26/09/2026 | M3 |
-| 28/09/2026 | M4, M5, M6, M7; M8 documentato e saltato; file di tracciamento (questo, KNOWLEDGE, RUNBOOK, NATIVE) |
+| 28/09/2026 | M4, M5, M6, M7; M8 documentato e saltato; file di tracciamento (questo, KNOWLEDGE, RUNBOOK, NATIVE); icone originali |
