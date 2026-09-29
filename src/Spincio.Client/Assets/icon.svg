@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Spincio app icon: original artwork (felt table, a card with the coins suit). -->
+  <rect width="512" height="512" rx="96" fill="#1f5d3a"/>
+  <g transform="rotate(-10 256 256)">
+    <rect x="118" y="70" width="276" height="372" rx="30" fill="#fbf7ee" stroke="#b8860b" stroke-width="10"/>
+    <circle cx="256" cy="256" r="92" fill="#d9a520"/>
+    <circle cx="256" cy="256" r="62" fill="none" stroke="#8a6100" stroke-width="12"/>
+    <circle cx="256" cy="256" r="22" fill="none" stroke="#8a6100" stroke-width="10"/>
+    <text x="150" y="130" font-family="system-ui, sans-serif" font-weight="800" font-size="56" fill="#1b1b1b">S</text>
+  </g>
+</svg>

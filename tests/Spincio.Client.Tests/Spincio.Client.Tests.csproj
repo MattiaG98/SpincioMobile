@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+  <ItemGroup>
+    <PackageReference Include="bunit" />
+    <PackageReference Include="FsCheck.Xunit" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Spincio.Client\Spincio.Client.csproj" />
+  </ItemGroup>
+</Project>

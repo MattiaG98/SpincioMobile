@@ -1,0 +1,38 @@
+@* Original suit symbols, drawn for Spincio (ADR 0009). Coordinates are centred on (X, Y); Size is the height. *@
+@{
+    var s = Size / 20.0;
+    var transform = FormattableString.Invariant($"translate({X} {Y}) scale({s})");
+}
+<g transform="@transform" class="glyph glyph-@Suit.ToString().ToLowerInvariant()">
+    @switch (Suit)
+    {
+        case Suit.Coins:
+            <circle r="9.5" class="fill" />
+            <circle r="6.5" class="line" fill="none" stroke-width="1.4" />
+            <circle r="2.4" class="line" fill="none" stroke-width="1.2" />
+            break;
+        case Suit.Cups:
+            <path class="fill" d="M-8,-9 H8 C8,-1 4,3 1.6,3.5 V6.5 H5 V9.5 H-5 V6.5 H-1.6 V3.5 C-4,3 -8,-1 -8,-9 Z" />
+            <path class="line" fill="none" stroke-width="1.1" d="M-6.5,-6 H6.5" />
+            break;
+        case Suit.Swords:
+            <path class="fill" d="M0,-10 L2,-6 V5 H-2 V-6 Z" />
+            <rect class="fill" x="-5.5" y="4.2" width="11" height="2" rx="1" />
+            <rect class="fill" x="-1.2" y="6.2" width="2.4" height="2.6" />
+            <circle class="fill" cy="9.4" r="1.4" />
+            break;
+        default:
+            <path class="fill" d="M-2.2,9.5 L-3.4,-6 C-3.6,-9 3.6,-9 3.4,-6 L2.2,9.5 Z" transform="rotate(-18)" />
+            <circle class="knot" cx="-2.2" cy="-2" r="1" />
+            <circle class="knot" cx="1.6" cy="2.5" r="1" />
+            <circle class="knot" cx="-0.6" cy="6.2" r="0.9" />
+            break;
+    }
+</g>
+
+@code {
+    [Parameter, EditorRequired] public Suit Suit { get; set; }
+    [Parameter] public double X { get; set; }
+    [Parameter] public double Y { get; set; }
+    [Parameter] public double Size { get; set; } = 20;
+}

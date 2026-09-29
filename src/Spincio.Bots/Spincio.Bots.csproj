@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <InternalsVisibleTo Include="Spincio.Bots.Tests" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Spincio.Engine\Spincio.Engine.csproj" />
+  </ItemGroup>
+</Project>

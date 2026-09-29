@@ -1,0 +1,60 @@
+@using Spincio.Client.Game
+@* Original card face in the Piacentine spirit: pips for 1–7, a figure for Fante, Cavallo and Re (ADR 0009). *@
+<svg class="face" viewBox="0 0 60 90" aria-hidden="true" focusable="false">
+    <rect class="paper" x="1" y="1" width="58" height="88" rx="6" />
+    <text class="index" x="7" y="14">@GameText.RankLabel(Card.Rank)</text>
+    <SuitGlyph Suit="Card.Suit" X="7.5" Y="22" Size="7" />
+    <g transform="rotate(180 30 45)">
+        <text class="index" x="7" y="14">@GameText.RankLabel(Card.Rank)</text>
+        <SuitGlyph Suit="Card.Suit" X="7.5" Y="22" Size="7" />
+    </g>
+
+    @if (Card.Rank <= Rank.Seven)
+    {
+        double size = Card.Rank == Rank.Ace ? 30 : 14;
+        foreach (var (x, y) in Pips[(int)Card.Rank])
+        {
+            <SuitGlyph Suit="Card.Suit" X="x" Y="y" Size="size" />
+        }
+    }
+    else
+    {
+        <SuitGlyph Suit="Card.Suit" X="30" Y="20" Size="12" />
+        <g class="figure glyph-@Card.Suit.ToString().ToLowerInvariant()">
+            @switch (Card.Rank)
+            {
+                case Rank.Jack:
+                    <rect class="fill" x="25" y="34" width="10" height="4" rx="1.5" />
+                    <circle class="fill" cx="30" cy="43" r="5" />
+                    <path class="fill" d="M22,79 L26,51 H34 L38,79 Z" />
+                    break;
+                case Rank.Knight:
+                    <path class="fill" d="M20,79 L24,60 C21,52 25,43 33,41 L37,35 L39,41 C44,45 45,53 41,56 L36,54 L34,63 L38,79 Z" />
+                    <circle class="eye" cx="36" cy="46" r="1.2" />
+                    break;
+                default:
+                    <path class="fill" d="M23,39 L24.5,32 L27.5,36 L30,30 L32.5,36 L35.5,32 L37,39 Z" />
+                    <circle class="fill" cx="30" cy="44" r="5" />
+                    <path class="fill" d="M20,79 L25,51 H35 L40,79 Z" />
+                    break;
+            }
+        </g>
+    }
+</svg>
+
+@code {
+    [Parameter, EditorRequired] public Card Card { get; set; }
+
+    /// <summary>Pip positions for 1..7 in the 60×90 card box.</summary>
+    private static readonly (double X, double Y)[][] Pips =
+    [
+        [],
+        [(30, 45)],
+        [(30, 26), (30, 64)],
+        [(30, 22), (30, 45), (30, 68)],
+        [(20, 27), (40, 27), (20, 63), (40, 63)],
+        [(20, 25), (40, 25), (30, 45), (20, 65), (40, 65)],
+        [(20, 23), (40, 23), (20, 45), (40, 45), (20, 67), (40, 67)],
+        [(20, 23), (40, 23), (30, 34), (20, 45), (40, 45), (20, 67), (40, 67)],
+    ];
+}

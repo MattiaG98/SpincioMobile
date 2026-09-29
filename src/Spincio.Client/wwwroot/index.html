@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1f5d3a" />
+    <meta name="description" content="Spincio: gioco di carte 2 contro 2 con mazzo piacentino, contro la CPU." />
+    <title>Spincio</title>
+    <script>
+        // GitHub Pages serves a project site under /<repo>/; locally the app lives at /.
+        // Computed here (not rewritten at deploy) so index.html keeps the hash the service worker checks.
+        (function () {
+            var match = location.pathname.match(/^\/[^/]+\//);
+            var base = location.hostname.endsWith('github.io') && match ? match[0] : '/';
+            document.write('<base href="' + base + '" />');
+        })();
+    </script>
+    <link rel="preload" id="webassembly" />
+    <link rel="stylesheet" href="css/app.css" />
+    <link rel="icon" type="image/png" href="favicon.png" />
+    <link href="manifest.webmanifest" rel="manifest" />
+    <link rel="apple-touch-icon" sizes="512x512" href="icon-512.png" />
+    <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png" />
+    <script type="importmap"></script>
+</head>
+
+<body>
+    <div id="app">
+        <svg class="loading-progress">
+            <circle r="40%" cx="50%" cy="50%" />
+            <circle r="40%" cx="50%" cy="50%" />
+        </svg>
+        <div class="loading-progress-text"></div>
+    </div>
+
+    <div id="blazor-error-ui">
+        Si è verificato un errore imprevisto.
+        <a href="." class="reload">Ricarica</a>
+        <span class="dismiss">🗙</span>
+    </div>
+    <script src="_framework/blazor.webassembly#[.{fingerprint}].js"></script>
+    <script>navigator.serviceWorker.register('service-worker.js', { updateViaCache: 'none' });</script>
+</body>
+
+</html>

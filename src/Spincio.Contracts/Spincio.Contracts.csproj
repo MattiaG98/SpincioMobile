@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Wire contracts shared by Client and Server (ADR 0004). Depends on the engine for its value types. -->
+  <ItemGroup>
+    <ProjectReference Include="..\Spincio.Engine\Spincio.Engine.csproj" />
+  </ItemGroup>
+</Project>

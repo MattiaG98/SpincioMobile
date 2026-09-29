@@ -1,0 +1,141 @@
+@page "/online"
+@using Spincio.Client.Game
+@using Spincio.Contracts
+@implements IDisposable
+@inject OnlineService OnlineGames
+@inject GameHost Host
+@inject NavigationManager Navigation
+
+<PageTitle>Spincio online</PageTitle>
+
+<section class="start online">
+    <h1>Online</h1>
+
+    @if (OnlineGames.ServerUrl is null)
+    {
+        <p>Il gioco online non è configurato su questa installazione.</p>
+    }
+    else if (Room is null)
+    {
+        <p>Crea una stanza e condividi il codice, oppure entra con il codice di un amico. I posti vuoti vanno alla CPU.</p>
+        <label class="field">
+            Il tuo nome
+            <input @bind="_name" @bind:event="oninput" maxlength="16" placeholder="Nome" />
+        </label>
+        <button type="button" class="primary" disabled="@_busy" @onclick="CreateAsync">Crea una stanza</button>
+        <label class="field">
+            Codice stanza
+            <input @bind="_code" @bind:event="oninput" maxlength="5" placeholder="ABCDE" class="code" />
+        </label>
+        <button type="button" disabled="@(_busy || string.IsNullOrWhiteSpace(_code))" @onclick="JoinAsync">Entra</button>
+    }
+    else
+    {
+        <p>Codice stanza: <strong class="room-code">@Room.Code</strong></p>
+        <p>Condividi il codice con gli altri giocatori. I primi due sono compagni di squadra.</p>
+        <ol class="seats">
+            @foreach (var seat in Room.Seats)
+            {
+                <li>
+                    @(seat.Seat % 2 == 0 ? "Squadra A" : "Squadra B") ·
+                    @(string.IsNullOrEmpty(seat.Name) ? "libero (CPU)" : seat.Name)
+                    @(seat.Seat == Session.Me.Index ? " (tu)" : "")
+                </li>
+            }
+        </ol>
+        <button type="button" class="primary" disabled="@_busy" @onclick="StartAsync">Inizia la partita</button>
+    }
+
+    @if (_connectionError)
+    {
+        <p class="error">Server non raggiungibile. Riprova più tardi.</p>
+    }
+    else if (OnlineGames.ServerUrl is not null && Session.Error is { } error)
+    {
+        <p class="error">@error</p>
+    }
+
+    <a class="button-link" href="">Torna al gioco offline</a>
+</section>
+
+@code {
+    private string _name = "";
+    private string _code = "";
+    private bool _busy;
+    private bool _connectionError;
+
+    private RemoteGameSession Session => OnlineGames.Session;
+
+    private RoomInfo? Room => OnlineGames.ServerUrl is null ? null : Session.Room;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (OnlineGames.ServerUrl is null)
+        {
+            return;
+        }
+
+        Session.Changed += OnChanged;
+        if (Session.Room is null && !Session.IsStarted)
+        {
+            // Back to a match or lobby left open earlier (the seat token is remembered in this browser).
+            await Busy(async () => await Session.TryRejoinAsync());
+        }
+    }
+
+    private async Task CreateAsync() => await Busy(() => Session.CreateRoomAsync(_name));
+
+    private async Task JoinAsync() => await Busy(() => Session.JoinRoomAsync(_code.Trim().ToUpperInvariant(), _name));
+
+    private async Task StartAsync() => await Busy(() => Session.StartMatchAsync());
+
+    private async Task Busy<T>(Func<Task<T>> action)
+    {
+        _busy = true;
+        try
+        {
+            await action();
+        }
+        catch (Exception)
+        {
+            // Server unreachable: stay on the form. The server's own refusals come through Session.Error.
+            _busy = false;
+            _connectionError = true;
+            StateHasChanged();
+            return;
+        }
+
+        _connectionError = false;
+
+        _busy = false;
+        EnterIfStarted();
+    }
+
+    private bool EnterIfStarted()
+    {
+        if (!Session.IsStarted)
+        {
+            return false;
+        }
+
+        Host.UseOnline(Session);
+        Navigation.NavigateTo("");
+        return true;
+    }
+
+    private void OnChanged() => InvokeAsync(() =>
+    {
+        if (!EnterIfStarted())
+        {
+            StateHasChanged();
+        }
+    });
+
+    public void Dispose()
+    {
+        if (OnlineGames.ServerUrl is not null)
+        {
+            Session.Changed -= OnChanged;
+        }
+    }
+}

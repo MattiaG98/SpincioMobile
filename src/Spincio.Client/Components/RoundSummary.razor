@@ -1,0 +1,48 @@
+@using Spincio.Client.Game
+@{
+    var us = Scored.Score.For(Us);
+    var them = Scored.Score.For(GameText.Other(Us));
+    var themTeam = GameText.Other(Us);
+}
+<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="summary-title">
+    <div class="panel">
+        <h2 id="summary-title">Fine smazzata</h2>
+        <table class="summary">
+            <thead>
+                <tr><th></th><th>Noi</th><th>Loro</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Carte</td>@Cell(us.CardCount, us.CardsPoint)@Cell(them.CardCount, them.CardsPoint)</tr>
+                <tr><td>Denari</td>@Cell(us.CoinCount, us.CoinsPoint)@Cell(them.CoinCount, them.CoinsPoint)</tr>
+                <tr><td>Rebello</td>@Points(us.RebelloPoint)@Points(them.RebelloPoint)</tr>
+                <tr><td>Settebello</td>@Points(us.SettebelloPoint)@Points(them.SettebelloPoint)</tr>
+                <tr><td>Primiera (sette)</td>@Cell(us.SevenCount, us.PrimieraPoint)@Cell(them.SevenCount, them.PrimieraPoint)</tr>
+                <tr><td>Napola</td>@Points(us.NapolaPoints)@Points(them.NapolaPoints)</tr>
+                <tr class="total"><td>Punti di fine smazzata</td><td>@us.Total</td><td>@them.Total</td></tr>
+                <tr class="live"><td>Spazzini (già contati)</td><td>@Scored.Ledger.Sweeps.For(Us)</td><td>@Scored.Ledger.Sweeps.For(themTeam)</td></tr>
+                <tr class="live"><td>Accusi (già contati)</td><td>@Scored.Ledger.Declarations.For(Us)</td><td>@Scored.Ledger.Declarations.For(themTeam)</td></tr>
+                <tr class="total"><td>Punteggio partita</td><td>@Scored.MatchScore.For(Us)</td><td>@Scored.MatchScore.For(themTeam)</td></tr>
+            </tbody>
+        </table>
+        @if (Scored.Score.AllCoinsTeam is { } team)
+        {
+            <p class="highlight">@(team == Us ? "Noi abbiamo" : "Loro hanno") preso tutti i 10 denari!</p>
+        }
+        <button type="button" class="primary" @onclick="OnClose">Continua</button>
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public RoundScored Scored { get; set; } = default!;
+
+    /// <summary>The viewer's team: shown in the "Noi" column.</summary>
+    [Parameter] public Team Us { get; set; } = Team.A;
+
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    private static RenderFragment Cell(int count, int points) =>
+        @<td>@count @if (points > 0) { <strong> (+@points)</strong> }</td>;
+
+    private static RenderFragment Points(int points) =>
+        @<td>@(points > 0 ? $"+{points}" : "—")</td>;
+}
