@@ -10,7 +10,8 @@
     --cups: #b3261e;
     --swords: #1f4e9c;
     --clubs: #2e7d32;
-    --card-w: clamp(48px, 16vw, 76px);
+    --card-w: clamp(46px, 15vw, 72px);
+    --card-ratio: 1.83; /* Piacentine proportions (ADR 0011) */
 }
 
 * { box-sizing: border-box; }
@@ -62,11 +63,11 @@ button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 .seat-1 .seat-cards, .seat-3 .seat-cards { flex-direction: column; }
 .seat-1 .seat-cards .card.small, .seat-3 .seat-cards .card.small { height: calc(var(--card-w) * .35); }
 
-.table { min-height: calc(var(--card-w) * 1.6); display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; align-content: center; padding: 10px; border-radius: 16px; background: var(--felt-dark); }
+.table { min-height: calc(var(--card-w) * 1.95); display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; align-content: center; padding: 10px; border-radius: 16px; background: var(--felt-dark); }
 .table .empty { opacity: .6; font-size: .9rem; }
 
 .card {
-    width: var(--card-w); height: calc(var(--card-w) * 1.5); border-radius: 8px; padding: 0;
+    width: var(--card-w); height: calc(var(--card-w) * var(--card-ratio)); border-radius: 6px; padding: 0; overflow: hidden;
     background: var(--paper); color: var(--ink); border: 0;
     display: inline-flex; align-items: stretch; justify-content: stretch;
     box-shadow: 0 2px 4px #0005; transition: transform .12s ease;

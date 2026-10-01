@@ -34,6 +34,7 @@ Configurazione del server in `src/Spincio.Server/appsettings.json`:
 ## Verifiche nel browser (Playwright)
 - **Offline:** `dotnet publish src/Spincio.Client -c Release -o /tmp/pub`, poi `python3 -m http.server 8765` dentro `/tmp/pub/wwwroot`, poi `node tools/browser-checks/offline.mjs /tmp/out`. Stampa i tempi delle mosse della CPU ed eventuali errori in console.
 - **Online:** avviare server e client come sopra, poi `node tools/browser-checks/online.mjs /tmp/out`.
+- **Carte:** `node tools/card-slicer/slice.mjs assets-source/carte-piacentine-al-completo.jpg src/Spincio.Client/wwwroot/cards` ritaglia di nuovo le 40 carte (ADR 0011). La pagina `/mazzo` dell'app mostra tutto il mazzo per controllarlo.
 - Per fermare i processi usare l'ID del task o la porta, **non** `pkill -f` con un pattern che compare nel comando stesso.
 
 ## Pubblicazione su GitHub Pages (gratuita, repo pubblico)
