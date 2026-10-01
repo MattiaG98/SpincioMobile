@@ -1,0 +1,18 @@
+@page "/mazzo"
+@using Spincio.Client.Game
+@* The whole deck at a glance: to review the card art (ADR 0011). Not linked from the game. *@
+
+<PageTitle>Spincio · Mazzo</PageTitle>
+
+<section class="deck">
+    @foreach (var suit in new[] { Suit.Coins, Suit.Cups, Suit.Swords, Suit.Clubs })
+    {
+        <h2>@GameText.SuitName(suit)</h2>
+        <div class="deck-row">
+            @foreach (var rank in Enum.GetValues<Rank>())
+            {
+                <CardView Card="new Card(rank, suit)" />
+            }
+        </div>
+    }
+</section>

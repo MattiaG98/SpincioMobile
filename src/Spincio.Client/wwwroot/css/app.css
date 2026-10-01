@@ -78,20 +78,17 @@ button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 .card:disabled { opacity: .55; }
 .card.highlighted { outline: 3px solid var(--accent); outline-offset: 2px; transform: translateY(-4px); }
 
-/* Original SVG card art (ADR 0009). */
+/* Card art in the traditional Piacentine style, drawn for Spincio (ADR 0011). */
 .face { width: 100%; height: 100%; display: block; }
-.face .paper { fill: var(--paper); stroke: #0004; stroke-width: 1.2; }
-.face .index { font: 800 12px system-ui, sans-serif; fill: var(--ink); text-anchor: middle; }
-.glyph-coins .fill { fill: #d9a520; } .glyph-coins .line { stroke: #8a6100; }
-.glyph-cups .fill { fill: var(--cups); } .glyph-cups .line { stroke: #fbe3a0; }
-.glyph-swords .fill { fill: var(--swords); }
-.glyph-clubs .fill { fill: #7a4f24; } .glyph-clubs .knot { fill: #d8b27a; }
-.figure .fill { opacity: .9; }
-.figure .eye { fill: var(--paper); }
-.card.suit-coins .face .paper { stroke: var(--coins); }
-.card.suit-cups .face .paper { stroke: var(--cups); }
-.card.suit-swords .face .paper { stroke: var(--swords); }
-.card.suit-clubs .face .paper { stroke: var(--clubs); }
+.face .paper { fill: var(--paper); stroke: #0005; stroke-width: 1; }
+.face .frame { fill: none; stroke: #1d171222; stroke-width: .6; }
+.face .index { font: 800 9px Georgia, 'Times New Roman', serif; fill: #1d1712; text-anchor: middle; }
+.face .art { stroke: #1d1712; stroke-width: .5; stroke-linejoin: round; }
+.face .p-red { fill: #c8312b; } .face .p-yellow { fill: #f0bf2e; } .face .p-blue { fill: #2f5fa8; }
+.face .p-green { fill: #3d8b3d; } .face .p-ink { fill: #1d1712; } .face .p-skin { fill: #f6dcbc; }
+.face .p-hair { fill: #6b3f1f; } .face .p-white { fill: #fffdf6; } .face .p-horse { fill: #efe6d2; }
+.face .ribbon { fill: none; stroke: #c8312b; stroke-width: 2.2; stroke-linecap: round; }
+.face .ace-ring { fill: none; stroke: #c8312b; stroke-width: 1.2; stroke-dasharray: 1.2 2; }
 
 /* Animations: new table cards slide in, the last feed line and sweeps are emphasised. */
 @keyframes card-in { from { transform: translateY(-14px) scale(.92); opacity: 0; } to { transform: none; opacity: 1; } }
@@ -217,3 +214,6 @@ code {
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
     text-align: start;
 }
+.deck { padding: 8px; }
+.deck h2 { font-size: 1rem; margin: 12px 0 6px; }
+.deck-row { display: flex; flex-wrap: wrap; gap: 6px; }
