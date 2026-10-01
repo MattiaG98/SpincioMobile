@@ -1,6 +1,6 @@
 # ADR 0009 — Grafica delle carte originale in SVG
 
-- **Stato:** Accettato (M6, 28/09/2026) — il proprietario può chiedere di tornare a Wikimedia (decisione aperta in `STATUS.md`)
+- **Stato:** Superato da ADR 0011 (01/10/2026)
 - **Sostituisce in parte:** la decisione aperta n. 4 del documento di passaggio ("SVG piacentini di Wikimedia Commons")
 
 ## Contesto

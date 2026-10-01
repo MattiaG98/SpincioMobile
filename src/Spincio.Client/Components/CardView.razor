@@ -1,5 +1,5 @@
 @using Spincio.Client.Game
-@* A card: original SVG art (ADR 0009). Interactive only when OnClick is bound. *@
+@* A card: image from the Piacentine scan (ADR 0011). Interactive only when OnClick is bound. *@
 @if (Card is { } card && !FaceDown)
 {
     var css = $"card suit-{card.Suit.ToString().ToLowerInvariant()} {(Small ? "small" : "")} {(Highlighted ? "highlighted" : "")} {(Playable ? "playable" : "")}";

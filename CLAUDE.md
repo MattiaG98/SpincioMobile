@@ -43,6 +43,6 @@ Digital card game "Spincio" (house-rules variant of Spazzino), 2v2. Blazor WebAs
 - In Blazor, bind inputs that enable buttons with `@bind:event="oninput"`.
 
 ## Legal
-- Card art: original SVG drawn in this repo (`CardFace`, `SuitGlyph`, ADR 0009). Any third-party asset must be public domain or compatibly licensed and listed in `CREDITS.md`. No Dal Negro / Modiano assets or names.
+- Card art: images cut from the Piacentine full-deck scan on Wikimedia Commons, by the owner's decision (ADR 0011, supersedes ADR 0009). That is the only exception: any other third-party asset must be public domain or compatibly licensed and listed in `CREDITS.md`. No other publisher assets, and no Dal Negro / Modiano names.
 - Do not use the names "Dal Negro", "Modiano", "Scopa Più".
 - `docs/SPEC.md` is written from scratch; never copy rule text from the web.

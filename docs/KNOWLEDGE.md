@@ -75,6 +75,9 @@ Mosse legali dalla vista → se c'è un accuso lo dichiara → per N mondi: dist
 | `pkill -f pattern` ha chiuso la shell stessa | Il pattern compariva anche nella riga di comando della shell | Fermare i processi per ID del task o per porta |
 | Playwright: selettore ambiguo | `getByText` trova sia il paragrafo sia il pulsante | Usare `getByRole('button', { name })` |
 | Deduzione sbagliata nella spec | "Mai due carte uguali in tavola dopo la prima giocata" è falso (tavola iniziale con coppia + calata) | Corretta in SPEC v1.2; è una proprietà FsCheck |
+| Download da Wikimedia rifiutato (HTTP 429) | Wikimedia limita le richieste dall'IP condiviso dell'ambiente cloud | Non aggirare il blocco: il proprietario carica il file nel repo (`assets-source/`) dal browser |
+| Nessuna libreria immagini in Python (`pip install pillow` fallisce) | L'ambiente non raggiunge PyPI per Pillow | Ritagli e WebP con il canvas di Chromium via Playwright (`tools/card-slicer/slice.mjs`) |
+| Ritagli storti dalla scansione | Carte leggermente ruotate o spostate; la cornice stampata non sempre si rileva | Cornice di misura fissa (mediana): asse X dal centro del disegno, asse Y dalla mediana della riga se la cornice manca |
 
 ## 6. Strategia di test
 

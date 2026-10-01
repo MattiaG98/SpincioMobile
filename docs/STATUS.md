@@ -16,13 +16,13 @@
 | M6 | Grafica delle carte + animazioni | ✅ Fatto | Carte SVG originali (ADR 0009); animazioni con `prefers-reduced-motion` |
 | M7 | Online (SignalR, server autoritativo) | ✅ Fatto in locale | 2 giocatori reali + 2 CPU nel browser; test end-to-end; **non pubblicato** (hosting a pagamento escluso, ADR 0010) |
 | M8 | App nativa (store) | ⏭️ Saltato | Richiede account sviluppatore a pagamento: opzioni in [`NATIVE.md`](NATIVE.md) |
-| M9 | Rifinitura dopo il playtest del proprietario | 🔄 In corso | **A** ✅ storico mosse a scomparsa, nomi CPU (Titti compagno, Tito e Vava avversari), frasi in seconda persona per il giocatore · **B** carte piacentine da Wikimedia: verifica licenze in corso |
+| M9 | Rifinitura dopo il playtest del proprietario | 🔄 In corso | **A** ✅ storico mosse a scomparsa, nomi CPU (Titti compagno, Tito e Vava avversari), frasi in seconda persona per il giocatore · **B** ✅ carte dalla scansione piacentina di Wikimedia Commons, senza indici (ADR 0011, decisione del proprietario) |
 
 ## Metriche
 
 | Voce | Valore | Come si rimisura |
 |---|---|---|
-| Test automatici | **182** (Engine 78, Bots 31, Client 29, Architecture 23, Server 21) | `dotnet test Spincio.slnx` |
+| Test automatici | **184** (Engine 78, Bots 31, Client 31, Architecture 23, Server 21) | `dotnet test Spincio.slnx` |
 | L1 vs L0 | 99,3% (seed 1), 99,1% (seed 5000) | `--x Greedy --y Random` |
 | L2 vs L1 | 64,4% (16 mondi), 62,0% (8 mondi), seed 5000 | `--x Pimc --y Greedy --worlds N` |
 | L2 senza prior L1 | 56,0% (16 mondi) / **44,6%** (8 mondi): peggio di L1 | `PimcOptions.PriorWeight = 0` |
@@ -36,7 +36,7 @@
 |---|---|---|---|
 | 1 | Attivare GitHub Pages | Settings → Pages → Source: **GitHub Actions**; poi merge su `main` | Proprietario |
 | 2 | Hosting del server online | Rimandato (ADR 0010). Opzioni gratuite o quasi in `RUNBOOK.md` | Proprietario |
-| 3 | Carte: il proprietario vuole le piacentine di Wikipedia | La scansione completa su it.wikipedia (`Carte_piacentine_al_completo.jpg`) è un mazzo commerciale moderno: rischio di diritti dell'editore e vietato da ADR 0009. Cercare un mazzo completo con licenza verificata | Proprietario + Tech lead |
+| 3 | ~~Carte~~ | ✅ 01/10: scansione piacentina (ADR 0011). Rischio diritti accettato dal proprietario; se arriva una segnalazione si torna al ridisegno originale | — |
 | 4 | ~~Icone dell'app~~ | ✅ Fatto il 28/09: icona originale (`Assets/icon.svg`) | — |
 | 5 | Verifica del marchio "Spincio" (EUIPO/UIBM) | Prima di qualsiasi pubblicazione sugli store | Proprietario |
 
@@ -54,4 +54,4 @@
 | 25/09/2026 | M0, M1, M2 |
 | 26/09/2026 | M3 |
 | 28/09/2026 | M4, M5, M6, M7; M8 documentato e saltato; file di tracciamento (questo, KNOWLEDGE, RUNBOOK, NATIVE); icone originali |
-| 29/09–01/10/2026 | Merge PR #1, GitHub Pages attivo (https://mattiag98.github.io/SpincioMobile/), app installata su iPhone dal proprietario; M9-A |
+| 29/09–01/10/2026 | Merge PR #1, GitHub Pages attivo (https://mattiag98.github.io/SpincioMobile/), app installata su iPhone dal proprietario; M9-A (PR #2); M9-B carte piacentine |
