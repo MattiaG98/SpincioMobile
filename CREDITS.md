@@ -5,10 +5,10 @@ Spincio è un progetto hobby. Il regolamento (`docs/SPEC.md`) è scritto da zero
 ## Grafica
 | Elemento | Origine | Licenza |
 |---|---|---|
-| Carte (semi, pip, figure) | Disegni SVG originali in questo repository (`CardFace.razor`, `SuitGlyph.razor`, ADR 0009) | Stessa licenza del progetto |
+| Carte (`wwwroot/cards/*.webp`) | Ritagliate da [Carte_piacentine_al_completo.jpg](https://commons.wikimedia.org/wiki/File:Carte_piacentine_al_completo.jpg), scansione di Florixc (Wikimedia Commons, 2009) — ADR 0011 | Dichiarata di pubblico dominio da chi l'ha caricata. Il disegno del mazzo può appartenere al suo editore: uso deciso dal proprietario per un progetto personale |
 | Icone dell'app (`favicon.png`, `icon-192.png`, `icon-512.png`) | Disegno originale (`src/Spincio.Client/Assets/icon.svg`, reso con `tools/browser-checks/render-icons.mjs`) | Stessa licenza del progetto |
 
-Non vengono usate grafiche né marchi di editori di carte da gioco (es. Dal Negro, Modiano).
+Non vengono usati marchi né nomi di editori di carte da gioco. L'unica grafica di terzi sono le carte qui sopra (ADR 0011).
 
 ## Software
 | Componente | Uso | Licenza |
