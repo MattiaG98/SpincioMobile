@@ -12,7 +12,7 @@ namespace Spincio.Client.Game;
 public sealed class LocalGameSession : IGameSession
 {
     public const string RulesVersion = "1.2";
-    public const int FeedLength = 8;
+    public const int FeedLength = 60;
     public static readonly Seat Human = new(0);
     public static readonly TimeSpan DefaultCpuDelay = TimeSpan.FromMilliseconds(700);
 

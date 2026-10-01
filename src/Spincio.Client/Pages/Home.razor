@@ -66,12 +66,15 @@ else
             @SeatAt(view, 1)
         </div>
 
-        <ol class="feed" aria-live="polite">
-            @foreach (var line in Session.Feed.TakeLast(4))
-            {
-                <li>@line</li>
-            }
-        </ol>
+        <details class="feed">
+            <summary aria-live="polite">@(Session.Feed.Count > 0 ? Session.Feed[^1] : "Storico delle mosse")</summary>
+            <ol reversed>
+                @for (var i = Session.Feed.Count - 2; i >= 0; i--)
+                {
+                    <li>@Session.Feed[i]</li>
+                }
+            </ol>
+        </details>
 
         <section class="me @(view.IsMyTurn ? "turn" : "")">
             <div class="status">

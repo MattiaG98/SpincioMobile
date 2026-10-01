@@ -54,7 +54,7 @@ public sealed class InMemoryOnlineSeatStore : IOnlineSeatStore
 /// </summary>
 public sealed class RemoteGameSession : IGameSession, IAsyncDisposable
 {
-    public const int FeedLength = 8;
+    public const int FeedLength = 60;
 
     private readonly HubConnection _hub;
     private readonly IOnlineSeatStore _store;
