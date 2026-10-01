@@ -10,13 +10,18 @@ public static class GameText
 
     public static Seat AtPosition(Seat me, int position) => new((me.Index + position) % Seat.Count);
 
+    /// <summary>Names of the CPU players in the offline game, chosen by the owner: partner, right opponent, left opponent.</summary>
+    public const string PartnerName = "Titti";
+    public const string RightOpponentName = "Tito";
+    public const string LeftOpponentName = "Vava";
+
     /// <summary>Default names for the offline game.</summary>
     public static string SeatName(Seat seat, Seat me) => Relative(seat, me) switch
     {
         0 => "Tu",
-        1 => "Est",
-        2 => "Compagno",
-        _ => "Ovest",
+        1 => RightOpponentName,
+        2 => PartnerName,
+        _ => LeftOpponentName,
     };
 
     public static string TeamName(Team team, Seat me) => team == me.Team ? "Noi" : "Loro";
@@ -74,13 +79,17 @@ public static class GameText
         RoundStarted r when r.MatchNumber > 0 => $"Spareggio {r.MatchNumber}, smazzata {r.RoundNumber}: mescola {seatName(r.Dealer)}",
         RoundStarted r => $"Smazzata {r.RoundNumber}: mescola {seatName(r.Dealer)}",
         DeckReshuffled => "Almeno due assi in tavola: si rimescola",
-        Declared d => $"{seatName(d.Seat)} accusa: {DeclarationName(d.Kind)} (+{d.Points})",
-        CardPlayed { Captured.IsEmpty: true } p => $"{seatName(p.Seat)} cala {CardName(p.Card)}",
-        CardPlayed p => $"{seatName(p.Seat)} prende {Cards(p.Captured)} con {CardName(p.Card)}" + (p.IsSweep ? " — SPAZZINO!" : ""),
+        Declared d => $"{Subject(d.Seat, me, seatName, "accusi", "accusa")}: {DeclarationName(d.Kind)} (+{d.Points})",
+        CardPlayed { Captured.IsEmpty: true } p => $"{Subject(p.Seat, me, seatName, "cali", "cala")} {CardName(p.Card)}",
+        CardPlayed p => $"{Subject(p.Seat, me, seatName, "prendi", "prende")} {Cards(p.Captured)} con {CardName(p.Card)}" + (p.IsSweep ? " — SPAZZINO!" : ""),
         TableAwarded { Team: null } a => $"Carte rimaste in tavola a nessuno: {Cards(a.Cards)}",
         TableAwarded a => $"Carte rimaste in tavola a {TeamName(a.Team!.Value, me)}: {Cards(a.Cards)}",
         TiebreakStarted t => $"Pareggio! Si gioca lo spareggio {t.MatchNumber}",
         MatchEnded m => $"Partita finita: vince {TeamName(m.Winner, me)} ({WinReasonText(m.Reason)})",
         _ => null,
     };
+
+    /// <summary>"Tu prendi" for the viewer, "Titti prende" for everybody else.</summary>
+    private static string Subject(Seat seat, Seat me, Func<Seat, string> seatName, string secondPerson, string thirdPerson) =>
+        seat == me ? $"{seatName(seat)} {secondPerson}" : $"{seatName(seat)} {thirdPerson}";
 }

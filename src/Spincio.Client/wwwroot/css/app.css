@@ -105,9 +105,14 @@ button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
     animation: sweep-flash 1.6s ease-out forwards;
 }
 
-.feed { list-style: none; margin: 0; padding: 6px 10px; font-size: .85rem; min-height: 4.8em; background: #0002; border-radius: 10px; }
-.feed li { opacity: .7; }
-.feed li:last-child { opacity: 1; font-weight: 600; }
+/* Move history: only the latest line is shown; the rest opens on tap. */
+.feed { font-size: .8rem; background: #0002; border-radius: 10px; padding: 4px 10px; }
+.feed summary { cursor: pointer; opacity: .85; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; list-style: none; }
+.feed summary::-webkit-details-marker { display: none; }
+.feed summary::before { content: "▸ "; opacity: .6; }
+.feed[open] summary::before { content: "▾ "; }
+.feed ol { list-style: none; margin: 4px 0 2px; padding: 0; max-height: 9.5em; overflow-y: auto; }
+.feed li { opacity: .65; padding: 1px 0; }
 
 .me { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 8px; border-radius: 12px; border: 2px solid transparent; }
 .me.turn { border-color: var(--accent); }

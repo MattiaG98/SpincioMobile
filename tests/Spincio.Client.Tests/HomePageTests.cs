@@ -58,4 +58,30 @@ public class HomePageTests : BunitContext
         page.WaitForAssertion(() =>
             (page.FindAll(".hand .card").Count < 3 || page.FindAll(".choice").Count > 1).ShouldBeTrue());
     }
+
+    [Fact]
+    public void CPU_players_have_human_names()
+    {
+        var page = Render<Home>();
+        page.Find("section.start button").Click();
+
+        page.WaitForAssertion(() => page.FindAll(".hand .card").Count.ShouldBe(3));
+        var board = page.Find(".board").TextContent;
+        board.ShouldContain(GameText.PartnerName);
+        board.ShouldContain(GameText.RightOpponentName);
+        board.ShouldContain(GameText.LeftOpponentName);
+    }
+
+    [Fact]
+    public void Move_history_is_collapsed_and_shows_only_the_latest_line()
+    {
+        var page = Render<Home>();
+        page.Find("section.start button").Click();
+        page.WaitForAssertion(() => _session.Feed.Count.ShouldBeGreaterThan(0));
+
+        var feed = page.Find("details.feed");
+        feed.HasAttribute("open").ShouldBeFalse();
+        feed.QuerySelector("summary")!.TextContent.ShouldBe(_session.Feed[^1]);
+        feed.QuerySelectorAll("li").Length.ShouldBe(_session.Feed.Count - 1);
+    }
 }
