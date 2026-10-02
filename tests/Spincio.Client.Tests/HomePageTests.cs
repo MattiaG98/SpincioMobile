@@ -16,6 +16,7 @@ public class HomePageTests : BunitContext
         Services.AddSingleton(_session);
         Services.AddSingleton(new GameHost(_session));
         Services.AddSingleton<IConfiguration>(new ConfigurationBuilder().Build());
+        JSInterop.Mode = JSRuntimeMode.Loose; // card animations call into JS (js/moves.js)
     }
 
     [Fact]

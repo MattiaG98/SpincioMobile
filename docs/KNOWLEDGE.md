@@ -28,7 +28,15 @@ Tutte queste regole sono **verificate da test** in `tests/Spincio.Architecture.T
 ## 2. Flussi principali
 
 ### Una mossa, offline
-`Home.razor` → `IGameSession.PlayAsync(cmd)` → `LocalGameSession` → `SpincioEngine.Apply(state, cmd)` → nuovo stato + eventi → eventi filtrati per il giocatore (`EventsFor`) → feed, riepilogo, salvataggio (seed + log comandi) → loop delle CPU con pausa di 700 ms.
+`Home.razor` → `IGameSession.PlayAsync(cmd)` → `LocalGameSession` → `SpincioEngine.Apply(state, cmd)` → nuovo stato + eventi → eventi filtrati per il giocatore (`EventsFor`) → **animazione** di ogni `CardPlayed` sul tavolo ancora vecchio (`IMoveAnimator`, `wwwroot/js/moves.js`) → solo allora lo stato viene accettato → feed, riepilogo, salvataggio (seed + log comandi) → `SettleAsync` toglie le carte volanti → loop delle CPU con pausa di 450 ms.
+
+### Animazioni delle mosse (M10)
+- Solo presentazione: il motore non sa nulla, una sessione senza `Animator` gioca identica (test `Without_an_animator_the_game_is_unchanged`).
+- Le copie volanti stanno in un livello fisso (`#fly-layer`) sopra la pagina; gli originali vengono solo nascosti (`visibility`), mai spostati, così il DOM di Blazor resta coerente. `settle()` aspetta due frame dopo il nuovo render, poi svuota il livello e rimostra ciò che è ancora in pagina.
+- Le carte sono trovate con `data-card` (notazione, es. `7D`); i posti con `.seat-1/2/3` e `.me`.
+- Presa: vola (380 ms) → si posa sulla **prima** carta presa, non al centro del gruppo che potrebbe contenere carte non prese → evidenzia (260 ms) → raccoglie (220 ms) → porta al giocatore (420 ms). Calata: vola nel posto misurato con una carta-sonda invisibile.
+- Durante l'animazione della propria carta la mano è disattivata (`LegalCommands` vuoto). Online gli aggiornamenti passano in fila (semaforo) e ognuno anima prima di mostrarsi.
+- `prefers-reduced-motion`: nessuna animazione.
 
 ### Una mossa, online
 Client: `RemoteGameSession.PlayAsync` → hub `Play(token, expectedSequence, "P0:7D>3S+4B")` → `GameRoom` (coda seriale) valida token, sequenza e regole → `AcceptAsync` → a ogni posto `GameUpdate(sequence, ViewFor(seat), EventsFor(seat))` → timer: pausa CPU oppure timeout di turno (30 s) → a fine partita `MatchReveal(seed, salt, log)` e il client verifica con `Commitment.Verify`.
@@ -54,7 +62,7 @@ Mosse legali dalla vista → se c'è un accuso lo dichiara → per N mondi: dist
 | Pesi di L1 (`GreedyWeights`) | carta 1, denaro +1, sette +1,5, settebello +5, rebello +4, spazzino 10, rischio spazzino 8, costo calata 0,3 | Ablazione M2: ogni componente fa vincere; ×2 e ×0,5 sul rischio peggiorano |
 | Mondi L2 | 16 nel simulatore/server, **8 nel browser** | Nel browser (interpretato) 8 mondi stanno sotto ~250 ms per mossa |
 | `PriorWeight` L2 | **1,0** | Senza prior, con 8 mondi L2 perde contro L1 (44,6%). Screening: 0 → 44%, 0,2 → 59%, 1 → 65%, 2 → 66%, 4 → 61% |
-| Pausa CPU | 700 ms | Leggibilità per l'umano |
+| Pausa CPU | 450 ms + animazione (0,4–1,3 s) | Leggibilità: l'animazione stessa scandisce le mosse. Mossa CPU nel browser: mediana ~0,9 s |
 | Timeout di turno / grazia riconnessione | 30 s / 30 s | ADR 0004 |
 
 ## 5. Lezioni apprese
@@ -78,6 +86,7 @@ Mosse legali dalla vista → se c'è un accuso lo dichiara → per N mondi: dist
 | Download da Wikimedia rifiutato (HTTP 429) | Wikimedia limita le richieste dall'IP condiviso dell'ambiente cloud | Non aggirare il blocco: il proprietario carica il file nel repo (`assets-source/`) dal browser |
 | Nessuna libreria immagini in Python (`pip install pillow` fallisce) | L'ambiente non raggiunge PyPI per Pillow | Ritagli e WebP con il canvas di Chromium via Playwright (`tools/card-slicer/slice.mjs`) |
 | Ritagli storti dalla scansione | Carte leggermente ruotate o spostate; la cornice stampata non sempre si rileva | Cornice di misura fissa (mediana): asse X dal centro del disegno, asse Y dalla mediana della riga se la cornice manca |
+| Controllo nel browser che segnalava carte "rimaste in volo" | Lo script misurava durante l'animazione della mia carta, quando il resto della mano sembrava ancora giocabile | Mano disattivata durante il volo (anche un difetto per l'utente); i controlli aspettano una carta `playable` visibile e chiudono il riepilogo "Continua" |
 
 ## 6. Strategia di test
 
