@@ -82,10 +82,13 @@ button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 /* Card faces: images cut from the Piacentine scan (ADR 0011). */
 .face { width: 100%; height: 100%; display: block; object-fit: fill; border-radius: inherit; user-select: none; -webkit-user-drag: none; }
 
-/* Animations: new table cards slide in, the last feed line and sweeps are emphasised. */
+/* Animations: the hand slides in; card plays fly over the board (js/moves.js); sweeps are emphasised. */
+#fly-layer { position: fixed; inset: 0; pointer-events: none; z-index: 12; }
+.fly-card { position: fixed; border-radius: 6px; overflow: hidden; background: var(--paper); box-shadow: 0 6px 16px #0007; }
+.fly-card img { width: 100%; height: 100%; display: block; }
+.fly-card.taken { outline: 3px solid var(--accent); outline-offset: -1px; }
 @keyframes card-in { from { transform: translateY(-14px) scale(.92); opacity: 0; } to { transform: none; opacity: 1; } }
 @keyframes sweep-flash { 0% { transform: scale(.6); opacity: 0; } 20% { transform: scale(1.08); opacity: 1; } 80% { opacity: 1; } 100% { transform: scale(1); opacity: 0; } }
-.table .card { animation: card-in .28s ease-out; }
 .hand .card { animation: card-in .22s ease-out; }
 .sweep-flash {
     position: fixed; left: 50%; top: 38%; translate: -50% -50%; z-index: 15; pointer-events: none;

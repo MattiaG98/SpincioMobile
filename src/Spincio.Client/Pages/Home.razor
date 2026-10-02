@@ -3,6 +3,7 @@
 @implements IDisposable
 @inject GameHost Host
 @inject IConfiguration Configuration
+@inject IJSRuntime JS
 
 <PageTitle>Spincio</PageTitle>
 
@@ -172,6 +173,7 @@ else
 
     private IGameSession Session => Host.Current;
     private IGameSession? _subscribed;
+    private IMoveAnimator? _animator;
     private bool _hasSave;
     private int _sweepsAtStart;
     private BotLevel _difficulty = BotLevel.Greedy;
@@ -201,10 +203,12 @@ else
         if (_subscribed is not null)
         {
             _subscribed.Changed -= OnSessionChanged;
+            _subscribed.Animator = null;
         }
 
         _subscribed = Session;
         _subscribed.Changed += OnSessionChanged;
+        _subscribed.Animator = _animator ??= new JsMoveAnimator(JS); // card plays fly over this page
         _sweepsAtStart = Session.SweepCount; // no animation for sweeps replayed on resume
     }
 
@@ -282,6 +286,7 @@ else
         if (_subscribed is not null)
         {
             _subscribed.Changed -= OnSessionChanged;
+            _subscribed.Animator = null;
         }
     }
 }

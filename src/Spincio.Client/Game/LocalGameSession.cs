@@ -14,7 +14,8 @@ public sealed class LocalGameSession : IGameSession
     public const string RulesVersion = "1.2";
     public const int FeedLength = 60;
     public static readonly Seat Human = new(0);
-    public static readonly TimeSpan DefaultCpuDelay = TimeSpan.FromMilliseconds(700);
+    /// <summary>CPU "thinking" pause; the card animation (about 0.4–1.3 s) comes on top of it.</summary>
+    public static readonly TimeSpan DefaultCpuDelay = TimeSpan.FromMilliseconds(450);
 
     /// <summary>L2 budget in the browser: WebAssembly runs interpreted, so fewer worlds than the simulator.</summary>
     public static readonly PimcOptions BrowserPimc = PimcOptions.Default with { Worlds = 8 };
@@ -30,6 +31,8 @@ public sealed class LocalGameSession : IGameSession
     private Pcg32[] _rngs = [];
     private MatchState? _state;
     private bool _cpuLoopRunning;
+    private bool _animatingHuman;
+    private bool _animated;
     private int _generation;
 
     public LocalGameSession(ISavedGameStore store, Func<TimeSpan, Task>? delay = null, TimeSpan? cpuDelay = null, IBot? bot = null)
@@ -52,7 +55,8 @@ public sealed class LocalGameSession : IGameSession
 
     public PlayerView View => SpincioEngine.ViewFor(State, Human);
 
-    public IReadOnlyList<Command> LegalCommands => SpincioEngine.LegalCommands(View);
+    /// <summary>Empty while the human's card is flying: the rest of the hand is not playable until it lands.</summary>
+    public IReadOnlyList<Command> LegalCommands => _animatingHuman ? [] : SpincioEngine.LegalCommands(View);
 
     public IReadOnlyList<string> Feed => _feed;
 
@@ -67,7 +71,9 @@ public sealed class LocalGameSession : IGameSession
 
     public Seat Me => Human;
 
-    public bool IsWaiting => _cpuLoopRunning;
+    public bool IsWaiting => _cpuLoopRunning || _animatingHuman;
+
+    public IMoveAnimator? Animator { get; set; }
 
     public int SweepCount { get; private set; }
 
@@ -135,7 +141,7 @@ public sealed class LocalGameSession : IGameSession
     public async Task PlayAsync(Command command)
     {
         ArgumentNullException.ThrowIfNull(command);
-        if (command.Seat != Human || _cpuLoopRunning || PendingSummary is not null)
+        if (command.Seat != Human || _cpuLoopRunning || _animatingHuman || PendingSummary is not null)
         {
             return;
         }
@@ -149,9 +155,27 @@ public sealed class LocalGameSession : IGameSession
         }
 
         Error = null;
+        int generation = _generation;
+        _animatingHuman = true;
+        try
+        {
+            Changed?.Invoke();
+            await AnimateAsync(result.Value);
+        }
+        finally
+        {
+            _animatingHuman = false;
+        }
+
+        if (generation != _generation)
+        {
+            return; // abandoned while the card was flying
+        }
+
         Accept(result.Value, CommandCodec.Encode(command));
         await SaveAsync();
         Changed?.Invoke();
+        await SettleAsync();
         await RunCpusAsync();
     }
 
@@ -252,8 +276,17 @@ public sealed class LocalGameSession : IGameSession
                 var state = before;
                 var seat = state.ToPlay;
                 var command = _bot.Choose(SpincioEngine.ViewFor(state, seat), _memories[seat.Index], ref _rngs[seat.Index]);
-                Accept(SpincioEngine.Apply(state, command).Value, CommandCodec.Encode(command));
+                var transition = SpincioEngine.Apply(state, command).Value;
+                await AnimateAsync(transition);
+                if (generation != _generation || !ReferenceEquals(before, _state))
+                {
+                    continue;
+                }
+
+                Accept(transition, CommandCodec.Encode(command));
                 await SaveAsync();
+                Changed?.Invoke();
+                await SettleAsync();
             }
         }
         finally
@@ -268,6 +301,25 @@ public sealed class LocalGameSession : IGameSession
 
         Changed?.Invoke();
     }
+
+    /// <summary>Plays the animations for the cards played in <paramref name="transition"/>, before it is accepted.</summary>
+    private async Task AnimateAsync(Transition transition)
+    {
+        _animated = false;
+        if (Animator is not { } animator)
+        {
+            return;
+        }
+
+        foreach (var play in transition.EventsFor(Human).OfType<CardPlayed>())
+        {
+            await animator.PlayAsync(play, GameText.Relative(play.Seat, Human));
+            _animated = true;
+        }
+    }
+
+    /// <summary>After the animated move has been shown: clears the animation leftovers.</summary>
+    private Task SettleAsync() => _animated && Animator is { } animator ? animator.SettleAsync() : Task.CompletedTask;
 
     private Task SaveAsync() => _store.SaveAsync(new SavedGame(RulesVersion, Seed, [.. _commands], Difficulty).ToJson());
 }

@@ -41,6 +41,9 @@ public interface IGameSession
     /// <summary>Whether "Nuova partita" is available at the end (offline only).</summary>
     bool CanRestart { get; }
 
+    /// <summary>Plays the card animations of each move before it is shown; null = no animation (tests, server-side).</summary>
+    IMoveAnimator? Animator { get; set; }
+
     string SeatName(Seat seat);
 
     Task PlayAsync(Command command);

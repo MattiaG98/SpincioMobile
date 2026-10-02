@@ -58,6 +58,8 @@ public sealed class RemoteGameSession : IGameSession, IAsyncDisposable
 
     private readonly HubConnection _hub;
     private readonly IOnlineSeatStore _store;
+    private readonly SemaphoreSlim _updates = new(1, 1); // one update at a time, animations included
+    private bool _animating;
     private ImmutableList<string> _feed = [];
     private PlayerView? _view;
     private int _sequence;
@@ -82,7 +84,7 @@ public sealed class RemoteGameSession : IGameSession, IAsyncDisposable
             .Build();
 
         _hub.On<RoomInfo>(nameof(IGameClient.RoomChanged), OnRoomChanged);
-        _hub.On<GameUpdate>(nameof(IGameClient.Updated), OnUpdated);
+        _hub.On<GameUpdate>(nameof(IGameClient.Updated), OnUpdatedAsync);
         _hub.On<MatchReveal>(nameof(IGameClient.Revealed), OnRevealed);
         _hub.Reconnected += async _ => await RejoinAsync();
     }
@@ -97,7 +99,7 @@ public sealed class RemoteGameSession : IGameSession, IAsyncDisposable
 
     public PlayerView View => _view ?? throw new InvalidOperationException("The match has not started.");
 
-    public IReadOnlyList<Command> LegalCommands => _view is null ? [] : SpincioEngine.LegalCommands(_view);
+    public IReadOnlyList<Command> LegalCommands => _view is null || _animating ? [] : SpincioEngine.LegalCommands(_view);
 
     public IReadOnlyList<string> Feed => _feed;
 
@@ -107,9 +109,11 @@ public sealed class RemoteGameSession : IGameSession, IAsyncDisposable
 
     public string? Error { get; private set; }
 
-    public bool IsWaiting => _view is { Phase: MatchPhase.AwaitingPlay } view && !view.IsMyTurn;
+    public bool IsWaiting => _animating || (_view is { Phase: MatchPhase.AwaitingPlay } view && !view.IsMyTurn);
 
     public int SweepCount { get; private set; }
+
+    public IMoveAnimator? Animator { get; set; }
 
     /// <summary>Seconds left for this player's move, as of the last update (0 when it is not our turn).</summary>
     public int TurnSecondsLeft { get; private set; }
@@ -196,7 +200,7 @@ public sealed class RemoteGameSession : IGameSession, IAsyncDisposable
     public async Task PlayAsync(Command command)
     {
         ArgumentNullException.ThrowIfNull(command);
-        if (command.Seat != Me || _token is null)
+        if (command.Seat != Me || _token is null || _animating)
         {
             return;
         }
@@ -220,7 +224,11 @@ public sealed class RemoteGameSession : IGameSession, IAsyncDisposable
         await _hub.StopAsync();
     }
 
-    public async ValueTask DisposeAsync() => await _hub.DisposeAsync();
+    public async ValueTask DisposeAsync()
+    {
+        await _hub.DisposeAsync();
+        _updates.Dispose();
+    }
 
     private async Task ConnectAsync()
     {
@@ -270,7 +278,42 @@ public sealed class RemoteGameSession : IGameSession, IAsyncDisposable
         Changed?.Invoke();
     }
 
-    private void OnUpdated(GameUpdate update)
+    private async Task OnUpdatedAsync(GameUpdate update)
+    {
+        await _updates.WaitAsync();
+        try
+        {
+            // The board still shows the previous view: play the moves on it first, then show the new view.
+            if (Animator is { } animator && _view is not null)
+            {
+                _animating = true;
+                try
+                {
+                    Changed?.Invoke();
+                    foreach (var play in update.Events.OfType<CardPlayed>())
+                    {
+                        await animator.PlayAsync(play, GameText.Relative(play.Seat, Me));
+                    }
+                }
+                finally
+                {
+                    _animating = false;
+                }
+            }
+
+            Apply(update);
+            if (Animator is { } settle && update.Events.OfType<CardPlayed>().Any())
+            {
+                await settle.SettleAsync();
+            }
+        }
+        finally
+        {
+            _updates.Release();
+        }
+    }
+
+    private void Apply(GameUpdate update)
     {
         _sequence = update.Sequence;
         _view = update.View;
