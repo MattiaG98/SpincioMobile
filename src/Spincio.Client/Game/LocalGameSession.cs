@@ -11,7 +11,7 @@ namespace Spincio.Client.Game;
 /// </summary>
 public sealed class LocalGameSession : IGameSession
 {
-    public const string RulesVersion = "1.2";
+    public const string RulesVersion = "1.3";
     public const int FeedLength = 60;
     public static readonly Seat Human = new(0);
     /// <summary>CPU "thinking" pause; the card animation (about 0.4–1.3 s) comes on top of it.</summary>

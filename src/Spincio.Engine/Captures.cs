@@ -31,16 +31,22 @@ public sealed class CaptureOption : IEquatable<CaptureOption>
     public override string ToString() => "{" + string.Join(",", Cards) + "}";
 }
 
-/// <summary>Capture rules P1–P5 (SPEC §5).</summary>
+/// <summary>Capture rules P1–P5 and P8 (SPEC §5).</summary>
 public static class Captures
 {
     /// <summary>
     /// Every capture the played card can make. Empty means the card is dropped.
-    /// An equal-value card forbids sums (P2); otherwise every subset of ≥2 cards summing to the value (P1, P3).
+    /// An ace takes the whole table (P8). Otherwise an equal-value card forbids sums (P2), else every subset of
+    /// ≥2 cards summing to the value (P1, P3).
     /// </summary>
     public static ImmutableArray<CaptureOption> Options(Card played, IReadOnlyList<Card> table)
     {
         ArgumentNullException.ThrowIfNull(table);
+        if (played.Rank == Rank.Ace)
+        {
+            return table.Count == 0 ? [] : [new CaptureOption(table)]; // P8: asso pigliatutto
+        }
+
         int target = played.Value;
 
         var equal = table.Where(t => t.Value == target).Order().Select(t => new CaptureOption([t])).ToImmutableArray();
