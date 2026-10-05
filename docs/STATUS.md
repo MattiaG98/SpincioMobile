@@ -18,8 +18,8 @@
 | M8 | App nativa (store) | ⏭️ Saltato | Richiede account sviluppatore a pagamento: opzioni in [`NATIVE.md`](NATIVE.md) |
 | M9 | Rifinitura dopo il playtest del proprietario | ✅ Fatto | **A** ✅ storico mosse a scomparsa, nomi CPU (Titti compagno, Tito e Vava avversari), frasi in seconda persona per il giocatore · **B** ✅ carte dalla scansione piacentina di Wikimedia Commons, senza indici (ADR 0011, decisione del proprietario) |
 | M10 | Animazioni delle mosse (prima tranche del refactor UI) | ✅ Fatto (PR #4) | Ogni carta giocata vola dal giocatore al tavolo; nelle prese si posa sulle carte prese, le evidenzia e le porta al giocatore. Offline e online; rispetta `prefers-reduced-motion` |
-| M11 | Carte "da app" (seconda tranche) | 🔄 In revisione | PR #5: carte raddrizzate, fondo bianco, colori più vivi, 240×440 px. PR #6: verifica carta per carta, nessun taglio del disegno, cornice nera ridisegnata |
-| — | Regola P8 "asso pigliatutto" (SPEC v1.3, dettata dal proprietario) | 🔄 In revisione | AT-33…AT-38; salvataggi v1.2 non ripresi |
+| M11 | Carte "da app" (seconda tranche) | ✅ Fatto | PR #5–#7: raddrizzate, fondo bianco, nessun taglio del disegno, cornice ridisegnata; dalla scansione originale 3507×2417 caricata dal proprietario (cornice 273 px → nessun ingrandimento) |
+| — | Regola P8 "asso pigliatutto" (SPEC v1.3, dettata dal proprietario) | ✅ Fatto (PR #6) | AT-33…AT-38; salvataggi v1.2 non ripresi |
 
 ## Metriche
 

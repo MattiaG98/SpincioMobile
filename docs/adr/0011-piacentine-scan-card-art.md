@@ -4,7 +4,7 @@
 - **Supera:** ADR 0009 (carte SVG originali)
 
 ## Contesto
-Dopo il playtest il proprietario vuole le carte piacentine "vere", non un disegno ispirato. Su Wikimedia Commons il mazzo completo è disponibile come un'unica scansione: `File:Carte_piacentine_al_completo.jpg` (utente Florixc, 07/09/2009, 3507 × 2417 px). La scansione è dichiarata di pubblico dominio da chi l'ha caricata.
+Dopo il playtest il proprietario vuole le carte piacentine "vere", non un disegno ispirato. Su Wikimedia Commons il mazzo completo è disponibile come un'unica scansione: `File:Carte_piacentine_al_completo.jpg` (utente Florixc, 07/09/2009, 3507 × 2417 px; in `assets-source/` dal 05/10/2026 a piena risoluzione). La scansione è dichiarata di pubblico dominio da chi l'ha caricata.
 
 Il Tech lead ha fatto presente, prima della decisione:
 - la scansione riproduce un mazzo moderno in commercio; chi scansiona non detiene i diritti sul disegno, quindi la dichiarazione di pubblico dominio non tutela davvero;
