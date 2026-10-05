@@ -1,6 +1,6 @@
 # Stato del progetto
 
-> Da aggiornare **a fine di ogni milestone** (regola in `CLAUDE.md`). Ultimo aggiornamento: **02/10/2026**.
+> Da aggiornare **a fine di ogni milestone** (regola in `CLAUDE.md`). Ultimo aggiornamento: **05/10/2026**.
 > Fonte delle regole: [`SPEC.md`](SPEC.md) · decisioni: [`adr/`](adr/) · conoscenza tecnica: [`KNOWLEDGE.md`](KNOWLEDGE.md) · procedure: [`RUNBOOK.md`](RUNBOOK.md)
 
 ## Milestone
@@ -17,7 +17,8 @@
 | M7 | Online (SignalR, server autoritativo) | ✅ Fatto in locale | 2 giocatori reali + 2 CPU nel browser; test end-to-end; **non pubblicato** (hosting a pagamento escluso, ADR 0010) |
 | M8 | App nativa (store) | ⏭️ Saltato | Richiede account sviluppatore a pagamento: opzioni in [`NATIVE.md`](NATIVE.md) |
 | M9 | Rifinitura dopo il playtest del proprietario | ✅ Fatto | **A** ✅ storico mosse a scomparsa, nomi CPU (Titti compagno, Tito e Vava avversari), frasi in seconda persona per il giocatore · **B** ✅ carte dalla scansione piacentina di Wikimedia Commons, senza indici (ADR 0011, decisione del proprietario) |
-| M10 | Animazioni delle mosse (prima tranche del refactor UI) | 🔄 In revisione | Ogni carta giocata vola dal giocatore al tavolo; nelle prese si posa sulle carte prese, le evidenzia e le porta al giocatore. Offline e online; rispetta `prefers-reduced-motion` |
+| M10 | Animazioni delle mosse (prima tranche del refactor UI) | ✅ Fatto (PR #4) | Ogni carta giocata vola dal giocatore al tavolo; nelle prese si posa sulle carte prese, le evidenzia e le porta al giocatore. Offline e online; rispetta `prefers-reduced-motion` |
+| M11 | Carte "da app" (seconda tranche) | 🔄 In revisione | Ogni carta raddrizzata, tagliata dentro la cornice stampata, ridisegnata su fondo bianco con margine uniforme, colori più vivi e più nitida; 240×440 px |
 
 ## Metriche
 
