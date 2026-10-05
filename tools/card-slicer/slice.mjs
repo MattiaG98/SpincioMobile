@@ -94,18 +94,20 @@ const result = await page.evaluate(async ({ dataUrl, W, H }) => {
     };
     const lefts = [f.l.v > strong ? f.l.at : NaN, f.r.v > strong ? f.r.at - fw : NaN];
     const left = pick(lefts, f.cx - fw / 2, fw * 0.12);
+    const how = (left === lefts[0] ? 'L' : left === lefts[1] ? 'R' : 'c') ;
     const rowTops = found.filter(o => o.row === f.row && o.t.v > strong && o.b.v > strong && Math.abs(o.b.at - o.t.at - fh) <= fh * 0.04).map(o => o.t.at);
     const expectedTop = rowTops.length ? median(rowTops) : f.cy - fh / 2;
     const top = pick([f.t.v > strong ? f.t.at : NaN, f.b.v > strong ? f.b.at - fh : NaN], expectedTop, fh * 0.06);
 
     // Cut just inside the frame line, then lay the artwork on a clean card with an even white margin.
-    const inset = Math.max(3, Math.round(fw * 0.03));
+    // Cut just past the printed line (the artwork reaches the frame: a deeper cut would clip swords and crowns).
+    const inset = Math.max(2, Math.round(fw * 0.013));
     const art = { x: left + inset, y: top + inset, w: fw - 2 * inset, h: fh - 2 * inset };
     const out = document.createElement('canvas');
     out.width = W; out.height = H;
     const o = out.getContext('2d', { willReadFrequently: true });
     o.fillStyle = '#fff'; o.fillRect(0, 0, W, H);
-    const scale = Math.min((W - 24) / art.w, (H - 24) / art.h);
+    const scale = Math.min((W - 30) / art.w, (H - 24) / art.h);
     const dw = art.w * scale, dh = art.h * scale, dx = (W - dw) / 2, dy = (H - dh) / 2;
     o.imageSmoothingQuality = 'high';
     o.drawImage(f.k.c, art.x, art.y, art.w, art.h, dx, dy, dw, dh);
@@ -129,7 +131,12 @@ const result = await page.evaluate(async ({ dataUrl, W, H }) => {
       d[i] = enhanced[i] + 0.7 * (enhanced[i] - blur);
     }
     o.putImageData(id, 0, 0);
-    cards.push({ row: f.row, col: f.col, angle: f.angle, webp: out.toDataURL('image/webp', 0.84) });
+    // Redraw the Piacentine frame as a crisp line on the artwork's edge: it restores the card's structure and
+    // covers whatever is left of the scanned line.
+    o.strokeStyle = '#1b1b1b';
+    o.lineWidth = 2;
+    o.strokeRect(Math.round(dx) + 0.5, Math.round(dy) + 0.5, Math.round(dw) - 1, Math.round(dh) - 1);
+    cards.push({ row: f.row, col: f.col, angle: f.angle, how: how + (top === f.t.at ? 'T' : top === f.b.at - fh ? 'B' : 'r'), lv: [f.l.v, f.r.v].map(v => v.toFixed(2)).join('/'), webp: out.toDataURL('image/webp', 0.84) });
   }
   return { fw, fh, cards };
 }, { dataUrl, W, H });
@@ -138,6 +145,6 @@ console.log('frame', result.fw, 'x', result.fh);
 for (const card of result.cards) {
   const name = `${ranks[card.col]}${suits[card.row]}`;
   writeFileSync(`${outDir}/${name}.webp`, Buffer.from(card.webp.split(',')[1], 'base64'));
-  console.log(name, 'angle', card.angle);
+  console.log(name, 'angle', card.angle, card.how, card.lv);
 }
 await browser.close();

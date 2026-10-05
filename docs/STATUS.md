@@ -18,15 +18,16 @@
 | M8 | App nativa (store) | ⏭️ Saltato | Richiede account sviluppatore a pagamento: opzioni in [`NATIVE.md`](NATIVE.md) |
 | M9 | Rifinitura dopo il playtest del proprietario | ✅ Fatto | **A** ✅ storico mosse a scomparsa, nomi CPU (Titti compagno, Tito e Vava avversari), frasi in seconda persona per il giocatore · **B** ✅ carte dalla scansione piacentina di Wikimedia Commons, senza indici (ADR 0011, decisione del proprietario) |
 | M10 | Animazioni delle mosse (prima tranche del refactor UI) | ✅ Fatto (PR #4) | Ogni carta giocata vola dal giocatore al tavolo; nelle prese si posa sulle carte prese, le evidenzia e le porta al giocatore. Offline e online; rispetta `prefers-reduced-motion` |
-| M11 | Carte "da app" (seconda tranche) | 🔄 In revisione | Ogni carta raddrizzata, tagliata dentro la cornice stampata, ridisegnata su fondo bianco con margine uniforme, colori più vivi e più nitida; 240×440 px |
+| M11 | Carte "da app" (seconda tranche) | 🔄 In revisione | PR #5: carte raddrizzate, fondo bianco, colori più vivi, 240×440 px. PR #6: verifica carta per carta, nessun taglio del disegno, cornice nera ridisegnata |
+| — | Regola P8 "asso pigliatutto" (SPEC v1.3, dettata dal proprietario) | 🔄 In revisione | AT-33…AT-38; salvataggi v1.2 non ripresi |
 
 ## Metriche
 
 | Voce | Valore | Come si rimisura |
 |---|---|---|
-| Test automatici | **187** (Engine 78, Bots 31, Client 34, Architecture 23, Server 21) | `dotnet test Spincio.slnx` |
-| L1 vs L0 | 99,3% (seed 1), 99,1% (seed 5000) | `--x Greedy --y Random` |
-| L2 vs L1 | 64,4% (16 mondi), 62,0% (8 mondi), seed 5000 | `--x Pimc --y Greedy --worlds N` |
+| Test automatici | **193** (Engine 84, Bots 31, Client 34, Architecture 23, Server 21) | `dotnet test Spincio.slnx` |
+| L1 vs L0 | 92,9% (seed 1, regole v1.3 con asso pigliatutto); era 99,3% con la v1.2 | `--x Greedy --y Random` |
+| L2 vs L1 | 58,0% (8 mondi, 300 partite, seed 5000, regole v1.3); con la v1.2: 64,4% (16 mondi) / 62,0% (8 mondi) | `--x Pimc --y Greedy --worlds N` |
 | L2 senza prior L1 | 56,0% (16 mondi) / **44,6%** (8 mondi): peggio di L1 | `PimcOptions.PriorWeight = 0` |
 | Tempo decisione L2 (.NET) | media 3 ms, max 65 ms (8 mondi) | `--timing Pimc --worlds 8` |
 | Mossa CPU "Difficile" nel browser | mediana 944 ms, max 2172 ms (02/10): 450 ms di pausa voluta + animazione della carta | Playwright, vedi RUNBOOK |

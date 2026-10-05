@@ -42,5 +42,11 @@ Per eseguirli: `dotnet test Spincio.slnx --filter "FullyQualifiedName~AT_"`.
 | AT-31 | `AT_31_view_has_own_hand_table_score_declarations_and_hand_counts` | `HiddenInformationTests.cs` |
 | AT-31 | `AT_31_view_never_exposes_captured_piles` | `HiddenInformationTests.cs` |
 | AT-32 | `AT_32_nobody_captured_leftover_goes_to_nobody` | `HiddenInformationTests.cs` |
+| AT-33 | `AT_33_ace_takes_the_whole_table` | `AceTests.cs` |
+| AT-34 | `AT_34_ace_takes_the_whole_table_even_with_an_ace_on_it` | `AceTests.cs` |
+| AT-35 | `AT_35_ace_capture_is_a_sweep_worth_one_point` | `AceTests.cs` |
+| AT-36 | `AT_36_ace_on_empty_table_is_just_dropped` | `AceTests.cs` |
+| AT-37 | `AT_37_ace_on_the_last_play_takes_the_table_without_sweep` | `AceTests.cs` |
+| AT-38 | `AT_38_ace_cannot_be_dropped_or_take_less_than_the_whole_table` | `AceTests.cs` |
 
 Test aggiuntivi sui casi limite: `C1_…`, `C6_…`, `F7_all_coins_also_wins_a_tiebreak_match`. Invarianti property-based in `PropertyTests.cs`.
