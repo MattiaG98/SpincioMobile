@@ -183,7 +183,7 @@ public class LocalGameSessionTests
     public async Task Saves_from_before_difficulty_existed_resume_at_normal_level()
     {
         var store = new InMemoryGameStore();
-        await store.SaveAsync("""{"RulesVersion":"1.3","Seed":21,"Commands":[]}""");
+        await store.SaveAsync("""{"RulesVersion":"1.4","Seed":21,"Commands":[]}""");
 
         var session = NewSession(store);
 
@@ -205,10 +205,10 @@ public class LocalGameSessionTests
 
     [Theory]
     [InlineData("not json")]
-    [InlineData("""{"RulesVersion":"1.3","Seed":21,"Commands":["X9"]}""")]
-    [InlineData("""{"RulesVersion":"1.3","Seed":21,"Commands":["P0:KD"]}""")]
-    [InlineData("""{"RulesVersion":"1.3","Seed":21,"Commands":["P0:ZZ"]}""")]
-    [InlineData("""{"RulesVersion":"1.3","Seed":21,"Commands":[""]}""")]
+    [InlineData("""{"RulesVersion":"1.4","Seed":21,"Commands":["X9"]}""")]
+    [InlineData("""{"RulesVersion":"1.4","Seed":21,"Commands":["P0:KD"]}""")]
+    [InlineData("""{"RulesVersion":"1.4","Seed":21,"Commands":["P0:ZZ"]}""")]
+    [InlineData("""{"RulesVersion":"1.4","Seed":21,"Commands":[""]}""")]
     public async Task Corrupt_or_illegal_save_is_not_resumed(string json)
     {
         var store = new InMemoryGameStore();

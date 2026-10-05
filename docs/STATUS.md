@@ -19,13 +19,13 @@
 | M9 | Rifinitura dopo il playtest del proprietario | ✅ Fatto | **A** ✅ storico mosse a scomparsa, nomi CPU (Titti compagno, Tito e Vava avversari), frasi in seconda persona per il giocatore · **B** ✅ carte dalla scansione piacentina di Wikimedia Commons, senza indici (ADR 0011, decisione del proprietario) |
 | M10 | Animazioni delle mosse (prima tranche del refactor UI) | ✅ Fatto (PR #4) | Ogni carta giocata vola dal giocatore al tavolo; nelle prese si posa sulle carte prese, le evidenzia e le porta al giocatore. Offline e online; rispetta `prefers-reduced-motion` |
 | M11 | Carte "da app" (seconda tranche) | ✅ Fatto | PR #5–#7: raddrizzate, fondo bianco, nessun taglio del disegno, cornice ridisegnata; dalla scansione originale 3507×2417 caricata dal proprietario (cornice 273 px → nessun ingrandimento) |
-| — | Regola P8 "asso pigliatutto" (SPEC v1.3, dettata dal proprietario) | ✅ Fatto (PR #6) | AT-33…AT-38; salvataggi v1.2 non ripresi |
+| — | Regola P8 "asso pigliatutto" (SPEC v1.3 → v1.4, dettata dal proprietario) | ✅ v1.3 (PR #6); v1.4 in revisione: con un asso in tavola si prende solo quello | AT-33…AT-39; versione delle regole nel piè di pagina | AT-33…AT-38; salvataggi v1.2 non ripresi |
 
 ## Metriche
 
 | Voce | Valore | Come si rimisura |
 |---|---|---|
-| Test automatici | **193** (Engine 84, Bots 31, Client 34, Architecture 23, Server 21) | `dotnet test Spincio.slnx` |
+| Test automatici | **194** (Engine 85, Bots 31, Client 34, Architecture 23, Server 21) | `dotnet test Spincio.slnx` |
 | L1 vs L0 | 92,9% (seed 1, regole v1.3 con asso pigliatutto); era 99,3% con la v1.2 | `--x Greedy --y Random` |
 | L2 vs L1 | 58,0% (8 mondi, 300 partite, seed 5000, regole v1.3); con la v1.2: 64,4% (16 mondi) / 62,0% (8 mondi) | `--x Pimc --y Greedy --worlds N` |
 | L2 senza prior L1 | 56,0% (16 mondi) / **44,6%** (8 mondi): peggio di L1 | `PimcOptions.PriorWeight = 0` |

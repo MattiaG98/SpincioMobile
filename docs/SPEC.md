@@ -1,4 +1,4 @@
-# Spincio — Specifica (Regolamento v1.3)
+# Spincio — Specifica (Regolamento v1.4)
 
 > **Fonte di verità.** Queste sono le regole di casa dello Spincio (variante dello Spazzino). In caso di conflitto con qualunque altra fonte, vale questo documento.
 > Ogni modifica alle regole richiede: aggiornamento di questo file, nuova versione del regolamento, test `AT-xx` corrispondenti.
@@ -8,6 +8,7 @@
 | Versione | Data | Modifica |
 |---|---|---|
 | v1.1 | 24/09/2026 | Regolamento confermato (Fasi 0–3) |
+| v1.4 | 06/10/2026 | **P8 precisata dal proprietario:** se in tavola c'è già un asso, l'asso giocato prende solo quell'asso (presa normale, P2); se così svuota la tavola è spazzino come ogni presa. AT-34 e AT-38 aggiornati, AT-39 nuovo. |
 | v1.3 | 05/10/2026 | **Nuova regola P8 (dettata dal proprietario): asso pigliatutto.** L'asso giocato con carte in tavola prende tutta la tavola ed è spazzino (tranne all'ultima giocata, P6); a tavola vuota si cala. AT-33…AT-38. |
 | v1.2 | 25/09/2026 | **Chiarimento F7** (confermato dal proprietario): vale anche nelle partite di spareggio. **Correzione di una deduzione** in §5 (invariante sulle carte di pari valore). `NewMatch` restituisce una `Transition`. Nessuna regola di gioco cambiata. |
 
@@ -38,7 +39,7 @@ Esempi: `KD` = re di denari (**rebello**), `7D` = **settebello**.
 | P5 | Nessuna presa doppia (uguaglianza + somma) nella stessa giocata. |
 | P6 | **Spazzino** (la presa svuota la tavola) = **1 punto**. **Non vale** con l'ultima giocata della smazzata. |
 | P7 | Le carte rimaste in tavola a fine smazzata vanno alla squadra che ha preso per ultima; non è spazzino. Se nessuno ha preso in tutta la smazzata, non vanno a nessuno. |
-| P8 | **Asso pigliatutto.** L'asso giocato quando in tavola ci sono carte **prende tutta la tavola**, anche se in tavola c'è già un asso (P1 e P2 non si applicano all'asso giocato). Svuotando la tavola, è **spazzino** (1 punto), tranne all'ultima giocata della smazzata (P6). A **tavola vuota** l'asso si cala, senza punti. |
+| P8 | **Asso pigliatutto.** L'asso giocato quando in tavola ci sono carte **prende tutta la tavola**, ed è **spazzino** (1 punto) tranne all'ultima giocata (P6). **Eccezione:** se in tavola c'è già un asso, l'asso giocato prende **solo quell'asso** (presa normale per uguaglianza, P2); se così svuota la tavola è spazzino come ogni presa. A **tavola vuota** l'asso si cala, senza punti. |
 
 ### 1.3 Accusi (punti della mano)
 | ID | Regola |
@@ -129,8 +130,8 @@ stateDiagram-v2
 
 ```
 CaptureOptions(played, table):
-  if played is Ace:                               // P8
-    return table == ∅ ? ∅ : { table }
+  if played is Ace and table ≠ ∅ and no ace in table:   // P8
+    return { table }
   v = played.Value
   equal = { {t} : t ∈ table, t.Value == v }
   if equal ≠ ∅: return equal                      // P2
@@ -169,7 +170,7 @@ LegalPlays(hand, table):
 | C13 | Pareggi 20–20 carte, 5–5 denari, 2–2 sette | 0 punti |
 | C14 | Napola con buchi o senza asso | 0 punti |
 | C15 | Pareggio a 31 o più ripetuto | Altro spareggio |
-| C16 | Asso giocato con carte in tavola | Prende tutta la tavola ed è spazzino (P8), anche se c'è un asso in tavola |
+| C16 | Asso giocato con carte in tavola | Prende tutta la tavola ed è spazzino (P8); se c'è un asso in tavola prende solo quello |
 
 ## 7. Test di accettazione
 
@@ -193,11 +194,12 @@ Ogni test nel codice porta lo stesso ID (es. `AT_05_equal_value_forbids_sum`).
 
 ### Asso pigliatutto (P8)
 - **AT-33** Tavola `[3S,KB,7C]`, gioco `AD` → unica opzione: tutta la tavola.
-- **AT-34** Tavola `[AC,5S,JB]`, gioco `AD` → prende tutta la tavola, non solo `AC`.
+- **AT-34** Tavola `[AC,5S,JB]`, gioco `AD` → unica opzione `{AC}` (presa normale).
 - **AT-35** Non è l'ultima giocata, tavola `[3S,KB,7C]`, gioco `AD` → tavola vuota, +1 spazzino.
 - **AT-36** Tavola vuota, gioco `AD` → l'asso si cala, nessun punto.
 - **AT-37** Ultima giocata, tavola `[3S,4B]`, gioco `AD` → prende tutto, lo spazzino non vale.
-- **AT-38** Tavola `[AC,5S]`: calare `AD` o prendere solo `{AC}` è illegale.
+- **AT-38** Tavola `[3S,5B]`: calare `AD` o prendere solo `{3S}` è illegale. Tavola `[AC,5S]`: calare `AD` o prendere `{AC,5S}` è illegale.
+- **AT-39** Non è l'ultima giocata, tavola `[AC]`, gioco `AD` → prende `AC`, tavola vuota, +1 spazzino.
 
 ### Spazzino e fine smazzata
 - **AT-13** Tavola `[3S,4B]`, non è l'ultima giocata, gioco `7D` → +1 spazzino alla squadra.
