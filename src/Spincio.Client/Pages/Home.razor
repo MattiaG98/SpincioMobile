@@ -4,34 +4,37 @@
 @inject GameHost Host
 @inject IConfiguration Configuration
 @inject IJSRuntime JS
+@inject SettingsService Settings
 
 <PageTitle>Spincio</PageTitle>
 
 @if (!Session.IsStarted)
 {
-    <section class="start">
-        <h1>Spincio</h1>
-        <p>2 contro 2: tu e il compagno contro due avversari. Si vince a 31.</p>
-        @if (_hasSave)
-        {
-            <button type="button" class="primary" @onclick="ResumeAsync">Riprendi la partita</button>
-        }
-        <fieldset class="difficulty">
-            <legend>Livello della CPU</legend>
-            <label>
-                <input type="radio" name="difficulty" checked="@(_difficulty == BotLevel.Greedy)" @onchange="() => _difficulty = BotLevel.Greedy" />
-                Normale
-            </label>
-            <label>
-                <input type="radio" name="difficulty" checked="@(_difficulty == BotLevel.Pimc)" @onchange="() => _difficulty = BotLevel.Pimc" />
-                Difficile <small>(ragiona di più)</small>
-            </label>
-        </fieldset>
-        <button type="button" class="@(_hasSave ? "" : "primary")" @onclick="NewGameAsync">Nuova partita</button>
-        @if (!string.IsNullOrWhiteSpace(Configuration["ServerUrl"]))
-        {
-            <a class="button-link" href="online">Gioca online con gli amici</a>
-        }
+    <section class="start menu-screen">
+        <div class="logo" aria-hidden="true">
+            <div class="fan">
+                <img src="cards/AD.webp" alt="" />
+                <img src="cards/7D.webp" alt="" />
+                <img src="cards/KD.webp" alt="" />
+            </div>
+        </div>
+        <h1 class="title">Spincio</h1>
+        <p class="tagline">2 contro 2 · mazzo piacentino · si vince a 31</p>
+        <div class="menu-buttons">
+            @if (_hasSave)
+            {
+                <button type="button" class="btn btn-gold" @onclick="ResumeAsync">Riprendi la partita</button>
+            }
+            <button type="button" class="btn @(_hasSave ? "btn-green" : "btn-gold")" @onclick="NewGameAsync">
+                Nuova partita
+                <small>CPU @(_settings.Difficulty == BotLevel.Pimc ? "difficile" : "normale")</small>
+            </button>
+            @if (!string.IsNullOrWhiteSpace(Configuration["ServerUrl"]))
+            {
+                <a class="btn btn-green" href="online">Gioca online con gli amici</a>
+            }
+            <button type="button" class="btn btn-dark" @onclick="() => _optionsOpen = true">⚙ Opzioni</button>
+        </div>
     </section>
 }
 else
@@ -43,6 +46,7 @@ else
     var highlighted = _choices.SelectMany(c => c.Capture?.Cards ?? []).ToHashSet();
 
     <header class="scorebar">
+        <button type="button" class="icon-btn" aria-label="Menu" @onclick="() => _menuOpen = true">☰</button>
         <div class="score"><span>Noi</span><strong>@view.Score.For(us)</strong></div>
         <div class="info">
             @(view.MatchNumber > 0 ? $"Spareggio {view.MatchNumber} · " : "")Smazzata @view.RoundNumber · Mazzo @view.DeckCount
@@ -114,11 +118,6 @@ else
         </section>
     </main>
 
-    <footer class="footer">
-        @Session.Footer ·
-        <button type="button" class="link" @onclick="LeaveAsync">@(Session.CanRestart ? "Abbandona" : "Esci")</button>
-    </footer>
-
     @if (Session.SweepCount > 0 && Session.SweepCount != _sweepsAtStart)
     {
         <div class="sweep-flash" @key="Session.SweepCount" aria-hidden="true">Spazzino!</div>
@@ -127,8 +126,11 @@ else
     @if (_choosing is { } chosen)
     {
         <div class="overlay" role="dialog" aria-modal="true" aria-labelledby="choice-title">
-            <div class="panel">
-                <h2 id="choice-title">Cosa prendi con @GameText.CardName(chosen)?</h2>
+            <div class="panel game-panel">
+                <header class="panel-head">
+                    <h2 id="choice-title">Cosa prendi con @GameText.CardName(chosen)?</h2>
+                    <button type="button" class="close" aria-label="Annulla" @onclick="CancelChoice">✕</button>
+                </header>
                 @foreach (var option in _choices)
                 {
                     <button type="button" class="choice" @onclick="() => ChooseAsync(option)">
@@ -138,7 +140,7 @@ else
                         }
                     </button>
                 }
-                <button type="button" class="link" @onclick="CancelChoice">Annulla</button>
+                <button type="button" class="btn btn-dark" @onclick="CancelChoice">Annulla</button>
             </div>
         </div>
     }
@@ -150,21 +152,50 @@ else
     else if (Session.Result is { } result)
     {
         <div class="overlay" role="dialog" aria-modal="true" aria-labelledby="result-title">
-            <div class="panel">
-                <h2 id="result-title">@(result.Winner == us ? "Avete vinto!" : "Hanno vinto loro")</h2>
-                <p>Noi @result.FinalScore.For(us) – Loro @result.FinalScore.For(GameText.Other(us)) (@GameText.WinReasonText(result.Reason))</p>
+            <div class="panel game-panel result @(result.Winner == us ? "won" : "lost")">
+                <header class="panel-head">
+                    <h2 id="result-title">@(result.Winner == us ? "Avete vinto!" : "Hanno vinto loro")</h2>
+                </header>
+                <p class="final-score"><span>Noi <strong>@result.FinalScore.For(us)</strong></span><span>Loro <strong>@result.FinalScore.For(GameText.Other(us))</strong></span></p>
+                <p class="reason">Vittoria per @GameText.WinReasonText(result.Reason)</p>
                 @if (Session.CanRestart)
                 {
-                    <button type="button" class="primary" @onclick="NewGameAsync">Nuova partita</button>
+                    <button type="button" class="btn btn-gold" @onclick="NewGameAsync">Nuova partita</button>
+                }
+                <button type="button" class="btn btn-dark" @onclick="LeaveAsync">Menu principale</button>
+            </div>
+        </div>
+    }
+
+    @if (_menuOpen)
+    {
+        <div class="overlay" role="dialog" aria-modal="true" aria-labelledby="menu-title">
+            <div class="panel game-panel">
+                <header class="panel-head">
+                    <h2 id="menu-title">@(_confirmLeave ? "Abbandonare la partita?" : "Pausa")</h2>
+                    <button type="button" class="close" aria-label="Chiudi" @onclick="CloseMenu">✕</button>
+                </header>
+                @if (_confirmLeave)
+                {
+                    <p>@(Session.CanRestart ? "La partita in corso andrà persa." : "Lasci la stanza: al tuo posto giocherà la CPU.")</p>
+                    <button type="button" class="btn btn-red" @onclick="LeaveAsync">@(Session.CanRestart ? "Sì, abbandona" : "Sì, esci")</button>
+                    <button type="button" class="btn btn-dark" @onclick="() => _confirmLeave = false">No, torna al menu</button>
                 }
                 else
                 {
-                    <p>@Session.Footer</p>
-                    <button type="button" class="primary" @onclick="LeaveAsync">Torna all'inizio</button>
+                    <button type="button" class="btn btn-gold" @onclick="CloseMenu">Riprendi</button>
+                    <button type="button" class="btn btn-green" @onclick="() => _optionsOpen = true">⚙ Opzioni</button>
+                    <button type="button" class="btn btn-red" @onclick="() => _confirmLeave = true">@(Session.CanRestart ? "Abbandona la partita" : "Esci dalla stanza")</button>
+                    <p class="menu-info">@Session.Footer</p>
                 }
             </div>
         </div>
     }
+}
+
+@if (_optionsOpen)
+{
+    <OptionsPanel Settings="_settings" SettingsChanged="SaveSettingsAsync" OnClose="() => _optionsOpen = false" />
 }
 
 @code {
@@ -176,7 +207,10 @@ else
     private IMoveAnimator? _animator;
     private bool _hasSave;
     private int _sweepsAtStart;
-    private BotLevel _difficulty = BotLevel.Greedy;
+    private GameSettings _settings = new();
+    private bool _menuOpen;
+    private bool _confirmLeave;
+    private bool _optionsOpen;
     private Card? _choosing;
     private IReadOnlyList<PlayCard> _choices = [];
 
@@ -184,6 +218,7 @@ else
     {
         Host.CurrentChanged += OnCurrentChanged;
         Subscribe();
+        _settings = await Settings.LoadAsync();
         if (!Session.IsStarted)
         {
             _hasSave = await Host.Local.HasSavedGameAsync();
@@ -257,7 +292,7 @@ else
         SeedParameter = null; // "Nuova partita" after the end gets a fresh deal
         var local = Host.Local;
         _sweepsAtStart = 0;
-        return local.NewGameAsync(seed, local.IsStarted ? local.Difficulty : _difficulty);
+        return local.NewGameAsync(seed, _settings.Difficulty);
     }
 
     private async Task ResumeAsync()
@@ -272,8 +307,21 @@ else
         }
     }
 
+    private void CloseMenu()
+    {
+        _menuOpen = false;
+        _confirmLeave = false;
+    }
+
+    private async Task SaveSettingsAsync(GameSettings settings)
+    {
+        _settings = settings;
+        await Settings.SaveAsync(settings);
+    }
+
     private async Task LeaveAsync()
     {
+        CloseMenu();
         CancelChoice();
         await Session.LeaveAsync();
         Host.UseOffline();

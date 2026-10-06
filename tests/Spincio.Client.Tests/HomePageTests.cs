@@ -16,6 +16,7 @@ public class HomePageTests : BunitContext
         Services.AddSingleton(_session);
         Services.AddSingleton(new GameHost(_session));
         Services.AddSingleton<IConfiguration>(new ConfigurationBuilder().Build());
+        Services.AddSingleton<SettingsService>();
         JSInterop.Mode = JSRuntimeMode.Loose; // card animations call into JS (js/moves.js)
     }
 
@@ -84,5 +85,33 @@ public class HomePageTests : BunitContext
         feed.HasAttribute("open").ShouldBeFalse();
         feed.QuerySelector("summary")!.TextContent.ShouldBe(_session.Feed[^1]);
         feed.QuerySelectorAll("li").Length.ShouldBe(_session.Feed.Count - 1);
+    }
+
+    [Fact]
+    public void Leaving_needs_the_menu_and_a_confirmation()
+    {
+        var page = Render<Home>();
+        page.Find("section.start button").Click();
+        page.WaitForAssertion(() => page.FindAll(".hand .card").Count.ShouldBe(3));
+
+        page.FindAll("button").Where(b => b.TextContent.Contains("Abbandona", StringComparison.Ordinal)).ShouldBeEmpty();
+        page.Find("button[aria-label='Menu']").Click();
+        page.FindAll("button").Single(b => b.TextContent.Contains("Abbandona la partita", StringComparison.Ordinal)).Click();
+        page.Find("#menu-title").TextContent.ShouldBe("Abbandonare la partita?");
+        page.FindAll("button").Single(b => b.TextContent.Contains("Sì, abbandona", StringComparison.Ordinal)).Click();
+
+        page.WaitForAssertion(() => page.FindAll("section.start").Count.ShouldBe(1));
+    }
+
+    [Fact]
+    public void Options_change_the_cpu_level_shown_on_the_new_game_button()
+    {
+        var page = Render<Home>();
+
+        page.FindAll("button").Single(b => b.TextContent.Contains("Opzioni", StringComparison.Ordinal)).Click();
+        page.FindAll(".segmented button").Single(b => b.TextContent == "Difficile").Click();
+        page.Find("button[aria-label='Chiudi']").Click();
+
+        page.Find("section.start").TextContent.ShouldContain("CPU difficile");
     }
 }

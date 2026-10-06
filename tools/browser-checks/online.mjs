@@ -48,6 +48,7 @@ await ada.screenshot({ path: `${out}/m7-game-ada.png` });
 await bea.screenshot({ path: `${out}/m7-game-bea.png` });
 const adaHand = await ada.locator('.hand .card').evaluateAll(els => els.map(e => e.getAttribute('aria-label')));
 const beaHand = await bea.locator('.hand .card').evaluateAll(els => els.map(e => e.getAttribute('aria-label')));
-const footer = await ada.locator('.footer').innerText();
+await ada.getByRole('button', { name: 'Menu' }).click();
+const footer = await ada.locator('.menu-info').innerText();
 console.log(JSON.stringify({ code, moves, adaHand, beaHand, overlap: adaHand.filter(c => beaHand.includes(c)), footer, errors }));
 await browser.close();

@@ -3,7 +3,9 @@
 // and carries them to the player who took them. Floating copies live in a fixed layer above the page, so Blazor's
 // DOM is never moved; settle() removes them once the new state has rendered.
 (function () {
-    const FLY = 380, HOLD = 260, GATHER = 220, CARRY = 420; // ms
+    const FLY = 380, HOLD = 260, GATHER = 220, CARRY = 420; // ms at normal speed
+    let speed = 1; // "Opzioni" → velocità animazioni: 1.5 slow, 1 normal, 0.6 fast, 0 off
+    const t = ms => ms * speed;
     const hidden = [];
 
     const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -76,7 +78,7 @@
     }
 
     async function play(card, position, captured) {
-        if (reducedMotion()) return;
+        if (speed === 0 || reducedMotion()) return;
         const table = document.querySelector('.table');
         if (!table) return;
         const size = cardSize();
@@ -93,13 +95,13 @@
         }
         const played = flyingCard(card, start.x, start.y, size);
         if (position !== 0) {
-            played.animate([{ opacity: 0.4 }, { opacity: 1 }], { duration: FLY / 2, fill: 'forwards' });
+            played.animate([{ opacity: 0.4 }, { opacity: 1 }], { duration: t(FLY / 2), fill: 'forwards' });
         }
 
         const targets = captured.map(c => table.querySelector(`[data-card="${c}"]`)).filter(Boolean);
         if (targets.length === 0) {
             const slot = dropSlot(table, size);
-            await moveTo(played, slot.x, slot.y, FLY);
+            await moveTo(played, slot.x, slot.y, t(FLY));
             return; // stays until settle(), when the real card has rendered underneath
         }
 
@@ -107,7 +109,7 @@
         // (not on the middle of the group: that may be a card it does not take).
         const rects = targets.map(t => t.getBoundingClientRect());
         const landX = rects[0].left + rects[0].width / 2, landY = rects[0].top + rects[0].height / 2 - size.h * 0.18;
-        await moveTo(played, landX, landY, FLY);
+        await moveTo(played, landX, landY, t(FLY));
 
         // ...show which cards it takes...
         const copies = targets.map((t, i) => {
@@ -119,17 +121,17 @@
         });
         played.style.zIndex = '2'; // keep the played card on top of the ones it takes
         await played.animate([{ transform: getComputedStyle(played).transform }, { transform: `${getComputedStyle(played).transform} scale(1.08)` },
-            { transform: getComputedStyle(played).transform }], { duration: HOLD, easing: 'ease-in-out' }).finished;
+            { transform: getComputedStyle(played).transform }], { duration: t(HOLD), easing: 'ease-in-out' }).finished;
 
         // ...gathers them under itself...
-        await Promise.all(copies.map((c, i) => moveTo(c, landX + (i + 1) * 3, landY + (i + 1) * 3, GATHER)));
+        await Promise.all(copies.map((c, i) => moveTo(c, landX + (i + 1) * 3, landY + (i + 1) * 3, t(GATHER))));
 
         // ...and carries them to whoever took them.
         const end = seatCentre(position);
         const all = [...copies, played];
-        await Promise.all(all.map(c => moveTo(c, end.x, end.y, CARRY, 'scale(.45)')));
-        all.forEach(c => c.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 120, fill: 'forwards' }));
-        await new Promise(r => setTimeout(r, 120));
+        await Promise.all(all.map(c => moveTo(c, end.x, end.y, t(CARRY), 'scale(.45)')));
+        all.forEach(c => c.animate([{ opacity: 1 }, { opacity: 0 }], { duration: t(120), fill: 'forwards' }));
+        await new Promise(r => setTimeout(r, t(120)));
         all.forEach(c => c.remove());
     }
 
@@ -144,5 +146,7 @@
         }
     }
 
-    window.spincioMoves = { play, settle };
+    function setSpeed(factor) { speed = Math.max(0, Number(factor) || 0); }
+
+    window.spincioMoves = { play, settle, setSpeed };
 })();
