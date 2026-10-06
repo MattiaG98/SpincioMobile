@@ -4,7 +4,7 @@ using static Spincio.Engine.Tests.Support.Cards;
 
 namespace Spincio.Engine.Tests.Acceptance;
 
-/// <summary>P8 (SPEC v1.3): the ace takes the whole table ("asso pigliatutto").</summary>
+/// <summary>P8 (SPEC v1.4): the ace takes the whole table ("asso pigliatutto"), unless an ace is already on it.</summary>
 public class AceTests
 {
     private static string[] OptionsOf(string played, string table) =>
@@ -17,9 +17,20 @@ public class AceTests
     }
 
     [Fact]
-    public void AT_34_ace_takes_the_whole_table_even_with_an_ace_on_it()
+    public void AT_34_ace_on_a_table_with_an_ace_takes_only_that_ace()
     {
-        OptionsOf("AD", "AC,5S,JB").ShouldBe([Take("AC,5S,JB").ToString()]);
+        OptionsOf("AD", "AC,5S,JB").ShouldBe(["{AC}"]);
+    }
+
+    [Fact]
+    public void AT_39_ace_taking_the_only_ace_on_the_table_is_a_sweep()
+    {
+        var state = new Scenario { PlaysInRound = 5 }.Hand(0, "AD").Table("AC").Build();
+
+        var step = state.Ok(new PlayCard(new Seat(0), C("AD"), Take("AC")));
+
+        step.EventsOf<CardPlayed>().ShouldHaveSingleItem().IsSweep.ShouldBeTrue();
+        step.State.Score.ShouldBe(new TeamScores(1, 0));
     }
 
     [Fact]
@@ -60,12 +71,15 @@ public class AceTests
     }
 
     [Fact]
-    public void AT_38_ace_cannot_be_dropped_or_take_less_than_the_whole_table()
+    public void AT_38_ace_must_take_the_whole_table_or_the_ace_on_it()
     {
-        var state = new Scenario { PlaysInRound = 5 }.Hand(0, "AD").Table("AC,5S").Build();
         var seat = new Seat(0);
+        var noAce = new Scenario { PlaysInRound = 5 }.Hand(0, "AD").Table("3S,5B").Build();
+        SpincioEngine.Apply(noAce, new PlayCard(seat, C("AD"))).IsSuccess.ShouldBeFalse();
+        SpincioEngine.Apply(noAce, new PlayCard(seat, C("AD"), Take("3S"))).IsSuccess.ShouldBeFalse();
 
-        SpincioEngine.Apply(state, new PlayCard(seat, C("AD"))).IsSuccess.ShouldBeFalse();
-        SpincioEngine.Apply(state, new PlayCard(seat, C("AD"), Take("AC"))).IsSuccess.ShouldBeFalse();
+        var withAce = new Scenario { PlaysInRound = 5 }.Hand(0, "AD").Table("AC,5S").Build();
+        SpincioEngine.Apply(withAce, new PlayCard(seat, C("AD"))).IsSuccess.ShouldBeFalse();
+        SpincioEngine.Apply(withAce, new PlayCard(seat, C("AD"), Take("AC,5S"))).IsSuccess.ShouldBeFalse();
     }
 }

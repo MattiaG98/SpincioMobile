@@ -36,15 +36,15 @@ public static class Captures
 {
     /// <summary>
     /// Every capture the played card can make. Empty means the card is dropped.
-    /// An ace takes the whole table (P8). Otherwise an equal-value card forbids sums (P2), else every subset of
+    /// An ace takes the whole table unless an ace is already there (P8). Otherwise an equal-value card forbids sums (P2), else every subset of
     /// ≥2 cards summing to the value (P1, P3).
     /// </summary>
     public static ImmutableArray<CaptureOption> Options(Card played, IReadOnlyList<Card> table)
     {
         ArgumentNullException.ThrowIfNull(table);
-        if (played.Rank == Rank.Ace)
+        if (played.Rank == Rank.Ace && table.Count > 0 && !table.Any(t => t.Rank == Rank.Ace))
         {
-            return table.Count == 0 ? [] : [new CaptureOption(table)]; // P8: asso pigliatutto
+            return [new CaptureOption(table)]; // P8: asso pigliatutto (with an ace on the table, P2 applies)
         }
 
         int target = played.Value;
