@@ -13,7 +13,9 @@ page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
 await page.goto('http://localhost:8765/?seed=3');
 await page.waitForSelector('section.start');
 await page.screenshot({ path: `${out}/m5-start.png` });
-await page.getByLabel(/Difficile/).check();
+await page.getByRole('button', { name: /Opzioni/ }).click();
+await page.getByRole('radio', { name: 'Difficile' }).click();
+await page.getByRole('button', { name: 'Fatto' }).click();
 await page.getByText('Nuova partita').click();
 await page.waitForSelector('.hand .card');
 // Measure CPU move intervals: time between consecutive feed changes while it is not my turn.

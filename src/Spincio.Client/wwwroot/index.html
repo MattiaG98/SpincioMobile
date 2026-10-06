@@ -39,6 +39,22 @@
         <a href="." class="reload">Ricarica</a>
         <span class="dismiss">🗙</span>
     </div>
+    <script>
+        // Show the error's first line inside the error bar, so a screenshot from the phone is enough to diagnose it.
+        (function () {
+            let last = '';
+            const original = console.error;
+            console.error = function (...args) { last = args.map(String).join(' ').split('\n').slice(0, 3).join(' | '); original.apply(console, args); };
+            const bar = document.getElementById('blazor-error-ui');
+            new MutationObserver(() => {
+                if (bar.style.display === 'block' && last) {
+                    let detail = bar.querySelector('.detail');
+                    if (!detail) { detail = document.createElement('small'); detail.className = 'detail'; bar.appendChild(detail); }
+                    detail.textContent = last.slice(0, 300);
+                }
+            }).observe(bar, { attributes: true, attributeFilter: ['style'] });
+        })();
+    </script>
     <script src="js/moves.js"></script>
     <script src="_framework/blazor.webassembly#[.{fingerprint}].js"></script>
     <script>navigator.serviceWorker.register('service-worker.js', { updateViaCache: 'none' });</script>

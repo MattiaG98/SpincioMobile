@@ -1,0 +1,44 @@
+@using Spincio.Client.Game
+@* "Opzioni": CPU level and animation speed, saved on the device. *@
+<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="options-title">
+    <div class="panel game-panel">
+        <header class="panel-head">
+            <h2 id="options-title">Opzioni</h2>
+            <button type="button" class="close" aria-label="Chiudi" @onclick="OnClose">✕</button>
+        </header>
+
+        <div class="option">
+            <span class="option-label">Livello della CPU</span>
+            <div class="segmented" role="radiogroup" aria-label="Livello della CPU">
+                @Choice("Normale", Settings.Difficulty == BotLevel.Greedy, () => Change(Settings with { Difficulty = BotLevel.Greedy }))
+                @Choice("Difficile", Settings.Difficulty == BotLevel.Pimc, () => Change(Settings with { Difficulty = BotLevel.Pimc }))
+            </div>
+            <small>Vale dalla prossima partita. "Difficile" ragiona di più.</small>
+        </div>
+
+        <div class="option">
+            <span class="option-label">Animazioni delle carte</span>
+            <div class="segmented" role="radiogroup" aria-label="Animazioni delle carte">
+                @Choice("Lente", Settings.Animations == AnimationSpeed.Slow, () => Change(Settings with { Animations = AnimationSpeed.Slow }))
+                @Choice("Normali", Settings.Animations == AnimationSpeed.Normal, () => Change(Settings with { Animations = AnimationSpeed.Normal }))
+                @Choice("Veloci", Settings.Animations == AnimationSpeed.Fast, () => Change(Settings with { Animations = AnimationSpeed.Fast }))
+                @Choice("No", Settings.Animations == AnimationSpeed.Off, () => Change(Settings with { Animations = AnimationSpeed.Off }))
+            </div>
+        </div>
+
+        <button type="button" class="btn btn-gold" @onclick="OnClose">Fatto</button>
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public GameSettings Settings { get; set; } = new();
+
+    [Parameter] public EventCallback<GameSettings> SettingsChanged { get; set; }
+
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    private Task Change(GameSettings settings) => SettingsChanged.InvokeAsync(settings);
+
+    private RenderFragment Choice(string label, bool selected, Func<Task> select) =>
+        @<button type="button" role="radio" aria-checked="@(selected ? "true" : "false")" class="@(selected ? "on" : "")" @onclick="select">@label</button>;
+}
