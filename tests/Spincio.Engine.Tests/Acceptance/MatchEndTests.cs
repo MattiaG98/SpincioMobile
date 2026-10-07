@@ -88,7 +88,7 @@ public class MatchEndTests
 
     /// <summary>
     /// Round ends 2–2 from 35–35. A: rebello + settebello. B: more cards (21–19) + more coins (6–4).
-    /// Sevens 2–2, no napola.
+    /// Sevens 2–2, no spincio.
     /// </summary>
     private static MatchState TiedLastPlay(int matchNumber)
     {

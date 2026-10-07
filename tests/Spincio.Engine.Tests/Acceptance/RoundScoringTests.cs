@@ -70,9 +70,9 @@ public class RoundScoringTests
     [InlineData("2D,3D,4D", 0)]
     [InlineData("AD,2D,3D,4D,5D,6D,7D,JD,ND", 9)]
     [InlineData("AD,2D,3C,4D", 0)]
-    public void AT_25_napola(string pile, int points)
+    public void AT_25_spincio(string pile, int points)
     {
-        RoundScoring.NapolaLength(Many(pile)).ShouldBe(points);
+        RoundScoring.SpincioLength(Many(pile)).ShouldBe(points);
     }
 
     [Fact]
@@ -81,8 +81,8 @@ public class RoundScoringTests
         var score = ScoreWithPileA(Many("AD,2D,3D,4D,5D,6D,7D").Concat(NonCoinsWithoutSevens.Take(14)));
 
         score.A.ShouldBe(new TeamTally(
-            CardCount: 21, CoinCount: 7, SevenCount: 1, NapolaLength: 7,
-            CardsPoint: 1, CoinsPoint: 1, RebelloPoint: 0, SettebelloPoint: 1, PrimieraPoint: 0, NapolaPoints: 7));
+            CardCount: 21, CoinCount: 7, SevenCount: 1, SpincioLength: 7,
+            CardsPoint: 1, CoinsPoint: 1, RebelloPoint: 0, SettebelloPoint: 1, PrimieraPoint: 0, SpincioPoints: 7));
         score.A.Total.ShouldBe(10);
     }
 

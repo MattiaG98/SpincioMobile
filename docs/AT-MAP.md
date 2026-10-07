@@ -32,7 +32,7 @@ Per eseguirli: `dotnet test Spincio.slnx --filter "FullyQualifiedName~AT_"`.
 | AT-22 | `AT_22_more_coins_scores_one_tie_scores_zero` | `RoundScoringTests.cs` |
 | AT-23 | `AT_23_rebello_and_settebello` | `RoundScoringTests.cs` |
 | AT-24 | `AT_24_primiera_is_most_sevens` | `RoundScoringTests.cs` |
-| AT-25 | `AT_25_napola` | `RoundScoringTests.cs` |
+| AT-25 | `AT_25_spincio` | `RoundScoringTests.cs` |
 | AT-26 | `AT_26_all_ten_coins_wins_even_when_behind` | `RoundScoringTests.cs` |
 | AT-27 | `AT_27_reaching_31_mid_round_does_not_end_the_match` | `MatchEndTests.cs` |
 | AT-28 | `AT_28_both_over_31_higher_wins` | `MatchEndTests.cs` |

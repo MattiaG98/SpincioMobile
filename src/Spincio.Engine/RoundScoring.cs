@@ -5,15 +5,15 @@ public sealed record TeamTally(
     int CardCount,
     int CoinCount,
     int SevenCount,
-    int NapolaLength,
+    int SpincioLength,
     int CardsPoint,
     int CoinsPoint,
     int RebelloPoint,
     int SettebelloPoint,
     int PrimieraPoint,
-    int NapolaPoints)
+    int SpincioPoints)
 {
-    public int Total => CardsPoint + CoinsPoint + RebelloPoint + SettebelloPoint + PrimieraPoint + NapolaPoints;
+    public int Total => CardsPoint + CoinsPoint + RebelloPoint + SettebelloPoint + PrimieraPoint + SpincioPoints;
 }
 
 public sealed record RoundScore(TeamTally A, TeamTally B, Team? AllCoinsTeam)
@@ -25,7 +25,7 @@ public sealed record RoundScore(TeamTally A, TeamTally B, Team? AllCoinsTeam)
 
 public static class RoundScoring
 {
-    public const int MinNapolaLength = 3;
+    public const int MinSpincioLength = 3;
     public static readonly Card Rebello = new(Rank.King, Suit.Coins);
     public static readonly Card Settebello = new(Rank.Seven, Suit.Coins);
 
@@ -37,32 +37,32 @@ public static class RoundScoring
         int cardsA = pileA.Count, cardsB = pileB.Count;
         int coinsA = pileA.Count(c => c.IsCoins), coinsB = pileB.Count(c => c.IsCoins);
         int sevensA = pileA.Count(c => c.Rank == Rank.Seven), sevensB = pileB.Count(c => c.Rank == Rank.Seven);
-        int napolaA = NapolaLength(pileA), napolaB = NapolaLength(pileB);
+        int spincioA = SpincioLength(pileA), spincioB = SpincioLength(pileB);
 
-        TeamTally Tally(IReadOnlyCollection<Card> pile, int cards, int otherCards, int coins, int otherCoins, int sevens, int otherSevens, int napola) =>
+        TeamTally Tally(IReadOnlyCollection<Card> pile, int cards, int otherCards, int coins, int otherCoins, int sevens, int otherSevens, int spincio) =>
             new(
                 CardCount: cards,
                 CoinCount: coins,
                 SevenCount: sevens,
-                NapolaLength: napola,
+                SpincioLength: spincio,
                 CardsPoint: cards > otherCards ? 1 : 0,
                 CoinsPoint: coins > otherCoins ? 1 : 0,
                 RebelloPoint: pile.Contains(Rebello) ? 1 : 0,
                 SettebelloPoint: pile.Contains(Settebello) ? 1 : 0,
                 PrimieraPoint: sevens > otherSevens ? 1 : 0,
-                NapolaPoints: napola);
+                SpincioPoints: spincio);
 
         int coinsInDeck = Enum.GetValues<Rank>().Length;
         Team? allCoins = coinsA == coinsInDeck ? Team.A : coinsB == coinsInDeck ? Team.B : null;
 
         return new RoundScore(
-            Tally(pileA, cardsA, cardsB, coinsA, coinsB, sevensA, sevensB, napolaA),
-            Tally(pileB, cardsB, cardsA, coinsB, coinsA, sevensB, sevensA, napolaB),
+            Tally(pileA, cardsA, cardsB, coinsA, coinsB, sevensA, sevensB, spincioA),
+            Tally(pileB, cardsB, cardsA, coinsB, coinsA, sevensB, sevensA, spincioB),
             allCoins);
     }
 
     /// <summary>F6: length of the consecutive coins run starting from the ace, or 0 if shorter than 3.</summary>
-    public static int NapolaLength(IEnumerable<Card> pile)
+    public static int SpincioLength(IEnumerable<Card> pile)
     {
         var coinRanks = pile.Where(c => c.IsCoins).Select(c => c.Rank).ToHashSet();
         int length = 0;
@@ -76,7 +76,7 @@ public static class RoundScoring
             length++;
         }
 
-        return length >= MinNapolaLength ? length : 0;
+        return length >= MinSpincioLength ? length : 0;
     }
 }
 
