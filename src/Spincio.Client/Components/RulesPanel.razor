@@ -1,0 +1,96 @@
+@* "Regole": a player-facing summary of docs/SPEC.md (Regolamento v1.4). Keep it in step with the SPEC when a rule changes. *@
+<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="rules-title">
+    <div class="panel game-panel rules">
+        <header class="panel-head">
+            <h2 id="rules-title">Regole dello Spincio</h2>
+            <button type="button" class="close" aria-label="Chiudi" @onclick="OnClose">✕</button>
+        </header>
+
+        <section>
+            <h3>Lo scopo</h3>
+            <p>Si gioca <strong>2 contro 2</strong>: tu e il tuo compagno contro due avversari. Vince la prima squadra che, a fine smazzata, arriva a <strong>31 punti</strong>.</p>
+        </section>
+
+        <section>
+            <h3>Le carte</h3>
+            <p>Mazzo piacentino da 40 carte. L'asso vale 1, dal 2 al 7 le carte valgono il loro numero, il <strong>fante 8</strong>, il <strong>cavallo 9</strong>, il <strong>re 10</strong>.</p>
+            <div class="rule-cards">@Card("AD", "1")@Card("7C", "7")@Card("JB", "8")@Card("NS", "9")@Card("KD", "10")</div>
+        </section>
+
+        <section>
+            <h3>La smazzata</h3>
+            <ul>
+                <li>Il mazziere dà <strong>3 carte</strong> a testa e ne mette <strong>4 scoperte</strong> in tavola. Quando tutti hanno finito le carte se ne danno altre 3 a testa, finché il mazzo finisce.</li>
+                <li>Comincia chi siede dopo il mazziere; si gioca in senso <strong>antiorario</strong>.</li>
+                <li>Se in tavola escono <strong>2 o più assi</strong>, si rimescola tutto e si ridistribuisce.</li>
+            </ul>
+        </section>
+
+        <section>
+            <h3>Prendere</h3>
+            <ul>
+                <li>Una carta prende una carta di <strong>pari valore</strong>, oppure due o più carte la cui <strong>somma</strong> è uguale. Anche le figure: il re prende 7 + 3.</li>
+                <li>Se in tavola c'è una carta di pari valore, devi prendere <strong>quella</strong> (niente somma). Se ce ne sono due uguali, ne prendi una a scelta.</li>
+                <li>Se ci sono più somme possibili, <strong>scegli tu</strong>.</li>
+                <li>Puoi giocare qualunque carta, ma se la carta che giochi può prendere, <strong>deve</strong> prendere. Altrimenti resta in tavola.</li>
+            </ul>
+            <div class="rule-example">
+                <div class="rule-cards">@Card("KB", "gioco")<span class="arrow">→</span>@Card("7S", "")@Card("3C", "")</div>
+                <p>Il re (10) prende 7 + 3.</p>
+            </div>
+        </section>
+
+        <section>
+            <h3>Asso pigliatutto</h3>
+            <ul>
+                <li>L'asso giocato <strong>prende tutta la tavola</strong> e fa spazzino (tranne all'ultima giocata).</li>
+                <li>Se in tavola c'è già un asso, prende <strong>solo quell'asso</strong>.</li>
+                <li>A tavola vuota l'asso si cala e basta.</li>
+            </ul>
+        </section>
+
+        <section>
+            <h3>Spazzino</h3>
+            <p>Se una presa <strong>svuota la tavola</strong> fai uno spazzino: <strong>1 punto</strong> subito. All'ultima giocata della smazzata non vale. Le carte rimaste in tavola a fine smazzata vanno alla squadra che ha preso per ultima.</p>
+        </section>
+
+        <section>
+            <h3>Accusi</h3>
+            <p>A ogni distribuzione, se la tua mano vale punti compare il pulsante <strong>Accusa</strong>. Puoi usarlo solo nel tuo turno, <strong>prima di giocare la prima carta</strong>: dopo, i punti sono persi.</p>
+            <ul>
+                <li>Somma delle tre carte <strong>fino a 9</strong>: <strong>2 punti</strong>, oppure <strong>3</strong> se due carte sono uguali.</li>
+                <li><strong>Tris</strong> (tre carte uguali): <strong>7 punti</strong>. Si sommano: 3-3-3 vale 7 + 2 = 9.</li>
+                <li>Gli altri vedono solo il tipo di accuso e i punti, mai le carte.</li>
+            </ul>
+        </section>
+
+        <section>
+            <h3>Punti di fine smazzata</h3>
+            <p>Un punto a chi ne ha di più; in parità nessuno.</p>
+            <ul>
+                <li>Più <strong>carte</strong>.</li>
+                <li>Più <strong>denari</strong>.</li>
+                <li><strong>Rebello</strong> (re di denari) e <strong>settebello</strong> (7 di denari).</li>
+                <li><strong>Primiera</strong>: più sette.</li>
+                <li><strong>Napola</strong>: asso, 2 e 3 di denari in fila (e oltre: 4, 5 … fino al re). Vale quante carte è lunga: A-2-3 = 3 punti, A–5 = 5.</li>
+            </ul>
+            <div class="rule-cards">@Card("KD", "rebello")@Card("7D", "settebello")</div>
+            <p class="rule-highlight">Chi prende <strong>tutti i 10 denari</strong> vince subito la partita, qualunque sia il punteggio.</p>
+            <p>Le carte prese non si vedono, nemmeno le tue. Il punteggio invece è sempre visibile.</p>
+        </section>
+
+        <section>
+            <h3>Fine partita</h3>
+            <p>Si controlla a fine smazzata: vince chi arriva a <strong>31</strong>; se ci arrivano entrambe, chi ha di più. In caso di pareggio esatto da 31 in su si gioca uno <strong>spareggio</strong>: una nuova partita da 0–0.</p>
+        </section>
+
+        <button type="button" class="btn btn-gold" @onclick="OnClose">Ho capito</button>
+    </div>
+</div>
+
+@code {
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    private static RenderFragment Card(string notation, string caption) =>
+        @<figure class="rule-card"><img src="cards/@(notation).webp" alt="" /><figcaption>@caption</figcaption></figure>;
+}

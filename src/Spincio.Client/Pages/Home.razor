@@ -33,6 +33,7 @@
             {
                 <a class="btn btn-green" href="online">Gioca online con gli amici</a>
             }
+            <button type="button" class="btn btn-dark" @onclick="() => _rulesOpen = true">📖 Regole</button>
             <button type="button" class="btn btn-dark" @onclick="() => _optionsOpen = true">⚙ Opzioni</button>
         </div>
     </section>
@@ -184,6 +185,7 @@ else
                 else
                 {
                     <button type="button" class="btn btn-gold" @onclick="CloseMenu">Riprendi</button>
+                    <button type="button" class="btn btn-green" @onclick="() => _rulesOpen = true">📖 Regole</button>
                     <button type="button" class="btn btn-green" @onclick="() => _optionsOpen = true">⚙ Opzioni</button>
                     <button type="button" class="btn btn-red" @onclick="() => _confirmLeave = true">@(Session.CanRestart ? "Abbandona la partita" : "Esci dalla stanza")</button>
                     <p class="menu-info">@Session.Footer</p>
@@ -191,6 +193,11 @@ else
             </div>
         </div>
     }
+}
+
+@if (_rulesOpen)
+{
+    <RulesPanel OnClose="() => _rulesOpen = false" />
 }
 
 @if (_optionsOpen)
@@ -211,6 +218,7 @@ else
     private bool _menuOpen;
     private bool _confirmLeave;
     private bool _optionsOpen;
+    private bool _rulesOpen;
     private Card? _choosing;
     private IReadOnlyList<PlayCard> _choices = [];
 
