@@ -18,8 +18,8 @@ public sealed record GreedyWeights
 
     public double Rebello { get; init; } = 4.0;
 
-    /// <summary>Extra for low coins (A, 2, 3), the start of a napola.</summary>
-    public double NapolaStart { get; init; } = 0.5;
+    /// <summary>Extra for low coins (A, 2, 3), the start of a spincio (scala di denari).</summary>
+    public double SpincioStart { get; init; } = 0.5;
 
     public double Sweep { get; init; } = 10.0;
 
@@ -108,7 +108,7 @@ public sealed class GreedyBot(GreedyWeights? weights = null) : IBot
             value += _w.Coin;
             if (card.Rank <= Rank.Three)
             {
-                value += _w.NapolaStart;
+                value += _w.SpincioStart;
             }
         }
 

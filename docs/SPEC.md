@@ -8,6 +8,7 @@
 | Versione | Data | Modifica |
 |---|---|---|
 | v1.1 | 24/09/2026 | Regolamento confermato (Fasi 0–3) |
+| v1.4 (terminologia) | 07/10/2026 | La scala di denari si chiama **spincio** (prima "napola"), su indicazione del proprietario. Nessuna regola cambiata. |
 | v1.4 | 06/10/2026 | **P8 precisata dal proprietario:** se in tavola c'è già un asso, l'asso giocato prende solo quell'asso (presa normale, P2); se così svuota la tavola è spazzino come ogni presa. AT-34 e AT-38 aggiornati, AT-39 nuovo. |
 | v1.3 | 05/10/2026 | **Nuova regola P8 (dettata dal proprietario): asso pigliatutto.** L'asso giocato con carte in tavola prende tutta la tavola ed è spazzino (tranne all'ultima giocata, P6); a tavola vuota si cala. AT-33…AT-38. |
 | v1.2 | 25/09/2026 | **Chiarimento F7** (confermato dal proprietario): vale anche nelle partite di spareggio. **Correzione di una deduzione** in §5 (invariante sulle carte di pari valore). `NewMatch` restituisce una `Transition`. Nessuna regola di gioco cambiata. |
@@ -57,9 +58,9 @@ Esempi: `KD` = re di denari (**rebello**), `7D` = **settebello**.
 | F3 | Rebello (`KD`). |
 | F4 | Settebello (`7D`). |
 | F5 | Primiera = **più 7**. |
-| F6 | **Napola di denari**: scala consecutiva che parte dall'asso (A,2,3,4,5,6,7,J,N,K), lunga almeno 3 carte; vale quanto la sua lunghezza (A–5 = 5). |
+| F6 | **Spincio** (scala di denari; altrove detta "napola"): scala consecutiva che parte dall'asso (A,2,3,4,5,6,7,J,N,K), lunga almeno 3 carte; vale quanto la sua lunghezza (A–5 = 5). |
 | F7 | **Tutti i 10 denari** presi = **vittoria immediata** della partita, qualunque sia il punteggio. Vale anche nelle partite di spareggio. |
-| — | Tutti i punti si **cumulano** (il `7D` conta per denari, settebello, primiera e napola). |
+| — | Tutti i punti si **cumulano** (il `7D` conta per denari, settebello, primiera e spincio). |
 
 ### 1.5 Fine partita
 | ID | Regola |
@@ -81,7 +82,7 @@ Esempi: `KD` = re di denari (**rebello**), `7D` = **settebello**.
 | Posto / Squadra / Mazziere | `Seat(0..3)`, `next = (s+1) % 4` / `Team {A, B}` / `Dealer` |
 | Distribuzione / Smazzata / Partita / Spareggio | `Deal` / `Round` / `Match` / `TiebreakMatch` |
 | Giocata / Presa / Calata / Spazzino | `Play` / `Capture` / `Drop` / `Sweep` |
-| Accuso / Napola / Primiera / Rebello / Settebello | `Declaration` / `Napola` / `Primiera` / `Rebello` / `Settebello` |
+| Accuso / Spincio (scala di denari) / Primiera / Rebello / Settebello | `Declaration` / `Spincio` / `Primiera` / `Rebello` / `Settebello` |
 
 ## 3. Modello (bozza)
 
@@ -168,7 +169,7 @@ LegalPlays(hand, table):
 | C11 | Una squadra arriva a 31 a metà smazzata | Si continua |
 | C12 | Tutti i denari presi, ma l'avversario ha più punti | Vince chi ha i denari |
 | C13 | Pareggi 20–20 carte, 5–5 denari, 2–2 sette | 0 punti |
-| C14 | Napola con buchi o senza asso | 0 punti |
+| C14 | Spincio con buchi o senza asso | 0 punti |
 | C15 | Pareggio a 31 o più ripetuto | Altro spareggio |
 | C16 | Asso giocato con carte in tavola | Prende tutta la tavola ed è spazzino (P8); se c'è un asso in tavola prende solo quello |
 
@@ -218,7 +219,7 @@ Ogni test nel codice porta lo stesso ID (es. `AT_05_equal_value_forbids_sum`).
 - **AT-22** Denari 6–4 → +1; 5–5 → 0.
 - **AT-23** `KD` e `7D` nel mazzetto della squadra A → +1 e +1 alla squadra A.
 - **AT-24** Sette 3–1 → +1 primiera; 2–2 → 0.
-- **AT-25** Napola: `A,2,3` → 3 · `A…5` → 5 · `A,2,4` → 0 · `2,3,4` → 0 · `A…N` → 9.
+- **AT-25** Spincio: `A,2,3` → 3 · `A…5` → 5 · `A,2,4` → 0 · `2,3,4` → 0 · `A…N` → 9.
 - **AT-26** La squadra A ha tutti i 10 denari → vince la partita anche se B ha più punti.
 
 ### Fine partita
