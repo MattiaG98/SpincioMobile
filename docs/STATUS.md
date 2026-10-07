@@ -19,7 +19,7 @@
 | M9 | Rifinitura dopo il playtest del proprietario | ✅ Fatto | **A** ✅ storico mosse a scomparsa, nomi CPU (Titti compagno, Tito e Vava avversari), frasi in seconda persona per il giocatore · **B** ✅ carte dalla scansione piacentina di Wikimedia Commons, senza indici (ADR 0011, decisione del proprietario) |
 | M10 | Animazioni delle mosse (prima tranche del refactor UI) | ✅ Fatto (PR #4) | Ogni carta giocata vola dal giocatore al tavolo; nelle prese si posa sulle carte prese, le evidenzia e le porta al giocatore. Offline e online; rispetta `prefers-reduced-motion` |
 | M11 | Carte "da app" (seconda tranche) | ✅ Fatto | PR #5–#7: raddrizzate, fondo bianco, nessun taglio del disegno, cornice ridisegnata; dalla scansione originale 3507×2417 caricata dal proprietario (cornice 273 px → nessun ingrandimento) |
-| M12 | Interfaccia "da gioco mobile" (terza tranche) | ✅ Fatto (PR #9) + pagina Regole in revisione | Menu iniziale, Opzioni, menu di pausa ☰, popup con ✕, dettaglio errori; pagina **Regole** (dal menu e dalla pausa) riassunta da SPEC v1.4 |
+| M12 | Interfaccia "da gioco mobile" (terza tranche) | ✅ Fatto (PR #9, #10) | Menu iniziale, Opzioni, menu di pausa ☰, popup con ✕, dettaglio errori; pagina **Regole** (dal menu e dalla pausa) riassunta da SPEC v1.4 |
 | — | Regola P8 "asso pigliatutto" (SPEC v1.3 → v1.4, dettata dal proprietario) | ✅ v1.3 (PR #6); v1.4 in revisione: con un asso in tavola si prende solo quello | AT-33…AT-39; versione delle regole nel piè di pagina | AT-33…AT-38; salvataggi v1.2 non ripresi |
 
 ## Metriche
