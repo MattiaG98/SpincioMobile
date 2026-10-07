@@ -5,6 +5,7 @@ Digital card game "Spincio" (house-rules variant of Spazzino), 2v2. Blazor WebAs
 ## Source of truth
 - **Rules:** `docs/SPEC.md` (Regolamento v1.4). Never invent a rule. If a rule is missing or ambiguous, stop and ask the owner. When a rule changes, also bump `LocalGameSession.RulesVersion` and update the in-app rules page (`Components/RulesPanel.razor`).
 - **Acceptance tests `AT-xx`** in `docs/SPEC.md` are the contract. Every rule has an `AT-xx` test with the same ID in its name (e.g. `AT_05_equal_value_forbids_sum`).
+- **App version:** `<Version>` in `Directory.Build.props` (semver, ADR 0012). Every PR that changes the app bumps it and adds a `CHANGELOG.md` entry; after merging, tag the merge commit `vX.Y.Z`.
 - **Decisions:** `docs/adr/`. Changing a decision means a new ADR, not an edit of history.
 - **Project memory:** `docs/STATUS.md` (milestones, metrics, open decisions), `docs/KNOWLEDGE.md` (architecture map, tuned numbers, lessons learned), `docs/RUNBOOK.md` (how to run, test, deploy, verify). **Read them at the start of a session; update them at the end of every milestone** (checklist in RUNBOOK). Add a "lesson learned" whenever a problem costs more than a few minutes.
 

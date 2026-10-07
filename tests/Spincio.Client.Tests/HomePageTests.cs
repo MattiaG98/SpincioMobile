@@ -132,4 +132,25 @@ public class HomePageTests : BunitContext
         page.FindAll("button").Single(b => b.TextContent.Contains("Regole", StringComparison.Ordinal)).Click();
         page.FindAll(".rules").Count.ShouldBe(1);
     }
+
+    [Fact]
+    public void Main_menu_shows_the_app_version()
+    {
+        var page = Render<Home>();
+
+        AppInfo.Version.ShouldBe("1.0.0");
+        page.Find("section.start .app-version").TextContent.ShouldBe("v1.0.0");
+    }
+
+    [Fact]
+    public void Table_tells_the_layout_how_many_columns_each_row_count_needs()
+    {
+        var page = Render<Home>();
+        page.Find("section.start button").Click();
+        page.WaitForAssertion(() => page.FindAll(".hand .card").Count.ShouldBe(3));
+
+        var n = page.FindAll(".table .card").Count;
+        page.Find(".table").GetAttribute("style")
+            .ShouldBe($"--c1: {n}; --c2: {(n + 1) / 2}; --c3: {(n + 2) / 3}; --c4: {(n + 3) / 4}");
+    }
 }

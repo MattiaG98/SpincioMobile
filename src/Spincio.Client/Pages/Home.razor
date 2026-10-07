@@ -36,6 +36,7 @@
             <button type="button" class="btn btn-dark" @onclick="() => _rulesOpen = true">📖 Regole</button>
             <button type="button" class="btn btn-dark" @onclick="() => _optionsOpen = true">⚙ Opzioni</button>
         </div>
+        <p class="app-version">v@(AppInfo.Version)</p>
     </section>
 }
 else
@@ -59,7 +60,7 @@ else
         @SeatAt(view, 2)
         <div class="middle">
             @SeatAt(view, 3)
-            <div class="table" aria-label="Tavola">
+            <div class="table" aria-label="Tavola" style="@TableFit(view.Table.Length)">
                 @if (view.Table.IsEmpty)
                 {
                     <span class="empty">Tavola vuota</span>
@@ -96,14 +97,13 @@ else
                 {
                     <span class="badge">@GameText.DeclarationName(d.Kind) +@d.Points</span>
                 }
+                @if (legal.OfType<Declare>().Any())
+                {
+                    <button type="button" class="declare" @onclick="() => Session.PlayAsync(new Declare(me))">
+                        Accusa: @GameText.DeclarationName(view.AvailableDeclaration.Kind) (+@view.AvailableDeclaration.Points)
+                    </button>
+                }
             </div>
-
-            @if (legal.OfType<Declare>().Any())
-            {
-                <button type="button" class="declare" @onclick="() => Session.PlayAsync(new Declare(me))">
-                    Accusa: @GameText.DeclarationName(view.AvailableDeclaration.Kind) (+@view.AvailableDeclaration.Points)
-                </button>
-            }
 
             <div class="hand">
                 @foreach (var card in view.Hand)
@@ -189,6 +189,7 @@ else
                     <button type="button" class="btn btn-green" @onclick="() => _optionsOpen = true">⚙ Opzioni</button>
                     <button type="button" class="btn btn-red" @onclick="() => _confirmLeave = true">@(Session.CanRestart ? "Abbandona la partita" : "Esci dalla stanza")</button>
                     <p class="menu-info">@Session.Footer</p>
+                    <p class="app-version">Spincio v@(AppInfo.Version)</p>
                 }
             </div>
         </div>
@@ -239,6 +240,13 @@ else
         return @<SeatView Seat="seat" Position="position" Name="@Session.SeatName(seat)"
                           CardCount="view.HandCounts[seat.Index]" IsTurn="view.ToPlay == seat" IsDealer="view.Dealer == seat"
                           Declarations="view.Declarations.Where(d => d.Seat == seat)" />;
+    }
+
+    // The table keeps its size: its cards shrink to fit (.table in app.css). For 1–4 rows of cards, the columns needed.
+    private static string TableFit(int count)
+    {
+        var n = Math.Max(count, 1);
+        return $"--c1: {n}; --c2: {(n + 1) / 2}; --c3: {(n + 2) / 3}; --c4: {(n + 3) / 4}";
     }
 
     private void Subscribe()
