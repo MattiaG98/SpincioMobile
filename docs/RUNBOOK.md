@@ -35,6 +35,7 @@ Configurazione del server in `src/Spincio.Server/appsettings.json`:
 - **Offline:** `dotnet publish src/Spincio.Client -c Release -o /tmp/pub`, poi `python3 -m http.server 8765` dentro `/tmp/pub/wwwroot`, poi `node tools/browser-checks/offline.mjs /tmp/out`. Stampa i tempi delle mosse della CPU ed eventuali errori in console.
 - **Online:** avviare server e client come sopra, poi `node tools/browser-checks/online.mjs /tmp/out`.
 - **Animazioni:** con il sito pubblicato su :8765, `node tools/browser-checks/animations.mjs` gioca 30 turni e controlla che nel mio turno nessuna carta sia ancora in volo o nascosta.
+- **Impaginazione:** con il sito pubblicato su :8765, `node tools/browser-checks/layout.mjs /tmp/out` gioca su tre schermi (375×667, 390×844, 430×932) e controlla a ogni mossa che la pagina non scorra, che la tavola non cambi misura e che le carte restino dentro; poi riempie la tavola con 8, 12 e 16 carte. Esce con codice 1 se qualcosa non va.
 - **Carte:** `node tools/card-slicer/slice.mjs assets-source/carte-piacentine-al-completo.jpg src/Spincio.Client/wwwroot/cards` ritaglia di nuovo le 40 carte (ADR 0011). La pagina `/mazzo` dell'app mostra tutto il mazzo per controllarlo.
 - Per fermare i processi usare l'ID del task o la porta, **non** `pkill -f` con un pattern che compare nel comando stesso.
 
@@ -73,4 +74,5 @@ Variabili d'ambiente: `DOTNET_ROOT=/root/.dotnet`, `DOTNET_CLI_TELEMETRY_OPTOUT=
 - [ ] Mutation testing manuale sulle regole o sui bot toccati
 - [ ] Verifica nel browser se è cambiata la UI
 - [ ] Aggiornati `docs/STATUS.md`, `docs/KNOWLEDGE.md` (lezioni apprese), `docs/AT-MAP.md`, gli ADR
+- [ ] Versione aumentata in `Directory.Build.props` e voce in `CHANGELOG.md` (ADR 0012); dopo il merge, tag `vX.Y.Z`
 - [ ] Commit con messaggio in inglese, push, CI verde

@@ -37,6 +37,12 @@ Tutte queste regole sono **verificate da test** in `tests/Spincio.Architecture.T
 - Presa: vola (380 ms) → si posa sulla **prima** carta presa, non al centro del gruppo che potrebbe contenere carte non prese → evidenzia (260 ms) → raccoglie (220 ms) → porta al giocatore (420 ms). Calata: vola nel posto misurato con una carta-sonda invisibile.
 - Durante l'animazione della propria carta la mano è disattivata (`LegalCommands` vuoto). Online gli aggiornamenti passano in fila (semaforo) e ognuno anima prima di mostrarsi.
 - `prefers-reduced-motion`: nessuna animazione.
+- Le carte volanti cambiano misura (left/top/width/height animati, poi fissati): partono grandi come la carta di origine (mano o dorso del posto) e arrivano grandi come le carte in tavola (carta-sonda o prima carta presa).
+
+### Impaginazione senza scorrimento (1.0.0)
+- `html, body` non scorrono; `.app` è alta `100dvh` e scorre solo se una pagina è più alta dello schermo (menu su schermi minuscoli, `/mazzo`, online). Lo schermo di gioco (`.app:has(> .board)`) non scorre mai.
+- Il tabellone è una colonna flex: tutto ha altezza fissa tranne `.middle`, che prende lo spazio rimasto. Per questo hanno misure fisse anche la riga di stato (con il pulsante Accusa), la mano (anche vuota), i posti laterali (56 px) e il nome del mazziere; le dichiarazioni degli altri sono sovrapposte (`.seat-badges`).
+- La tavola è un *container* CSS (`container-type: size`). `Home.razor` (`TableFit`) scrive in `--c1..--c4` quante colonne servono con 1–4 righe; per ogni numero di righe il CSS calcola la carta più grande che sta in larghezza e in altezza e prende la migliore, senza superare la misura delle carte in mano.
 
 ### Una mossa, online
 Client: `RemoteGameSession.PlayAsync` → hub `Play(token, expectedSequence, "P0:7D>3S+4B")` → `GameRoom` (coda seriale) valida token, sequenza e regole → `AcceptAsync` → a ogni posto `GameUpdate(sequence, ViewFor(seat), EventsFor(seat))` → timer: pausa CPU oppure timeout di turno (30 s) → a fine partita `MatchReveal(seed, salt, log)` e il client verifica con `Commitment.Verify`.
@@ -90,6 +96,7 @@ Mosse legali dalla vista → se c'è un accuso lo dichiara → per N mondi: dist
 | Carte "tagliate" dopo la pulizia (punte di spade, corone, piume) | Nelle piacentine il disegno arriva fino alla cornice: tagliare il 3% dentro la cornice lo rosicchiava | Taglio minimo (≈1,3%) e cornice nera ridisegnata sul bordo del disegno: struttura della carta originale, nessun filo di scansione. Attenzione: nella scansione anche il bordo fisico della carta (ombra grigia) è una riga scura, ma la cornice stampata è più nera |
 | "La regola nuova non funziona" sul telefono | La PWA tiene in cache la versione precedente finché non si riapre (il service worker aggiorna in background) | Versione delle regole nel piè di pagina ("regole v1.4"), così il proprietario vede quale versione sta giocando; chiudere e riaprire l'app due volte |
 | "Cliccando la x torno alla pagina iniziale" | Nel popup non c'era nessuna ✕: l'unica era quella della barra d'errore di Blazor, il cui "Ricarica" riporta all'inizio. Non riprodotto in Chromium | La barra d'errore ora mostra la prima riga dell'errore (script in `index.html`): con uno screenshot dal telefono si diagnostica. I popup hanno una ✕ vera che chiude e fa continuare |
+| La tavola "cresceva" o si spostava durante la partita | Non per le carte in tavola: cambiavano le misure di ciò che le sta intorno (mano vuota durante il volo, pulsante Accusa, "· mazziere" che andava a capo, dichiarazioni) | Misure fisse per tutto ciò che sta intorno alla tavola; `layout.mjs` lo controlla a ogni mossa |
 | Controllo nel browser che segnalava carte "rimaste in volo" | Lo script misurava durante l'animazione della mia carta, quando il resto della mano sembrava ancora giocabile | Mano disattivata durante il volo (anche un difetto per l'utente); i controlli aspettano una carta `playable` visibile e chiudono il riepilogo "Continua" |
 
 ## 6. Strategia di test
