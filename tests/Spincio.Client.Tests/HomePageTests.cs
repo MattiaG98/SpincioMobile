@@ -114,4 +114,22 @@ public class HomePageTests : BunitContext
 
         page.Find("section.start").TextContent.ShouldContain("CPU difficile");
     }
+
+    [Fact]
+    public void Rules_open_from_the_main_menu_and_from_the_pause_menu()
+    {
+        var page = Render<Home>();
+
+        page.FindAll("button").Single(b => b.TextContent.Contains("Regole", StringComparison.Ordinal)).Click();
+        page.Find("#rules-title").TextContent.ShouldBe("Regole dello Spincio");
+        page.Find(".rules").TextContent.ShouldContain("Asso pigliatutto");
+        page.FindAll("button").Single(b => b.TextContent == "Ho capito").Click();
+        page.FindAll(".rules").ShouldBeEmpty();
+
+        page.FindAll("section.start button").Single(b => b.TextContent.Contains("Nuova partita", StringComparison.Ordinal)).Click();
+        page.WaitForAssertion(() => page.FindAll(".hand .card").Count.ShouldBe(3));
+        page.Find("button[aria-label='Menu']").Click();
+        page.FindAll("button").Single(b => b.TextContent.Contains("Regole", StringComparison.Ordinal)).Click();
+        page.FindAll(".rules").Count.ShouldBe(1);
+    }
 }
