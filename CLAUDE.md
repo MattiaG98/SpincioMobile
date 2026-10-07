@@ -31,6 +31,11 @@ Digital card game "Spincio" (house-rules variant of Spazzino), 2v2. Blazor WebAs
 - Online locally: `dotnet run --project src/Spincio.Server` (port 5080) + `dotnet run --project src/Spincio.Client` (port 5058, Development config points to the local server)
 - Browser checks: `tools/browser-checks/*.mjs` (see RUNBOOK)
 
+## Workflow (owner's decision, 07/10/2026)
+- Every change goes through a PR into `main`. **Merge it yourself, without asking**, once: CI is green on the current head, there is no conflict, and you have reviewed your own diff for risks (rules vs SPEC, saved games, online play, deploy). The merge publishes the app on GitHub Pages.
+- If you find a real risk you cannot resolve, do not merge: explain it to the owner and ask.
+- After merging, check that the "Deploy to GitHub Pages" run succeeds (a run stuck in "waiting" blocks the next ones: cancel it so the newer run deploys).
+
 ## Conventions
 - Language: code, identifiers, commit messages in **English**; discussion and docs for the owner in **Italian**.
 - Card notation in tests: rank `A,2..7,J,N,K` + suit `D,C,S,B` (e.g. `KD`, `7D`); provide a parser helper in the test project.
