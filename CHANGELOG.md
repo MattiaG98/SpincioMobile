@@ -9,6 +9,7 @@ Versioni dell'app Spincio ([versionamento semantico](https://semver.org/lang/it/
   Non dà punti. Se la presa svuota la tavola compare MARIANA al posto di "Spazzino!" e lo spazzino vale comunque 1 punto.
   Anche nello storico delle mosse ("— MARIANA!") e nella pagina Regole. Regolamento: v1.4 con la nota "scritte" e AT-40;
   nessuna regola cambiata, quindi le partite salvate si riprendono.
+- Online (server): all'inizio della partita l'impegno anti-imbroglio arriva prima delle carte (prima arrivava subito dopo).
 
 ## 1.2.1 — 09/10/2026
 - **Aggiornamenti visibili**: l'app installata controlla se c'è una versione nuova ogni volta che torna in primo piano
