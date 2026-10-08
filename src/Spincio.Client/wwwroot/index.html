@@ -34,6 +34,12 @@
         <div class="loading-progress-text"></div>
     </div>
 
+    <div id="update-bar" role="status" hidden>
+        <span>È pronta una nuova versione di Spincio. La partita in corso resta salvata.</span>
+        <button type="button" class="update-now">Aggiorna</button>
+        <button type="button" class="update-later" aria-label="Più tardi">✕</button>
+    </div>
+
     <div id="blazor-error-ui">
         Si è verificato un errore imprevisto.
         <a href="." class="reload">Ricarica</a>
@@ -57,7 +63,30 @@
     </script>
     <script src="js/moves.js"></script>
     <script src="_framework/blazor.webassembly#[.{fingerprint}].js"></script>
-    <script>navigator.serviceWorker.register('service-worker.js', { updateViaCache: 'none' });</script>
+    <script>
+        // Updates. The installed app keeps serving the version it cached for offline play: a new version downloads in the
+        // background and waits. As soon as it is ready, a bar offers "Aggiorna", which hands over to it and reloads.
+        // iOS resumes home-screen apps without reloading them, so look for a new version every time the app comes back.
+        (function () {
+            if (!('serviceWorker' in navigator)) return;
+            const bar = document.getElementById('update-bar');
+            let waiting = null, reloading = false;
+            const offer = worker => { waiting = worker; bar.hidden = false; };
+            bar.querySelector('.update-now').addEventListener('click', () => waiting && waiting.postMessage('skipWaiting'));
+            bar.querySelector('.update-later').addEventListener('click', () => { bar.hidden = true; });
+            navigator.serviceWorker.addEventListener('controllerchange', () => { if (!reloading) { reloading = true; location.reload(); } });
+            navigator.serviceWorker.register('service-worker.js', { updateViaCache: 'none' }).then(reg => {
+                if (reg.waiting && navigator.serviceWorker.controller) offer(reg.waiting);
+                reg.addEventListener('updatefound', () => {
+                    const worker = reg.installing;
+                    worker && worker.addEventListener('statechange', () => {
+                        if (worker.state === 'installed' && navigator.serviceWorker.controller) offer(worker);
+                    });
+                });
+                document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') reg.update().catch(() => { }); });
+            });
+        })();
+    </script>
 </body>
 
 </html>
