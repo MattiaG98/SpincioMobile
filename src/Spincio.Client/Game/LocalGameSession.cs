@@ -17,8 +17,14 @@ public sealed class LocalGameSession : IGameSession
     /// <summary>CPU "thinking" pause; the card animation (about 0.4–1.3 s) comes on top of it.</summary>
     public static readonly TimeSpan DefaultCpuDelay = TimeSpan.FromMilliseconds(450);
 
-    /// <summary>L2 budget in the browser: WebAssembly runs interpreted, so fewer worlds than the simulator.</summary>
-    public static readonly PimcOptions BrowserPimc = PimcOptions.Default with { Worlds = 8 };
+    /// <summary>
+    /// "Difficile": L2 with the browser budget (WebAssembly runs interpreted, so fewer worlds than the simulator).
+    /// 12 worlds: at most ~0.5 s per decision in desktop Chromium (tools/browser-checks/cpu-time.mjs).
+    /// </summary>
+    public static readonly PimcOptions BrowserPimc = PimcOptions.Default with { Worlds = 12 };
+
+    /// <summary>"Normale" (1.2.0): L2 with a small search; it beats the L1 used before in 58% of matches.</summary>
+    public static readonly PimcOptions NormalPimc = PimcOptions.Default with { Worlds = 4 };
 
     private readonly ISavedGameStore _store;
     private readonly Func<TimeSpan, Task> _delay;
@@ -45,6 +51,8 @@ public sealed class LocalGameSession : IGameSession
 
     /// <summary>Raised after every visible change; the UI re-renders.</summary>
     public event Action? Changed;
+
+    public event Action<IReadOnlyList<GameEvent>>? LiveEvents;
 
     public bool IsStarted => _state is not null;
 
@@ -90,8 +98,10 @@ public sealed class LocalGameSession : IGameSession
     public async Task NewGameAsync(ulong seed, BotLevel difficulty = BotLevel.Greedy)
     {
         Reset(seed, difficulty);
-        Accept(SpincioEngine.NewMatch(seed), command: null);
+        var start = SpincioEngine.NewMatch(seed);
+        Accept(start, command: null);
         await SaveAsync();
+        RaiseLive(start);
         await RunCpusAsync();
     }
 
@@ -175,6 +185,7 @@ public sealed class LocalGameSession : IGameSession
         Accept(result.Value, CommandCodec.Encode(command));
         await SaveAsync();
         Changed?.Invoke();
+        RaiseLive(result.Value);
         await SettleAsync();
         await RunCpusAsync();
     }
@@ -194,12 +205,23 @@ public sealed class LocalGameSession : IGameSession
         Changed?.Invoke();
     }
 
+    /// <summary>
+    /// The three CPUs' level. "Normale" is still stored as <see cref="BotLevel.Greedy"/>, so saved options and games stay
+    /// valid (a saved game replays its commands, whatever the bot), but since 1.2.0 it searches too, with fewer worlds.
+    /// </summary>
+    public static IBot CpuFor(BotLevel difficulty) => difficulty switch
+    {
+        BotLevel.Pimc => new PimcBot(BrowserPimc),
+        BotLevel.Random => new RandomBot(),
+        _ => new PimcBot(NormalPimc),
+    };
+
     private void Reset(ulong seed, BotLevel difficulty)
     {
         _generation++;
         Seed = seed;
         Difficulty = difficulty;
-        _bot = _botOverride ?? BotFactory.Create(difficulty, BrowserPimc);
+        _bot = _botOverride ?? CpuFor(difficulty);
         _feed.Clear();
         _commands.Clear();
         _memories = [.. Seat.All.Select(s => new BotMemory(s))];
@@ -286,6 +308,7 @@ public sealed class LocalGameSession : IGameSession
                 Accept(transition, CommandCodec.Encode(command));
                 await SaveAsync();
                 Changed?.Invoke();
+                RaiseLive(transition);
                 await SettleAsync();
             }
         }
@@ -314,6 +337,8 @@ public sealed class LocalGameSession : IGameSession
 
     /// <summary>After the animated move has been shown: clears the animation leftovers.</summary>
     private Task SettleAsync() => _animated && Animator is { } animator ? animator.SettleAsync() : Task.CompletedTask;
+
+    private void RaiseLive(Transition transition) => LiveEvents?.Invoke([.. transition.EventsFor(Human)]);
 
     private Task SaveAsync() => _store.SaveAsync(new SavedGame(RulesVersion, Seed, [.. _commands], Difficulty).ToJson());
 }

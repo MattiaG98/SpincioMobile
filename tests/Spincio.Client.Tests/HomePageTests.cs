@@ -17,6 +17,7 @@ public class HomePageTests : BunitContext
         Services.AddSingleton(new GameHost(_session));
         Services.AddSingleton<IConfiguration>(new ConfigurationBuilder().Build());
         Services.AddSingleton<SettingsService>();
+        Services.AddSingleton<StatsService>();
         JSInterop.Mode = JSRuntimeMode.Loose; // card animations call into JS (js/moves.js)
     }
 
@@ -138,8 +139,8 @@ public class HomePageTests : BunitContext
     {
         var page = Render<Home>();
 
-        AppInfo.Version.ShouldBe("1.1.0");
-        page.Find("section.start .app-version").TextContent.ShouldBe("v1.1.0");
+        AppInfo.Version.ShouldBe("1.2.0");
+        page.Find("section.start .app-version").TextContent.ShouldBe("v1.2.0");
     }
 
     [Fact]
@@ -189,5 +190,27 @@ public class HomePageTests : BunitContext
         var call = JSInterop.Invocations["spincioMoves.points"][callsBefore];
         call.Arguments.Count.ShouldBe(1); // one array with every team's points, not one argument per team
         ((System.Collections.IEnumerable)call.Arguments[0]!).Cast<object>().Count().ShouldBe(PointsGain.ForRound(scored, us).Count);
+    }
+
+    [Fact]
+    public void Statistics_open_from_the_main_menu_and_count_an_abandoned_match()
+    {
+        var page = Render<Home>();
+        page.FindAll("section.start button").Single(b => b.TextContent.Contains("Statistiche", StringComparison.Ordinal)).Click();
+        page.WaitForAssertion(() => page.Find("#stats-title").TextContent.ShouldBe("Statistiche"));
+        page.Find(".stats").TextContent.ShouldContain("Gioca una partita");
+        page.Find(".stats .btn-gold").Click();
+
+        page.Find("section.start button").Click(); // new match
+        page.WaitForAssertion(() => page.FindAll(".hand .card").Count.ShouldBe(3));
+        page.Find(".icon-btn").Click();
+        page.FindAll(".overlay .btn").Single(b => b.TextContent.Contains("Abbandona", StringComparison.Ordinal)).Click();
+        page.FindAll(".overlay .btn").Single(b => b.TextContent.Contains("Sì, abbandona", StringComparison.Ordinal)).Click();
+
+        page.WaitForAssertion(() => page.Find("section.start").ShouldNotBeNull());
+        page.FindAll("section.start button").Single(b => b.TextContent.Contains("Statistiche", StringComparison.Ordinal)).Click();
+        page.WaitForAssertion(() => page.Find(".stats").TextContent.ShouldContain("Abbandonate"));
+        page.FindAll(".stat-tile").Single(t => t.TextContent.Contains("Abbandonate", StringComparison.Ordinal))
+            .QuerySelector("strong")!.TextContent.ShouldBe("1");
     }
 }

@@ -13,7 +13,7 @@
                 @Choice("Normale", Settings.Difficulty == BotLevel.Greedy, () => Change(Settings with { Difficulty = BotLevel.Greedy }))
                 @Choice("Difficile", Settings.Difficulty == BotLevel.Pimc, () => Change(Settings with { Difficulty = BotLevel.Pimc }))
             </div>
-            <small>Vale dalla prossima partita. "Difficile" ragiona di più.</small>
+            <small>Vale dalla prossima partita. Le CPU simulano le carte nascoste per scegliere la mossa; a "Difficile" ne provano di più.</small>
         </div>
 
         <div class="option">

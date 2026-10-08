@@ -14,6 +14,12 @@ public sealed record PimcOptions
     /// <summary>Attempts per world to satisfy the declarations made in the current deal.</summary>
     public int SamplingAttempts { get; init; } = 40;
 
+    /// <summary>
+    /// Also read silences: a seat that played its first card of the deal without declaring had nothing to declare
+    /// (A3: declaring is only possible before that card), so worlds giving it a declarable hand are resampled.
+    /// </summary>
+    public bool InferSilence { get; init; } = true;
+
     /// <summary>Value of winning all 10 coins (F7) relative to one point.</summary>
     public double AllCoinsValue { get; init; } = 30;
 
@@ -98,20 +104,23 @@ public sealed class PimcBot(PimcOptions? options = null, GreedyBot? rolloutPolic
 
     /// <summary>
     /// Deals the unseen cards to the other hands and the deck at random, retrying to honour the
-    /// declarations (A1) other seats made in the current deal: their dealt hand is what they have
-    /// already played this deal plus what we guess they still hold.
+    /// declarations (A1) other seats made in the current deal, and their silences (<see cref="PimcOptions.InferSilence"/>):
+    /// their dealt hand is what they have already played this deal plus what we guess they still hold.
     /// </summary>
     internal HiddenGuess SampleWorld(PlayerView view, BotMemory memory, Card[] unseen, ref Pcg32 rng)
     {
         var declared = view.Declarations
             .Where(d => d.DealNumber == view.DealNumber && d.Seat != view.Seat)
             .ToList();
+        var silent = _options.InferSilence
+            ? Seat.All.Where(s => s != view.Seat && !memory.PlayedThisDeal(s).IsEmpty && !declared.Exists(d => d.Seat == s)).ToList()
+            : [];
 
         HiddenGuess? guess = null;
         for (int attempt = 0; attempt < Math.Max(1, _options.SamplingAttempts); attempt++)
         {
             guess = Deal(view, memory, rng.Shuffle(unseen));
-            if (declared.TrueForAll(d => Consistent(d, guess, memory)))
+            if (declared.TrueForAll(d => Consistent(d, guess, memory)) && silent.TrueForAll(s => NothingToDeclare(s, guess, memory)))
             {
                 return guess;
             }
@@ -119,6 +128,9 @@ public sealed class PimcBot(PimcOptions? options = null, GreedyBot? rolloutPolic
 
         return guess!; // best effort: an unconstrained world
     }
+
+    private static bool NothingToDeclare(Seat seat, HiddenGuess guess, BotMemory memory) =>
+        Declarations.Evaluate(memory.PlayedThisDeal(seat).AddRange(guess.Hands[seat.Index])).Points == 0;
 
     private static bool Consistent(DeclarationRecord declaration, HiddenGuess guess, BotMemory memory)
     {

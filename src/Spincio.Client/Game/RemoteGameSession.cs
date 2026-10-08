@@ -91,6 +91,8 @@ public sealed class RemoteGameSession : IGameSession, IAsyncDisposable
 
     public event Action? Changed;
 
+    public event Action<IReadOnlyList<GameEvent>>? LiveEvents;
+
     public RoomInfo? Room { get; private set; }
 
     public bool IsStarted => _view is not null;
@@ -300,6 +302,7 @@ public sealed class RemoteGameSession : IGameSession, IAsyncDisposable
             }
 
             Apply(update);
+            LiveEvents?.Invoke(update.Events);
             if (animated && Animator is { } settle)
             {
                 await settle.SettleAsync();

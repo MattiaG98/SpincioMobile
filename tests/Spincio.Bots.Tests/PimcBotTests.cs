@@ -66,6 +66,37 @@ public class PimcBotTests
     }
 
     [Fact]
+    public void Sampled_worlds_honour_a_silence_this_deal()
+    {
+        // Seat 1 played its first card (AC) without declaring: with AC its dealt hand had nothing to declare, so it
+        // cannot hold, say, A + 2 or a pair of low cards. Without the inference such hands come up often.
+        var memory = new BotMemory(new Seat(0));
+        memory.Observe(new RoundStarted(0, 1, new Seat(3)));
+        memory.Observe(new HandDealt(new Seat(0), Many("KD,KC,KS")));
+        memory.Observe(new DealStarted(1, Many("JD,JC,JS,JB"), 24));
+        memory.Observe(new CardPlayed(new Seat(1), C("AC"), [], IsSweep: false));
+
+        var view = Views.For("KD,KC,KS", "JD,JC,JS,JB,AC", playsInRound: 1, handCounts: [3, 2, 3, 3]) with { DeckCount = 24 };
+        var unseen = memory.Unseen().ToArray();
+        var rng = Pcg32.FromSeed(5);
+
+        int Declarable(PimcBot bot, ref Pcg32 random)
+        {
+            int count = 0;
+            for (int i = 0; i < 200; i++)
+            {
+                var guess = bot.SampleWorld(view, memory, unseen, ref random);
+                count += Declarations.Evaluate(guess.Hands[1].Add(C("AC"))).Points > 0 ? 1 : 0;
+            }
+
+            return count;
+        }
+
+        Declarable(new PimcBot(PimcOptions.Default with { InferSilence = false }), ref rng).ShouldBeGreaterThan(10);
+        Declarable(new PimcBot(PimcOptions.Default with { SamplingAttempts = 2000 }), ref rng).ShouldBe(0);
+    }
+
+    [Fact]
     public void Takes_a_sweep_when_one_is_available()
     {
         // First play of the round (dealer seat 3): KB takes AC+2S+3B+4D and sweeps the table.

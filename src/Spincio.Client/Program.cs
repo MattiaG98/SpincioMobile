@@ -13,5 +13,8 @@ builder.Services.AddSingleton<GameHost>();
 builder.Services.AddSingleton<SettingsService>();
 builder.Services.AddSingleton<IOnlineSeatStore, LocalStorageOnlineSeatStore>();
 builder.Services.AddSingleton<OnlineService>();
+builder.Services.AddSingleton<StatsService>();
 
-await builder.Build().RunAsync();
+var host = builder.Build();
+host.Services.GetRequiredService<StatsService>(); // starts following the matches from the first one
+await host.RunAsync();

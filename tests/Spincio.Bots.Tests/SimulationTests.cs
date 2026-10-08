@@ -44,6 +44,45 @@ public class SimulationTests
         second.ShouldBe(first);
     }
 
+    /// <summary>Checks every decision: whenever the seat could declare (A3), the bot's choice is <see cref="Declare"/>.</summary>
+    private sealed class DeclarationAudit(IBot inner) : IBot
+    {
+        public int Chances { get; private set; }
+
+        public int Missed { get; private set; }
+
+        public string Name => inner.Name;
+
+        public Command Choose(PlayerView view, BotMemory memory, ref Pcg32 rng)
+        {
+            var command = inner.Choose(view, memory, ref rng);
+            if (view.AvailableDeclaration.Points > 0)
+            {
+                Chances++;
+                Missed += command is Declare ? 0 : 1;
+            }
+
+            return command;
+        }
+    }
+
+    [Fact]
+    public void Bots_declare_every_time_they_can_over_whole_matches()
+    {
+        var l1 = new DeclarationAudit(new GreedyBot());
+        var l2 = new DeclarationAudit(new PimcBot(PimcOptions.Default with { Worlds = 2 }));
+
+        for (ulong seed = 1; seed <= 10; seed++)
+        {
+            MatchRunner.Play(seed, [l1, l2, l1, l2]);
+        }
+
+        l1.Chances.ShouldBeGreaterThan(10);
+        l2.Chances.ShouldBeGreaterThan(10);
+        l1.Missed.ShouldBe(0);
+        l2.Missed.ShouldBe(0);
+    }
+
     [Fact]
     public void Bots_get_only_their_own_private_events()
     {

@@ -11,6 +11,12 @@ public interface IGameSession
     /// <summary>Raised after every visible change; the UI re-renders.</summary>
     event Action? Changed;
 
+    /// <summary>
+    /// The viewer's events of each move as it is played live (not when a saved match is replayed on resume),
+    /// once the move is shown. Feeds the statistics.
+    /// </summary>
+    event Action<IReadOnlyList<GameEvent>>? LiveEvents;
+
     bool IsStarted { get; }
 
     /// <summary>The viewer's seat (always 0 offline).</summary>

@@ -14,6 +14,8 @@
 
 ## Bot e simulatore
 
+- Confronto tra L2 con mondi diversi: `--x Pimc --y Pimc --worlds 12 --yworlds 8` (Y usa `--yworlds`).
+
 | Cosa | Comando |
 |---|---|
 | Torneo L1 contro L0 | `dotnet run --project tools/Spincio.Simulator -c Release -- --x Greedy --y Random --matches 1000 --seed 1` |
@@ -36,6 +38,7 @@ Configurazione del server in `src/Spincio.Server/appsettings.json`:
 - **Online:** avviare server e client come sopra, poi `node tools/browser-checks/online.mjs /tmp/out`.
 - **Animazioni:** con il sito pubblicato su :8765, `node tools/browser-checks/animations.mjs` gioca 30 turni e controlla che nel mio turno nessuna carta sia ancora in volo o nascosta.
 - **Punti:** con il sito pubblicato su :8765, `node tools/browser-checks/points.mjs /tmp/out` gioca una smazzata e controlla che ogni "+N" arrivi prima che il punteggio cambi e che, chiuso il riepilogo, la barra mostri il punteggio della partita; salva uno screenshot per tipo (spazzino, accuso, fine smazzata).
+- **Tempo di decisione delle CPU nel browser:** con il sito pubblicato su :8765, `node tools/browser-checks/cpu-time.mjs` gioca a "Normale" e a "Difficile" con le animazioni spente e stampa il tempo di decisione per mossa (mediana, p90, massimo), tolta la pausa fissa di 450 ms.
 - **Impaginazione:** con il sito pubblicato su :8765, `node tools/browser-checks/layout.mjs /tmp/out` gioca su tre schermi (375×667, 390×844, 430×932) e controlla a ogni mossa che la pagina non scorra, che la tavola non cambi misura e che le carte restino dentro; poi riempie la tavola con 8, 12 e 16 carte. Esce con codice 1 se qualcosa non va.
 - **Carte:** `node tools/card-slicer/slice.mjs assets-source/carte-piacentine-al-completo.jpg src/Spincio.Client/wwwroot/cards` ritaglia di nuovo le 40 carte (ADR 0011). La pagina `/mazzo` dell'app mostra tutto il mazzo per controllarlo.
 - Per fermare i processi usare l'ID del task o la porta, **non** `pkill -f` con un pattern che compare nel comando stesso.

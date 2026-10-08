@@ -13,7 +13,7 @@
         <div class="seat-badges">
             @foreach (var d in Declarations)
             {
-                <div class="badge">@GameText.DeclarationName(d.Kind) +@d.Points</div>
+                <div class="badge" title="@GameText.DeclarationName(d.Kind)">Accuso +@d.Points</div>
             }
         </div>
     }

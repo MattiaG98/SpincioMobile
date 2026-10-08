@@ -1,0 +1,120 @@
+@using System.Globalization
+@using Spincio.Client.Game
+@implements IDisposable
+@inject StatsService Stats
+@* "Statistiche": the player's matches and records on this device (PlayerStats). *@
+<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="stats-title">
+    <div class="panel game-panel stats">
+        <header class="panel-head">
+            <h2 id="stats-title">Statistiche</h2>
+            <button type="button" class="close" aria-label="Chiudi" @onclick="OnClose">✕</button>
+        </header>
+
+        @if (_stats is not { } s)
+        {
+            <p>Caricamento…</p>
+        }
+        else if (s.IsEmpty)
+        {
+            <p class="stats-empty">Gioca una partita per vedere qui le tue statistiche.</p>
+        }
+        else
+        {
+            <div class="stat-tiles">
+                @Tile("Partite", Number(s.Played))
+                @Tile("Vinte", Number(s.Won))
+                @Tile("Vittorie", Percent(s.WinRate, s.Played))
+            </div>
+            <div class="stat-tiles">
+                @Tile("Serie attuale", Number(s.CurrentStreak))
+                @Tile("Serie migliore", Number(s.BestStreak))
+                @Tile("Abbandonate", Number(s.Abandoned))
+            </div>
+
+            <section>
+                <h3>Contro</h3>
+                <table class="stat-table">
+                    <tbody>
+                        @Mode("CPU normale", s.Normal)
+                        @Mode("CPU difficile", s.Hard)
+                        @Mode("Online", s.Online)
+                    </tbody>
+                </table>
+            </section>
+
+            <section>
+                <h3>In partita</h3>
+                <table class="stat-table">
+                    <tbody>
+                        @Row("Smazzate giocate", Number(s.Rounds))
+                        @Row("Punti della tua squadra", s.Rounds == 0 ? Number(s.TeamPoints) : $"{Number(s.TeamPoints)} (media {Average(s.TeamPoints, s.Rounds)})")
+                        @Row("Spazzini fatti da te", Number(s.MySweeps))
+                        @Row("Accusi fatti da te", s.MyDeclarations == 0 ? "0" : $"{Number(s.MyDeclarations)} (+{Number(s.MyDeclarationPoints)} punti)")
+                        @Row("Settebelli presi", Number(s.Settebelli))
+                        @Row("Rebelli presi", Number(s.Rebelli))
+                        @Row("Smazzate con lo spincio", s.SpincioRounds == 0 ? "0" : $"{Number(s.SpincioRounds)} (il più lungo: {s.LongestSpincio})")
+                        @Row("Vinte con tutti i denari", Number(s.AllCoinsWins))
+                        @Row("Vittoria più larga", s.BiggestWinMargin == 0 ? "—" : $"+{s.BiggestWinMargin} punti")
+                    </tbody>
+                </table>
+            </section>
+
+            <p class="menu-info">Le statistiche sono salvate su questo dispositivo.</p>
+            @if (_confirmReset)
+            {
+                <p>Azzerare tutte le statistiche? Non si possono recuperare.</p>
+                <button type="button" class="btn btn-red" @onclick="ResetAsync">Sì, azzera</button>
+                <button type="button" class="btn btn-dark" @onclick="() => _confirmReset = false">No</button>
+            }
+            else
+            {
+                <button type="button" class="btn btn-dark" @onclick="() => _confirmReset = true">Azzera statistiche</button>
+            }
+        }
+
+        <button type="button" class="btn btn-gold" @onclick="OnClose">Chiudi</button>
+    </div>
+</div>
+
+@code {
+    private static readonly CultureInfo Italian = CultureInfo.GetCultureInfo("it-IT");
+    private PlayerStats? _stats;
+    private bool _confirmReset;
+
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Stats.Changed += OnStatsChanged;
+        _stats = await Stats.LoadAsync();
+    }
+
+    private void OnStatsChanged() => InvokeAsync(async () =>
+    {
+        _stats = await Stats.LoadAsync();
+        StateHasChanged();
+    });
+
+    private async Task ResetAsync()
+    {
+        _confirmReset = false;
+        _stats = await Stats.ResetAsync();
+    }
+
+    public void Dispose() => Stats.Changed -= OnStatsChanged;
+
+    private static string Number(int value) => value.ToString("N0", Italian);
+
+    private static string Percent(double rate, int played) => played == 0 ? "—" : rate.ToString("P0", Italian);
+
+    private static string Average(int total, int count) => ((double)total / count).ToString("0.0", Italian);
+
+    private static RenderFragment Tile(string label, string value) =>
+        @<div class="stat-tile"><strong>@value</strong><span>@label</span></div>;
+
+    private static RenderFragment Row(string label, string value) =>
+        @<tr><td>@label</td><td>@value</td></tr>;
+
+    private static RenderFragment Mode(string label, ModeStats mode) =>
+        @<tr><td>@label</td><td>@(mode.Played == 0 ? "—" : $"{mode.Won} vinte su {mode.Played} ({Percent(mode.WinRate, mode.Played)})")</td></tr>;
+}

@@ -216,4 +216,14 @@ public class LocalGameSessionTests
 
         (await NewSession(store).TryResumeAsync()).ShouldBeFalse();
     }
+
+    [Fact]
+    public void Both_cpu_levels_search_and_difficult_searches_more()
+    {
+        var normal = LocalGameSession.CpuFor(BotLevel.Greedy).ShouldBeOfType<PimcBot>();
+        var hard = LocalGameSession.CpuFor(BotLevel.Pimc).ShouldBeOfType<PimcBot>();
+
+        normal.ShouldNotBeSameAs(hard);
+        LocalGameSession.NormalPimc.Worlds.ShouldBeLessThan(LocalGameSession.BrowserPimc.Worlds);
+    }
 }
