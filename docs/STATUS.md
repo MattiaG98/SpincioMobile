@@ -21,13 +21,14 @@
 | M11 | Carte "da app" (seconda tranche) | ✅ Fatto | PR #5–#7: raddrizzate, fondo bianco, nessun taglio del disegno, cornice ridisegnata; dalla scansione originale 3507×2417 caricata dal proprietario (cornice 273 px → nessun ingrandimento) |
 | M12 | Interfaccia "da gioco mobile" (terza tranche) | ✅ Fatto (PR #9, #10) | Menu iniziale, Opzioni, menu di pausa ☰, popup con ✕, dettaglio errori; pagina **Regole** (dal menu e dalla pausa) riassunta da SPEC v1.4 |
 | M13 | Versione 1.0.0 e schermo di gioco fisso | ✅ Fatto | Versione nel menu (ADR 0012, `CHANGELOG.md`); niente scorrimento; tavola di misura fissa con carte che si rimpiccioliscono (fino a 16, `layout.mjs` su 3 schermi); carta giocata che si rimpicciolisce verso la tavola |
+| M14 | Animazione dei punti (1.1.0) | ✅ Fatto | "+N" vola sul punteggio della squadra per spazzini, accusi e fine smazzata (alla chiusura del riepilogo); `points.mjs` nel browser |
 | — | Regola P8 "asso pigliatutto" (SPEC v1.3 → v1.4, dettata dal proprietario) | ✅ v1.3 (PR #6); v1.4 in revisione: con un asso in tavola si prende solo quello | AT-33…AT-39; versione delle regole nel piè di pagina | AT-33…AT-38; salvataggi v1.2 non ripresi |
 
 ## Metriche
 
 | Voce | Valore | Come si rimisura |
 |---|---|---|
-| Test automatici | **199** (Engine 85, Bots 31, Client 39, Architecture 23, Server 21) | `dotnet test Spincio.slnx` |
+| Test automatici | **206** (Engine 85, Bots 31, Client 46, Architecture 23, Server 21) | `dotnet test Spincio.slnx` |
 | L1 vs L0 | 92,9% (seed 1, regole v1.3 con asso pigliatutto); era 99,3% con la v1.2 | `--x Greedy --y Random` |
 | L2 vs L1 | 58,0% (8 mondi, 300 partite, seed 5000, regole v1.3); con la v1.2: 64,4% (16 mondi) / 62,0% (8 mondi) | `--x Pimc --y Greedy --worlds N` |
 | L2 senza prior L1 | 56,0% (16 mondi) / **44,6%** (8 mondi): peggio di L1 | `PimcOptions.PriorWeight = 0` |
@@ -62,3 +63,4 @@
 | 28/09/2026 | M4, M5, M6, M7; M8 documentato e saltato; file di tracciamento (questo, KNOWLEDGE, RUNBOOK, NATIVE); icone originali |
 | 29/09–01/10/2026 | Merge PR #1, GitHub Pages attivo (https://mattiag98.github.io/SpincioMobile/), app installata su iPhone dal proprietario; M9-A (PR #2); M9-B carte piacentine |
 | 02/10–07/10/2026 | M10–M12, regola P8 (SPEC v1.4), "napola" → "spincio"; versione 1.0.0 (M13) |
+| 08/10/2026 | Animazione dei punti, versione 1.1.0 (M14) |

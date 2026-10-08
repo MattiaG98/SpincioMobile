@@ -284,16 +284,14 @@ public sealed class RemoteGameSession : IGameSession, IAsyncDisposable
         try
         {
             // The board still shows the previous view: play the moves on it first, then show the new view.
+            bool animated = false;
             if (Animator is { } animator && _view is not null)
             {
                 _animating = true;
                 try
                 {
                     Changed?.Invoke();
-                    foreach (var play in update.Events.OfType<CardPlayed>())
-                    {
-                        await animator.PlayAsync(play, GameText.Relative(play.Seat, Me));
-                    }
+                    animated = await animator.AnimateMoveAsync(update.Events, Me);
                 }
                 finally
                 {
@@ -302,7 +300,7 @@ public sealed class RemoteGameSession : IGameSession, IAsyncDisposable
             }
 
             Apply(update);
-            if (Animator is { } settle && update.Events.OfType<CardPlayed>().Any())
+            if (animated && Animator is { } settle)
             {
                 await settle.SettleAsync();
             }

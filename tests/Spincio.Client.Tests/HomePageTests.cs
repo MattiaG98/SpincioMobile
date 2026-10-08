@@ -138,8 +138,8 @@ public class HomePageTests : BunitContext
     {
         var page = Render<Home>();
 
-        AppInfo.Version.ShouldBe("1.0.0");
-        page.Find("section.start .app-version").TextContent.ShouldBe("v1.0.0");
+        AppInfo.Version.ShouldBe("1.1.0");
+        page.Find("section.start .app-version").TextContent.ShouldBe("v1.1.0");
     }
 
     [Fact]
@@ -152,5 +152,42 @@ public class HomePageTests : BunitContext
         var n = page.FindAll(".table .card").Count;
         page.Find(".table").GetAttribute("style")
             .ShouldBe($"--c1: {n}; --c2: {(n + 1) / 2}; --c3: {(n + 2) / 3}; --c4: {(n + 3) / 4}");
+    }
+
+    [Fact]
+    public void End_of_round_points_reach_the_score_bar_when_the_summary_closes()
+    {
+        var page = Render<Home>();
+        page.Find("section.start button").Click();
+        for (int i = 0; i < 100 && _session.PendingSummary is null; i++)
+        {
+            page.WaitForAssertion(() => page.FindAll(".hand .card.playable").Count.ShouldBeGreaterThan(0));
+            page.FindAll(".hand .card.playable")[0].Click();
+            if (page.FindAll(".choice").Count > 0)
+            {
+                page.FindAll(".choice")[0].Click();
+            }
+        }
+
+        var scored = _session.PendingSummary.ShouldNotBeNull();
+        var us = _session.Me.Team;
+        string[] Bar() => [.. page.FindAll(".scorebar .score strong").Select(s => s.TextContent)];
+        var before = PointsGain.ScoreBefore(scored);
+        page.WaitForAssertion(() => Bar().ShouldBe([$"{before.For(us)}", $"{before.For(GameText.Other(us))}"]));
+
+        page.Find(".summary").ShouldNotBeNull();
+        int callsBefore = JSInterop.Invocations["spincioMoves.points"].Count;
+        page.FindAll(".overlay .btn-gold").Single(b => b.TextContent.Contains("Continua", StringComparison.Ordinal)).Click();
+
+        page.WaitForAssertion(() =>
+        {
+            _session.PendingSummary.ShouldBeNull();
+            Bar().ShouldBe([$"{_session.View.Score.For(us)}", $"{_session.View.Score.For(GameText.Other(us))}"]);
+        });
+        page.FindAll(".summary").ShouldBeEmpty();
+        // The first points after the click are the end-of-round ones (then the CPUs may declare or sweep).
+        var call = JSInterop.Invocations["spincioMoves.points"][callsBefore];
+        call.Arguments.Count.ShouldBe(1); // one array with every team's points, not one argument per team
+        ((System.Collections.IEnumerable)call.Arguments[0]!).Cast<object>().Count().ShouldBe(PointsGain.ForRound(scored, us).Count);
     }
 }

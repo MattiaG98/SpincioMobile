@@ -2,13 +2,20 @@
 // the played card flies from its player to the table; on a capture it lands on the captured cards, gathers them
 // and carries them to the player who took them. Floating copies live in a fixed layer above the page, so Blazor's
 // DOM is never moved; settle() removes them once the new state has rendered.
+// Points scored (sweeps, declarations, end of round) pop up as "+N" and fly to the team's score: points().
 (function () {
     const FLY = 380, HOLD = 260, GATHER = 220, CARRY = 420; // ms at normal speed
+    const POP = 260, SHOW = 420, TO_SCORE = 520, BUMP = 360; // points: appear, stay, fly to the score, score bump
     let speed = 1; // "Opzioni" → velocità animazioni: 1.5 slow, 1 normal, 0.6 fast, 0 off
     const t = ms => ms * speed;
     const hidden = [];
 
     const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const wait = ms => new Promise(r => setTimeout(r, ms));
+
+    // While the animations run, the "Spazzino!" banner comes from points(); the page's own flash is the fallback.
+    const syncFlag = () => document.documentElement.classList.toggle('moves-on', speed > 0 && !reducedMotion());
+    syncFlag();
 
     function layer() {
         let el = document.getElementById('fly-layer');
@@ -143,6 +150,58 @@
         all.forEach(c => c.remove());
     }
 
+    function centreOf(el) {
+        const r = el.getBoundingClientRect();
+        return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+    }
+
+    // gains: [{ kind: 'sweep' | 'declaration' | 'roundend', from: 0-3 (seat, relative to me) or -1 (table),
+    //           ours: bool, points: n, label: text or null }]. Several gains play together (end of round: both teams).
+    async function points(gains) {
+        if (!gains || !gains.length || speed === 0 || reducedMotion()) return;
+        const boxes = document.querySelectorAll('.scorebar .score'); // "Noi", then "Loro"
+        const table = document.querySelector('.table');
+        if (boxes.length < 2 || !table) return;
+        await Promise.all(gains.map(g => flyPoints(g, boxes[g.ours ? 0 : 1], table, gains.length > 1 ? (g.ours ? -1 : 1) : 0)));
+    }
+
+    // "+N" (with what earned it) pops up where it was made, then flies to the score, which bumps as it lands.
+    // The score still shows the old total: the new one renders right after, with the new state.
+    async function flyPoints(g, box, table, side) {
+        const el = document.createElement('div');
+        el.className = `points-pop ${g.ours ? 'ours' : 'theirs'} ${g.kind}`;
+        if (g.label) {
+            const label = document.createElement('span');
+            label.className = 'label';
+            label.textContent = g.label;
+            el.appendChild(label);
+        }
+        const value = document.createElement('strong');
+        value.textContent = `+${g.points}`;
+        el.appendChild(value);
+        layer().appendChild(el);
+
+        const from = g.from < 0 ? centreOf(table) : seatCentre(g.from);
+        const size = el.getBoundingClientRect();
+        // Two gains from the table: side by side. Always fully on screen (side seats are at the edges).
+        const clamp = (v, half, max) => Math.min(Math.max(v, half + 8), max - half - 8);
+        const x = clamp(from.x + side * (size.width / 2 + 8), size.width / 2, innerWidth);
+        const y = clamp(from.y, size.height / 2, innerHeight);
+        el.style.left = (x - size.width / 2) + 'px';
+        el.style.top = (y - size.height / 2) + 'px';
+
+        await el.animate([{ transform: 'scale(.3)', opacity: 0 }, { transform: 'scale(1.15)', opacity: 1, offset: .7 }, { transform: 'scale(1)', opacity: 1 }],
+            { duration: t(POP), easing: 'ease-out', fill: 'forwards' }).finished;
+        await wait(t(SHOW));
+        const end = centreOf(box);
+        await el.animate([{ transform: 'none', opacity: 1 }, { transform: `translate(${end.x - x}px, ${end.y - y}px) scale(.4)`, opacity: .85 }],
+            { duration: t(TO_SCORE), easing: 'cubic-bezier(.45,0,.8,.5)', fill: 'forwards' }).finished;
+        el.remove();
+        // Not awaited: the bump goes on while the new score renders.
+        box.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.3)', boxShadow: '0 0 0 3px #f2b705, 0 0 18px #f2b705', offset: .35 }, { transform: 'scale(1)' }],
+            { duration: t(BUMP), easing: 'ease-out' });
+    }
+
     // After the new state has rendered: drop the floating copies and show anything we hid that is still on screen.
     async function settle() {
         await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
@@ -154,7 +213,10 @@
         }
     }
 
-    function setSpeed(factor) { speed = Math.max(0, Number(factor) || 0); }
+    function setSpeed(factor) {
+        speed = Math.max(0, Number(factor) || 0);
+        syncFlag();
+    }
 
-    window.spincioMoves = { play, settle, setSpeed };
+    window.spincioMoves = { play, points, settle, setSpeed };
 })();

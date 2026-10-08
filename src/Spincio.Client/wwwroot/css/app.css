@@ -176,6 +176,16 @@ button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 @keyframes card-in { from { transform: translateY(-14px) scale(.92); opacity: 0; } to { transform: none; opacity: 1; } }
 @keyframes sweep-flash { 0% { transform: scale(.6); opacity: 0; } 20% { transform: scale(1.08); opacity: 1; } 80% { opacity: 1; } 100% { transform: scale(1); opacity: 0; } }
 .hand .card { animation: card-in .22s ease-out; }
+/* Points scored: "+N" flies to the team's score (js/moves.js). Gold for us, red for them. */
+.points-pop { position: fixed; z-index: 2; display: flex; flex-direction: column; align-items: center; padding: 6px 14px 4px;
+              border-radius: 14px; border: 2px solid #fff8; font-weight: 900; line-height: 1.05; white-space: nowrap;
+              box-shadow: 0 6px 18px #0009; pointer-events: none; }
+.points-pop strong { font-size: 1.9rem; }
+.points-pop .label { font-size: .8rem; }
+.points-pop.sweep .label { font-size: 1.9rem; }
+.points-pop.ours { color: #3b2600; background: linear-gradient(#ffe27a, #f2b705); }
+.points-pop.theirs { color: #fff; background: linear-gradient(#e0574c, #b3261e); }
+.moves-on .sweep-flash { display: none; } /* the sweep is shown by its points pop */
 .sweep-flash {
     position: fixed; left: 50%; top: 38%; translate: -50% -50%; z-index: 15; pointer-events: none;
     font-size: 2.2rem; font-weight: 900; color: var(--ink); background: var(--accent);

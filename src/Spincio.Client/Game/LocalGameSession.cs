@@ -302,19 +302,13 @@ public sealed class LocalGameSession : IGameSession
         Changed?.Invoke();
     }
 
-    /// <summary>Plays the animations for the cards played in <paramref name="transition"/>, before it is accepted.</summary>
+    /// <summary>Plays the animations of <paramref name="transition"/> (cards, points scored), before it is accepted.</summary>
     private async Task AnimateAsync(Transition transition)
     {
         _animated = false;
-        if (Animator is not { } animator)
+        if (Animator is { } animator)
         {
-            return;
-        }
-
-        foreach (var play in transition.EventsFor(Human).OfType<CardPlayed>())
-        {
-            await animator.PlayAsync(play, GameText.Relative(play.Seat, Human));
-            _animated = true;
+            _animated = await animator.AnimateMoveAsync(transition.EventsFor(Human), Human);
         }
     }
 

@@ -14,6 +14,9 @@ public interface IMoveAnimator
     /// <param name="position">Seat of the player relative to the viewer: 0 = me, 1 = right, 2 = partner, 3 = left.</param>
     Task PlayAsync(CardPlayed play, int position);
 
+    /// <summary>Points scored: each "+N" flies to its team's score, still showing the score before them.</summary>
+    Task PointsAsync(IReadOnlyList<PointsGain> gains);
+
     /// <summary>Called once the new state has rendered: removes what is left of the animation.</summary>
     Task SettleAsync();
 }
@@ -25,6 +28,21 @@ public sealed class JsMoveAnimator(IJSRuntime js) : IMoveAnimator
     {
         ArgumentNullException.ThrowIfNull(play);
         return InvokeAsync("spincioMoves.play", play.Card.ToString(), position, play.Captured.Select(c => c.ToString()).ToArray());
+    }
+
+    public Task PointsAsync(IReadOnlyList<PointsGain> gains)
+    {
+        ArgumentNullException.ThrowIfNull(gains);
+        // One argument, the array: passed bare, the array would become the params array (one argument per gain).
+        object payload = gains.Select(g => new
+        {
+            kind = g.Kind.ToString().ToLowerInvariant(),
+            from = g.From,
+            ours = g.Ours,
+            points = g.Points,
+            label = g.Label,
+        }).ToArray();
+        return InvokeAsync("spincioMoves.points", payload);
     }
 
     public Task SettleAsync() => InvokeAsync("spincioMoves.settle");
@@ -39,5 +57,35 @@ public sealed class JsMoveAnimator(IJSRuntime js) : IMoveAnimator
         catch (Exception e) when (e is JSException or JSDisconnectedException or TaskCanceledException or InvalidOperationException)
         {
         }
+    }
+}
+
+public static class MoveAnimations
+{
+    /// <summary>
+    /// Plays, in order, the animations for the events of one move on the board that still shows the state before it:
+    /// card plays, then the points they score (sweeps, declarations). True if anything was animated.
+    /// </summary>
+    public static async Task<bool> AnimateMoveAsync(this IMoveAnimator animator, IEnumerable<GameEvent> events, Seat viewer)
+    {
+        ArgumentNullException.ThrowIfNull(animator);
+        ArgumentNullException.ThrowIfNull(events);
+        bool animated = false;
+        foreach (var e in events)
+        {
+            if (e is CardPlayed play)
+            {
+                await animator.PlayAsync(play, GameText.Relative(play.Seat, viewer));
+                animated = true;
+            }
+
+            if (PointsGain.For(e, viewer) is { } gain)
+            {
+                await animator.PointsAsync([gain]);
+                animated = true;
+            }
+        }
+
+        return animated;
     }
 }
