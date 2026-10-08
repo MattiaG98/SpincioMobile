@@ -94,7 +94,9 @@ public class MoveAnimationTests
     {
         var (_, animator) = await PlayAMatchAsync(seed: 24);
 
-        animator.Points.Select(p => p.Gain.Kind).Distinct().Order().ShouldBe([PointsKind.Sweep, PointsKind.Declaration]);
+        var kinds = animator.Points.Select(p => p.Gain.Kind).ToHashSet();
+        kinds.ShouldContain(PointsKind.Sweep);
+        kinds.ShouldContain(PointsKind.Declaration);
         var us = LocalGameSession.Human.Team;
         var wrong = animator.Points.Where(p =>
         {

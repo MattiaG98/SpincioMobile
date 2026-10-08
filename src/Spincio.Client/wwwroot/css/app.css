@@ -192,7 +192,7 @@ button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
               box-shadow: 0 6px 18px #0009; pointer-events: none; }
 .points-pop strong { font-size: 1.9rem; }
 .points-pop .label { font-size: .8rem; }
-.points-pop.sweep .label { font-size: 1.9rem; }
+.points-pop.sweep .label, .points-pop.mariana .label { font-size: 1.9rem; letter-spacing: .02em; }
 .points-pop.ours { color: #3b2600; background: linear-gradient(#ffe27a, #f2b705); }
 .points-pop.theirs { color: #fff; background: linear-gradient(#e0574c, #b3261e); }
 .moves-on .sweep-flash { display: none; } /* the sweep is shown by its points pop */

@@ -38,4 +38,20 @@ public class GameTextTests
 
         GameText.Describe(drop, Me, Name).ShouldBe("Titti cala 3 di spade");
     }
+
+    [Fact]
+    public void Mariana_takes_the_place_of_the_sweep_call_and_also_shows_without_a_sweep()
+    {
+        var tito = GameText.AtPosition(Me, 1);
+        var mariana = new CardPlayed(tito, Card.Parse("JD"), [Card.Parse("5C"), Card.Parse("3S")], IsSweep: false);
+        var sweep = new CardPlayed(tito, Card.Parse("7D"), [Card.Parse("3S"), Card.Parse("4B")], IsSweep: true);
+
+        GameText.Describe(mariana, Me, Name).ShouldBe("Tito prende 5 di coppe + 3 di spade con Fante di denari — MARIANA!");
+        GameText.Describe(mariana with { IsSweep = true }, Me, Name).ShouldEndWith(" — MARIANA! +1");
+        GameText.Describe(sweep, Me, Name).ShouldEndWith(" — SPAZZINO!");
+        GameText.Banner(mariana).ShouldBe("MARIANA");
+        GameText.Banner(mariana with { IsSweep = true }).ShouldBe("MARIANA");
+        GameText.Banner(sweep).ShouldBe("Spazzino!");
+        GameText.Banner(sweep with { IsSweep = false }).ShouldBeNull();
+    }
 }

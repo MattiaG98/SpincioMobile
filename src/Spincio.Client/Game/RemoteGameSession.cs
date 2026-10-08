@@ -113,7 +113,9 @@ public sealed class RemoteGameSession : IGameSession, IAsyncDisposable
 
     public bool IsWaiting => _animating || (_view is { Phase: MatchPhase.AwaitingPlay } view && !view.IsMyTurn);
 
-    public int SweepCount { get; private set; }
+    public int BannerCount { get; private set; }
+
+    public string? BannerText { get; private set; }
 
     public IMoveAnimator? Animator { get; set; }
 
@@ -321,9 +323,10 @@ public sealed class RemoteGameSession : IGameSession, IAsyncDisposable
         TurnSecondsLeft = update.TurnSecondsLeft;
         foreach (var e in update.Events)
         {
-            if (e is CardPlayed { IsSweep: true })
+            if (e is CardPlayed played && GameText.Banner(played) is { } banner)
             {
-                SweepCount++;
+                BannerCount++;
+                BannerText = banner;
             }
 
             if (GameText.Describe(e, Me, SeatName) is { } line)

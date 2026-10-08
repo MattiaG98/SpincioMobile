@@ -38,8 +38,11 @@ public interface IGameSession
     /// <summary>Waiting for someone else (CPU thinking or another player).</summary>
     bool IsWaiting { get; }
 
-    /// <summary>Increments at every sweep, so the UI can replay the "Spazzino!" animation.</summary>
-    int SweepCount { get; }
+    /// <summary>Increments at every play with a banner (a sweep or a Mariana), so the UI can show it again.</summary>
+    int BannerCount { get; }
+
+    /// <summary>The latest banner: "Spazzino!" or "MARIANA" (<see cref="GameText.Banner"/>).</summary>
+    string? BannerText { get; }
 
     /// <summary>One line for the footer (match number, CPU level, room code, fairness check).</summary>
     string Footer { get; }

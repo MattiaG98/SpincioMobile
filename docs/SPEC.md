@@ -9,6 +9,7 @@
 |---|---|---|
 | v1.1 | 24/09/2026 | Regolamento confermato (Fasi 0–3) |
 | v1.4 (terminologia) | 07/10/2026 | La scala di denari si chiama **spincio** (prima "napola"), su indicazione del proprietario. Nessuna regola cambiata. |
+| v1.4 (scritte) | 09/10/2026 | **Mariana** (dettata dal proprietario): quando un fante prende un 5 e un 3 compare la scritta MARIANA; se la presa svuota la tavola sostituisce la scritta dello spazzino, che vale comunque 1 punto. Solo una scritta: nessuna regola e nessun punto cambiati. AT-40. |
 | v1.4 | 06/10/2026 | **P8 precisata dal proprietario:** se in tavola c'è già un asso, l'asso giocato prende solo quell'asso (presa normale, P2); se così svuota la tavola è spazzino come ogni presa. AT-34 e AT-38 aggiornati, AT-39 nuovo. |
 | v1.3 | 05/10/2026 | **Nuova regola P8 (dettata dal proprietario): asso pigliatutto.** L'asso giocato con carte in tavola prende tutta la tavola ed è spazzino (tranne all'ultima giocata, P6); a tavola vuota si cala. AT-33…AT-38. |
 | v1.2 | 25/09/2026 | **Chiarimento F7** (confermato dal proprietario): vale anche nelle partite di spareggio. **Correzione di una deduzione** in §5 (invariante sulle carte di pari valore). `NewMatch` restituisce una `Transition`. Nessuna regola di gioco cambiata. |
@@ -74,6 +75,8 @@ Esempi: `KD` = re di denari (**rebello**), `7D` = **settebello**.
 - Modalità tutti contro tutti a 3.
 - Altri mazzi regionali.
 
+**Mariana** (solo una scritta, nessun punto): quando un **fante** prende un **5** e un **3**, di qualunque seme, compare la scritta **MARIANA**, anche se in tavola restano altre carte. Se la presa svuota la tavola, MARIANA prende il posto della scritta "Spazzino!" e lo spazzino vale normalmente (P6).
+
 ## 2. Glossario → codice
 
 | Italiano | Codice |
@@ -83,6 +86,7 @@ Esempi: `KD` = re di denari (**rebello**), `7D` = **settebello**.
 | Distribuzione / Smazzata / Partita / Spareggio | `Deal` / `Round` / `Match` / `TiebreakMatch` |
 | Giocata / Presa / Calata / Spazzino | `Play` / `Capture` / `Drop` / `Sweep` |
 | Accuso / Spincio (scala di denari) / Primiera / Rebello / Settebello | `Declaration` / `Spincio` / `Primiera` / `Rebello` / `Settebello` |
+| Mariana (fante che prende 5 e 3) | `CardPlayed.IsMariana()` (`Callouts`) |
 
 ## 3. Modello (bozza)
 
@@ -201,6 +205,9 @@ Ogni test nel codice porta lo stesso ID (es. `AT_05_equal_value_forbids_sum`).
 - **AT-37** Ultima giocata, tavola `[3S,4B]`, gioco `AD` → prende tutto, lo spazzino non vale.
 - **AT-38** Tavola `[3S,5B]`: calare `AD` o prendere solo `{3S}` è illegale. Tavola `[AC,5S]`: calare `AD` o prendere `{AC,5S}` è illegale.
 - **AT-39** Non è l'ultima giocata, tavola `[AC]`, gioco `AD` → prende `AC`, tavola vuota, +1 spazzino.
+
+### Scritte
+- **AT-40** Mariana: `JD` prende `{5S,3C}` → MARIANA; non lo sono `JC` che prende `{6S,2C}`, `AD` che prende `{5S,3C}` (P8) né `KD` che prende `{5S,3C,2B}`. Tavola `[5S,3C,KB]`, gioco `JD` prende `{5S,3C}` → MARIANA, nessun punto. Tavola `[5S,3C]` (non ultima giocata) → MARIANA e spazzino, +1.
 
 ### Spazzino e fine smazzata
 - **AT-13** Tavola `[3S,4B]`, non è l'ultima giocata, gioco `7D` → +1 spazzino alla squadra.
