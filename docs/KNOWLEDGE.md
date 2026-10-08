@@ -17,7 +17,7 @@ Client ─────┘      Server
 | Progetto | Ruolo | Regola chiave |
 |---|---|---|
 | `Spincio.Engine` | Regole pure: `NewMatch`, `Apply`, `LegalCommands`, `ViewFor`, `Hypothetical` | Zero dipendenze, niente clock/RNG/I-O; tutta la casualità in `Pcg32` dentro lo stato |
-| `Spincio.Bots` | L0 casuale, L1 greedy, L2 PIMC | Ricevono solo `PlayerView` + `BotMemory`; solo `PimcBot` tocca stati **ipotetici** (ADR 0008) |
+| `Spincio.Bots` | L0 casuale, L1 greedy, L2 PIMC (entrambi i livelli dell'app, ADR 0013) | Ricevono solo `PlayerView` + `BotMemory`; solo `PimcBot` tocca stati **ipotetici** (ADR 0008) |
 | `Spincio.Contracts` | DTO SignalR, `CommandCodec`, `SpincioJson`, `Commitment` | Condiviso da Client e Server; nessuna dipendenza da Bots/Client/Server |
 | `Spincio.Client` | PWA Blazor WebAssembly | La UI vede solo `IGameSession` (vista del giocatore); mai `MatchState` |
 | `Spincio.Server` | Stanze online autoritative | Una coda seriale per stanza; timer con `TimeProvider` |
@@ -46,6 +46,12 @@ Tutte queste regole sono **verificate da test** in `tests/Spincio.Architecture.T
 - Il tabellone è una colonna flex: tutto ha altezza fissa tranne `.middle`, che prende lo spazio rimasto. Per questo hanno misure fisse anche la riga di stato (con il pulsante Accusa), la mano (anche vuota), i posti laterali (56 px) e il nome del mazziere; le dichiarazioni degli altri sono sovrapposte (`.seat-badges`).
 - La tavola è un *container* CSS (`container-type: size`). `Home.razor` (`TableFit`) scrive in `--c1..--c4` quante colonne servono con 1–4 righe; per ogni numero di righe il CSS calcola la carta più grande che sta in larghezza e in altezza e prende la migliore, senza superare la misura delle carte in mano.
 
+### Statistiche (1.2.0)
+- `StatsTracker` (puro) aggiorna `PlayerStats` dagli eventi che il giocatore vede; `StatsService` le salva e segue la partita corrente tramite `IGameSession.LiveEvents`.
+- `LiveEvents` parte solo per le mosse giocate dal vivo (dopo che la mossa è mostrata), **mai** quando una partita salvata viene rigiocata alla ripresa: niente doppi conteggi.
+- Partita abbandonata = "Abbandona"/"Esci dalla stanza" prima della fine, oppure "Nuova partita" dal menu quando c'era una partita salvata. Azzera la serie di vittorie.
+- Gli aggiornamenti sono in catena (ognuno parte dal risultato del precedente), anche mentre il primo caricamento da localStorage è in corso.
+
 ### Una mossa, online
 Client: `RemoteGameSession.PlayAsync` → hub `Play(token, expectedSequence, "P0:7D>3S+4B")` → `GameRoom` (coda seriale) valida token, sequenza e regole → `AcceptAsync` → a ogni posto `GameUpdate(sequence, ViewFor(seat), EventsFor(seat))` → timer: pausa CPU oppure timeout di turno (30 s) → a fine partita `MatchReveal(seed, salt, log)` e il client verifica con `Commitment.Verify`.
 
@@ -60,6 +66,7 @@ Mosse legali dalla vista → se c'è un accuso lo dichiara → per N mondi: dist
 | Comando | `D0` accusa · `P1:7D` calata · `P1:7D>3S+4B` presa (carte prese in ordine canonico: seme, poi rango) | `Contracts/CommandCodec` |
 | Salvataggio offline | JSON `{RulesVersion, Seed, Commands[], Difficulty}` in `localStorage["spincio.savedGame"]` | `SavedGame` |
 | Seat online | `localStorage["spincio.onlineSeat"]` = token segreto del posto | `LocalStorageOnlineSeatStore` |
+| Statistiche | JSON `PlayerStats` (con `Version`) in `localStorage["spincio.stats"]`; versione diversa o JSON illeggibile = statistiche vuote | `StatsService` |
 | Eventi su SignalR | JSON con discriminatore `$kind`; `Seat` come numero | `SpincioJson` |
 | Impegno del seed | `SHA-256("{seed}:{salt}")` in esadecimale minuscolo | `Commitment.Of` |
 
@@ -68,7 +75,8 @@ Mosse legali dalla vista → se c'è un accuso lo dichiara → per N mondi: dist
 | Parametro | Valore | Motivo |
 |---|---|---|
 | Pesi di L1 (`GreedyWeights`) | carta 1, denaro +1, sette +1,5, settebello +5, rebello +4, spazzino 10, rischio spazzino 8, costo calata 0,3 | Ablazione M2: ogni componente fa vincere; ×2 e ×0,5 sul rischio peggiorano |
-| Mondi L2 | 16 nel simulatore/server, **8 nel browser** | Nel browser (interpretato) 8 mondi stanno sotto ~250 ms per mossa |
+| Mondi L2 | 16 nel simulatore/server; nel browser **4 ("Normale") e 12 ("Difficile")** (1.2.0, ADR 0013) | Nel browser (interpretato) 12 mondi stanno sotto ~0,4 s per mossa su desktop; oltre 16 mondi non si guadagna (16 contro 8: 52,2%) |
+| Silenzi in L2 (`InferSilence`) | attivo | Chi gioca la prima carta della distribuzione senza accusare non aveva accusi: 51,5% contro senza (1000 partite, non significativo), costo quasi nullo |
 | `PriorWeight` L2 | **1,0** | Senza prior, con 8 mondi L2 perde contro L1 (44,6%). Screening: 0 → 44%, 0,2 → 59%, 1 → 65%, 2 → 66%, 4 → 61% |
 | Pausa CPU | 450 ms + animazione (0,4–1,3 s) | Leggibilità: l'animazione stessa scandisce le mosse. Mossa CPU nel browser: mediana ~0,9 s |
 | Timeout di turno / grazia riconnessione | 30 s / 30 s | ADR 0004 |
@@ -77,6 +85,8 @@ Mosse legali dalla vista → se c'è un accuso lo dichiara → per N mondi: dist
 
 | Problema | Causa | Soluzione / regola |
 |---|---|---|
+| Migliorare L1 non rende i bot più forti | Con 3 carte in mano e prese obbligatorie le scelte vere sono poche; il risultato tra due L1 è dominato dalla fortuna. Misurato (1.2.0): rischio di presa dell'avversario con la regola dell'asso, maggioranze già decise e valore dinamico dello spincio cambiano il 9,5% delle scelte ma vincono il 50–51% contro la L1 precedente, anche dopo una taratura dei pesi; usati da L2 come politica: 49,5% | Non toccare L1 senza un torneo da migliaia di partite; la forza viene dalla ricerca (L2). Il codice provato è stato tolto: rendeva le simulazioni di L2 due volte più lente |
+| `pkill -f` ha chiuso di nuovo la shell (1.2.0) | Il pattern era nella riga di comando della shell stessa | Fermare i processi per PID: `ps -eo pid,args \| grep "[T]uner" \| awk '{print $1}' \| xargs -r kill` |
 | Property test lenti (31 s) | `ShouldAllBe`/`ShouldContain(predicato)` di Shouldly compilano un expression tree a ogni chiamata | Nei cicli per-mossa usare LINQ + `ShouldBeEmpty()` |
 | Test di architettura rosso su `System.Environment` | Il compilatore genera codice per gli iteratori `yield` che usa `Environment.CurrentManagedThreadId` | Nel motore niente `yield`: restituire array |
 | CA1716 su `Declare`, `Me`, `Error` | Sono parole chiave VB | Disattivato per tutta la solution (solo C#) in `Directory.Build.props` |

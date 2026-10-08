@@ -5,6 +5,7 @@
 @inject IConfiguration Configuration
 @inject IJSRuntime JS
 @inject SettingsService Settings
+@inject StatsService Stats
 
 <PageTitle>Spincio</PageTitle>
 
@@ -34,6 +35,7 @@
                 <a class="btn btn-green" href="online">Gioca online con gli amici</a>
             }
             <button type="button" class="btn btn-dark" @onclick="() => _rulesOpen = true">📖 Regole</button>
+            <button type="button" class="btn btn-dark" @onclick="() => _statsOpen = true">📊 Statistiche</button>
             <button type="button" class="btn btn-dark" @onclick="() => _optionsOpen = true">⚙ Opzioni</button>
         </div>
         <p class="app-version">v@(AppInfo.Version)</p>
@@ -191,6 +193,7 @@ else
                 {
                     <button type="button" class="btn btn-gold" @onclick="CloseMenu">Riprendi</button>
                     <button type="button" class="btn btn-green" @onclick="() => _rulesOpen = true">📖 Regole</button>
+                    <button type="button" class="btn btn-green" @onclick="() => _statsOpen = true">📊 Statistiche</button>
                     <button type="button" class="btn btn-green" @onclick="() => _optionsOpen = true">⚙ Opzioni</button>
                     <button type="button" class="btn btn-red" @onclick="() => _confirmLeave = true">@(Session.CanRestart ? "Abbandona la partita" : "Esci dalla stanza")</button>
                     <p class="menu-info">@Session.Footer</p>
@@ -204,6 +207,11 @@ else
 @if (_rulesOpen)
 {
     <RulesPanel OnClose="() => _rulesOpen = false" />
+}
+
+@if (_statsOpen)
+{
+    <StatsPanel OnClose="() => _statsOpen = false" />
 }
 
 @if (_optionsOpen)
@@ -225,6 +233,7 @@ else
     private bool _confirmLeave;
     private bool _optionsOpen;
     private bool _rulesOpen;
+    private bool _statsOpen;
     private bool _landingPoints;
     private Card? _choosing;
     private IReadOnlyList<PlayCard> _choices = [];
@@ -334,15 +343,20 @@ else
         await session.AcknowledgeSummaryAsync();
     }
 
-    private Task NewGameAsync()
+    private async Task NewGameAsync()
     {
+        if (!Session.IsStarted && _hasSave)
+        {
+            await Stats.RecordAbandonAsync(); // the saved match is replaced
+        }
+
         ulong seed = ulong.TryParse(SeedParameter, System.Globalization.CultureInfo.InvariantCulture, out var requested)
             ? requested
             : (ulong)Random.Shared.NextInt64(long.MaxValue);
         SeedParameter = null; // "Nuova partita" after the end gets a fresh deal
         var local = Host.Local;
         _sweepsAtStart = 0;
-        return local.NewGameAsync(seed, _settings.Difficulty);
+        await local.NewGameAsync(seed, _settings.Difficulty);
     }
 
     private async Task ResumeAsync()
@@ -373,6 +387,11 @@ else
     {
         CloseMenu();
         CancelChoice();
+        if (Session.IsStarted && Session.Result is null)
+        {
+            await Stats.RecordAbandonAsync();
+        }
+
         await Session.LeaveAsync();
         Host.UseOffline();
         _hasSave = await Host.Local.HasSavedGameAsync();
