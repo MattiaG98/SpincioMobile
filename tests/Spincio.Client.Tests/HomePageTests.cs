@@ -139,8 +139,8 @@ public class HomePageTests : BunitContext
     {
         var page = Render<Home>();
 
-        AppInfo.Version.ShouldBe("1.2.0");
-        page.Find("section.start .app-version").TextContent.ShouldBe("v1.2.0");
+        AppInfo.Version.ShouldBe("1.2.1");
+        page.Find("section.start .app-version").TextContent.ShouldBe("v1.2.1");
     }
 
     [Fact]

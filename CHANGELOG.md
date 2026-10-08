@@ -4,6 +4,12 @@ Versioni dell'app Spincio ([versionamento semantico](https://semver.org/lang/it/
 `Directory.Build.props` (`<Version>`) e si vede nel menu iniziale e nel menu di pausa. Le regole hanno una versione propria
 (`docs/SPEC.md`, "regole v1.4" nel menu di pausa).
 
+## 1.2.1 — 09/10/2026
+- **Aggiornamenti visibili**: l'app installata controlla se c'è una versione nuova ogni volta che torna in primo piano
+  (su iPhone l'app viene ripresa senza ricaricarsi, quindi prima non controllava quasi mai). Quando la versione nuova è
+  scaricata compare in alto "È pronta una nuova versione di Spincio" con il pulsante **Aggiorna**: un tocco e l'app si
+  ricarica con la versione nuova. La partita in corso resta salvata (si riprende dal menu).
+
 ## 1.2.0 — 08/10/2026
 - **Statistiche** (dal menu iniziale e dal menu di pausa): partite giocate, vinte e percentuale; serie di vittorie attuale e
   migliore; abbandonate; risultati contro CPU normale, CPU difficile e online; smazzate, punti della squadra (con la media),

@@ -5,6 +5,8 @@ self.importScripts('./service-worker-assets.js');
 self.addEventListener('install', event => event.waitUntil(onInstall(event)));
 self.addEventListener('activate', event => event.waitUntil(onActivate(event)));
 self.addEventListener('fetch', event => event.respondWith(onFetch(event)));
+// The page asks a new version to take over when the player taps "Aggiorna" (index.html).
+self.addEventListener('message', event => { if (event.data === 'skipWaiting') self.skipWaiting(); });
 
 const cacheNamePrefix = 'offline-cache-';
 const cacheName = `${cacheNamePrefix}${self.assetsManifest.version}`;
