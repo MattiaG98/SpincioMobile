@@ -29,7 +29,7 @@
 
 | Voce | Valore | Come si rimisura |
 |---|---|---|
-| Test automatici | **221** (Engine 85, Bots 33, Client 59, Architecture 23, Server 21) | `dotnet test Spincio.slnx` |
+| Test automatici | **222** (Engine 85, Bots 33, Client 60, Architecture 23, Server 21) | `dotnet test Spincio.slnx` |
 | L1 vs L0 | 92,9% (seed 1, regole v1.3 con asso pigliatutto); era 99,3% con la v1.2 | `--x Greedy --y Random` |
 | L2 vs L1 | 57,8% (4 mondi, 800 partite, seed 9000); 55,5% (8) / 60,3% (16) / 60,3% (32) su 400 partite, seed 5000 | `--x Pimc --y Greedy --worlds N` |
 | Livelli 1.2.0 contro 1.1.0 | "Normale" 59,7% · "Difficile" 53,1% (1000 partite ciascuno) | progetto di confronto, vedi ADR 0013 |

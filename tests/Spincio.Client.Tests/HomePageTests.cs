@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Components;
 using Bunit;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -143,14 +144,20 @@ public class HomePageTests : BunitContext
         page.Find("section.start .app-version").TextContent.ShouldBe("v1.2.1");
     }
 
-    [Fact]
-    public void Table_tells_the_layout_how_many_columns_each_row_count_needs()
+    /// <summary>Seed 3: the CPUs empty the table before my first turn; seed 7: there are cards on it.</summary>
+    [Theory]
+    [InlineData("3", true)]
+    [InlineData("7", false)]
+    public void Table_tells_the_layout_how_many_columns_each_row_count_needs(string seed, bool emptyTable)
     {
+        Services.GetRequiredService<NavigationManager>().NavigateTo($"/?seed={seed}");
         var page = Render<Home>();
         page.Find("section.start button").Click();
         page.WaitForAssertion(() => page.FindAll(".hand .card").Count.ShouldBe(3));
 
-        var n = page.FindAll(".table .card").Count;
+        int count = page.FindAll(".table .card").Count;
+        (count == 0).ShouldBe(emptyTable, "the deal for this seed changed: pick another seed");
+        var n = Math.Max(count, 1); // an empty table is sized like one card
         page.Find(".table").GetAttribute("style")
             .ShouldBe($"--c1: {n}; --c2: {(n + 1) / 2}; --c3: {(n + 2) / 3}; --c4: {(n + 3) / 4}");
     }
