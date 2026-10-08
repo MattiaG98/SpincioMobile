@@ -17,17 +17,22 @@ internal sealed class RecordingNotifier : IRoomNotifier
 
     public ConcurrentDictionary<string, MatchReveal> Reveals { get; } = new();
 
+    /// <summary>Every message in the order it was sent: "room", "room+commitment" or "update".</summary>
+    public ConcurrentQueue<(string Connection, string Kind)> Sequence { get; } = new();
+
     public GameUpdate Last(string connection) => Updates[connection][^1];
 
     public Task RoomChanged(string connectionId, RoomInfo room)
     {
         Rooms[connectionId] = room;
+        Sequence.Enqueue((connectionId, room.Commitment is null ? "room" : "room+commitment"));
         return Task.CompletedTask;
     }
 
     public Task Updated(string connectionId, GameUpdate update)
     {
         Updates.GetOrAdd(connectionId, _ => []).Add(update);
+        Sequence.Enqueue((connectionId, "update"));
         return Task.CompletedTask;
     }
 

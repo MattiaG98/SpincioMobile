@@ -61,4 +61,13 @@ public class PointsGainTests
 
         PointsGain.ForRound(scored, Team.A).ShouldBe([new PointsGain(PointsKind.RoundEnd, PointsGain.Table, Ours: false, 2, null)]);
     }
+
+    [Fact]
+    public void A_mariana_shows_its_name_with_the_sweep_point_or_with_no_points()
+    {
+        var mariana = new CardPlayed(new Seat(2), Card.Parse("JD"), [Card.Parse("5C"), Card.Parse("3S")], IsSweep: false);
+
+        PointsGain.For(mariana, Me).ShouldBe(new PointsGain(PointsKind.Mariana, PointsGain.Table, Ours: true, 0, "MARIANA"));
+        PointsGain.For(mariana with { IsSweep = true }, Me).ShouldBe(new PointsGain(PointsKind.Sweep, PointsGain.Table, Ours: true, 1, "MARIANA"));
+    }
 }

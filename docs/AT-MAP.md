@@ -49,5 +49,7 @@ Per eseguirli: `dotnet test Spincio.slnx --filter "FullyQualifiedName~AT_"`.
 | AT-37 | `AT_37_ace_on_the_last_play_takes_the_table_without_sweep` | `AceTests.cs` |
 | AT-38 | `AT_38_ace_must_take_the_whole_table_or_the_ace_on_it` | `AceTests.cs` |
 | AT-39 | `AT_39_ace_taking_the_only_ace_on_the_table_is_a_sweep` | `AceTests.cs` |
+| AT-40 | `AT_40_mariana_is_a_jack_taking_a_five_and_a_three` | `CalloutTests.cs` |
+| AT-40 | `AT_40_mariana_scores_nothing_and_a_mariana_sweep_is_still_one_point` | `CalloutTests.cs` |
 
 Test aggiuntivi sui casi limite: `C1_…`, `C6_…`, `F7_all_coins_also_wins_a_tiebreak_match`. Invarianti property-based in `PropertyTests.cs`.

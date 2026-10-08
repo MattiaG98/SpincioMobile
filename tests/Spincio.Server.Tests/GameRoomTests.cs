@@ -38,6 +38,25 @@ public class GameRoomTests
         (await h.Room.JoinAsync("Late", "c-late")).Ok.ShouldBeFalse();
     }
 
+    /// <summary>The commitment is published before anyone sees a card, so it cannot depend on the deal.</summary>
+    [Fact]
+    public async Task The_commitment_reaches_every_player_before_the_first_cards()
+    {
+        await using var h = new RoomHarness();
+        var ada = await h.JoinAsync("Ada", "c-ada");
+        await h.JoinAsync("Bea", "c-bea");
+
+        (await h.Room.StartAsync(ada.Token!)).Ok.ShouldBeTrue();
+
+        foreach (var connection in new[] { "c-ada", "c-bea" })
+        {
+            var kinds = h.Notifier.Sequence.Where(m => m.Connection == connection).Select(m => m.Kind).ToList();
+            int commitment = kinds.IndexOf("room+commitment");
+            commitment.ShouldBeGreaterThanOrEqualTo(0);
+            commitment.ShouldBeLessThan(kinds.IndexOf("update"), connection);
+        }
+    }
+
     [Fact]
     public async Task Each_player_receives_only_their_own_hand()
     {

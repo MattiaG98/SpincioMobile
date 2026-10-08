@@ -73,6 +73,24 @@ public static class GameText
         _ => "punteggio",
     };
 
+    /// <summary>
+    /// The banner a play deserves: "MARIANA" for a jack taking a 5 and a 3 (instead of "Spazzino!" when it also empties
+    /// the table: the sweep still scores), "Spazzino!" for any other sweep, null otherwise.
+    /// </summary>
+    public static string? Banner(CardPlayed play)
+    {
+        ArgumentNullException.ThrowIfNull(play);
+        return play.IsMariana() ? "MARIANA" : play.IsSweep ? "Spazzino!" : null;
+    }
+
+    private static string Callout(CardPlayed play) => (play.IsMariana(), play.IsSweep) switch
+    {
+        (true, true) => " — MARIANA! +1",
+        (true, false) => " — MARIANA!",
+        (false, true) => " — SPAZZINO!",
+        _ => "",
+    };
+
     /// <summary>One feed line for an event the viewer may see, or null for events not worth a line.</summary>
     public static string? Describe(GameEvent gameEvent, Seat me, Func<Seat, string> seatName) => gameEvent switch
     {
@@ -81,7 +99,7 @@ public static class GameText
         DeckReshuffled => "Almeno due assi in tavola: si rimescola",
         Declared d => $"{Subject(d.Seat, me, seatName, "accusi", "accusa")}: {DeclarationName(d.Kind)} (+{d.Points})",
         CardPlayed { Captured.IsEmpty: true } p => $"{Subject(p.Seat, me, seatName, "cali", "cala")} {CardName(p.Card)}",
-        CardPlayed p => $"{Subject(p.Seat, me, seatName, "prendi", "prende")} {Cards(p.Captured)} con {CardName(p.Card)}" + (p.IsSweep ? " — SPAZZINO!" : ""),
+        CardPlayed p => $"{Subject(p.Seat, me, seatName, "prendi", "prende")} {Cards(p.Captured)} con {CardName(p.Card)}" + Callout(p),
         TableAwarded { Team: null } a => $"Carte rimaste in tavola a nessuno: {Cards(a.Cards)}",
         TableAwarded a => $"Carte rimaste in tavola a {TeamName(a.Team!.Value, me)}: {Cards(a.Cards)}",
         TiebreakStarted t => $"Pareggio! Si gioca lo spareggio {t.MatchNumber}",

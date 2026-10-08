@@ -4,6 +4,13 @@ Versioni dell'app Spincio ([versionamento semantico](https://semver.org/lang/it/
 `Directory.Build.props` (`<Version>`) e si vede nel menu iniziale e nel menu di pausa. Le regole hanno una versione propria
 (`docs/SPEC.md`, "regole v1.4" nel menu di pausa).
 
+## 1.3.0 — 09/10/2026
+- **Mariana**: quando un giocatore prende un 5 e un 3 (di qualunque seme) con un fante compare la scritta **MARIANA**.
+  Non dà punti. Se la presa svuota la tavola compare MARIANA al posto di "Spazzino!" e lo spazzino vale comunque 1 punto.
+  Anche nello storico delle mosse ("— MARIANA!") e nella pagina Regole. Regolamento: v1.4 con la nota "scritte" e AT-40;
+  nessuna regola cambiata, quindi le partite salvate si riprendono.
+- Online (server): all'inizio della partita l'impegno anti-imbroglio arriva prima delle carte (prima arrivava subito dopo).
+
 ## 1.2.1 — 09/10/2026
 - **Aggiornamenti visibili**: l'app installata controlla se c'è una versione nuova ogni volta che torna in primo piano
   (su iPhone l'app viene ripresa senza ricaricarsi, quindi prima non controllava quasi mai). Quando la versione nuova è

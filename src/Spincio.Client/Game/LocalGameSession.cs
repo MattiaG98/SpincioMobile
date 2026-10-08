@@ -83,7 +83,9 @@ public sealed class LocalGameSession : IGameSession
 
     public IMoveAnimator? Animator { get; set; }
 
-    public int SweepCount { get; private set; }
+    public int BannerCount { get; private set; }
+
+    public string? BannerText { get; private set; }
 
     public string Footer => $"Partita n. {Seed} · CPU {(Difficulty == BotLevel.Pimc ? "difficile" : "normale")} · regole v{RulesVersion}";
 
@@ -229,7 +231,8 @@ public sealed class LocalGameSession : IGameSession
         PendingSummary = null;
         Result = null;
         Error = null;
-        SweepCount = 0;
+        BannerCount = 0;
+        BannerText = null;
     }
 
     private void Accept(Transition transition, string? command)
@@ -247,9 +250,10 @@ public sealed class LocalGameSession : IGameSession
 
         foreach (var e in transition.EventsFor(Human))
         {
-            if (e is CardPlayed { IsSweep: true })
+            if (e is CardPlayed played && GameText.Banner(played) is { } banner)
             {
-                SweepCount++;
+                BannerCount++;
+                BannerText = banner;
             }
 
             if (GameText.Describe(e, Human, SeatName) is { } line)

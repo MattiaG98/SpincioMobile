@@ -226,4 +226,19 @@ public class LocalGameSessionTests
         normal.ShouldNotBeSameAs(hard);
         LocalGameSession.NormalPimc.Worlds.ShouldBeLessThan(LocalGameSession.BrowserPimc.Worlds);
     }
+
+    [Fact]
+    public async Task Every_sweep_and_mariana_raises_a_banner_with_its_text()
+    {
+        var session = NewSession();
+        var banners = new List<string>();
+        session.LiveEvents += events => banners.AddRange(events.OfType<CardPlayed>().Select(GameText.Banner).OfType<string>());
+        await session.NewGameAsync(seed: 41);
+
+        await PlayHumanTurnsAsync(session);
+
+        banners.ShouldNotBeEmpty();
+        session.BannerCount.ShouldBe(banners.Count);
+        session.BannerText.ShouldBe(banners[^1]);
+    }
 }

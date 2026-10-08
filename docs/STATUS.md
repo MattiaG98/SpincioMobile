@@ -23,13 +23,14 @@
 | M13 | Versione 1.0.0 e schermo di gioco fisso | ✅ Fatto | Versione nel menu (ADR 0012, `CHANGELOG.md`); niente scorrimento; tavola di misura fissa con carte che si rimpiccioliscono (fino a 16, `layout.mjs` su 3 schermi); carta giocata che si rimpicciolisce verso la tavola |
 | M14 | Animazione dei punti (1.1.0) | ✅ Fatto | "+N" vola sul punteggio della squadra per spazzini, accusi e fine smazzata (alla chiusura del riepilogo); `points.mjs` nel browser |
 | M15 | Statistiche e CPU più forti (1.2.0) | ✅ Fatto | Pannello Statistiche (menu e pausa); "Normale" = L2 4 mondi (59,7% contro il vecchio), "Difficile" = L2 12 mondi + silenzi (53,1%); accusi delle CPU verificati su partite intere (ADR 0013) |
+| — | Scritta MARIANA (1.3.0, dettata dal proprietario) | ✅ Fatto | Fante che prende 5 e 3: scritta MARIANA, nessun punto; al posto di "Spazzino!" se svuota la tavola (lo spazzino vale). AT-40, pagina Regole |
 | — | Regola P8 "asso pigliatutto" (SPEC v1.3 → v1.4, dettata dal proprietario) | ✅ v1.3 (PR #6); v1.4 in revisione: con un asso in tavola si prende solo quello | AT-33…AT-39; versione delle regole nel piè di pagina | AT-33…AT-38; salvataggi v1.2 non ripresi |
 
 ## Metriche
 
 | Voce | Valore | Come si rimisura |
 |---|---|---|
-| Test automatici | **222** (Engine 85, Bots 33, Client 60, Architecture 23, Server 21) | `dotnet test Spincio.slnx` |
+| Test automatici | **234** (Engine 93, Bots 33, Client 63, Architecture 23, Server 22) | `dotnet test Spincio.slnx` |
 | L1 vs L0 | 92,9% (seed 1, regole v1.3 con asso pigliatutto); era 99,3% con la v1.2 | `--x Greedy --y Random` |
 | L2 vs L1 | 57,8% (4 mondi, 800 partite, seed 9000); 55,5% (8) / 60,3% (16) / 60,3% (32) su 400 partite, seed 5000 | `--x Pimc --y Greedy --worlds N` |
 | Livelli 1.2.0 contro 1.1.0 | "Normale" 59,7% · "Difficile" 53,1% (1000 partite ciascuno) | progetto di confronto, vedi ADR 0013 |
@@ -68,4 +69,4 @@
 | 29/09–01/10/2026 | Merge PR #1, GitHub Pages attivo (https://mattiag98.github.io/SpincioMobile/), app installata su iPhone dal proprietario; M9-A (PR #2); M9-B carte piacentine |
 | 02/10–07/10/2026 | M10–M12, regola P8 (SPEC v1.4), "napola" → "spincio"; versione 1.0.0 (M13) |
 | 08/10/2026 | Animazione dei punti, versione 1.1.0 (M14); statistiche e CPU più forti, versione 1.2.0 (M15) |
-| 09/10/2026 | Barra "Aggiorna" e controllo degli aggiornamenti al ritorno in primo piano, versione 1.2.1 |
+| 09/10/2026 | Barra "Aggiorna" e controllo degli aggiornamenti al ritorno in primo piano, versione 1.2.1; scritta MARIANA, versione 1.3.0 |

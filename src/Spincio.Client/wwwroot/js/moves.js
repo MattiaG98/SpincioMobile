@@ -155,8 +155,9 @@
         return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
     }
 
-    // gains: [{ kind: 'sweep' | 'declaration' | 'roundend', from: 0-3 (seat, relative to me) or -1 (table),
+    // gains: [{ kind: 'sweep' | 'declaration' | 'roundend' | 'mariana', from: 0-3 (seat, relative to me) or -1 (table),
     //           ours: bool, points: n, label: text or null }]. Several gains play together (end of round: both teams).
+    // With 0 points (a Mariana that does not sweep) only the label shows, and it fades where it is.
     async function points(gains) {
         if (!gains || !gains.length || speed === 0 || reducedMotion()) return;
         const boxes = document.querySelectorAll('.scorebar .score'); // "Noi", then "Loro"
@@ -176,9 +177,11 @@
             label.textContent = g.label;
             el.appendChild(label);
         }
-        const value = document.createElement('strong');
-        value.textContent = `+${g.points}`;
-        el.appendChild(value);
+        if (g.points > 0) {
+            const value = document.createElement('strong');
+            value.textContent = `+${g.points}`;
+            el.appendChild(value);
+        }
         layer().appendChild(el);
 
         const from = g.from < 0 ? centreOf(table) : seatCentre(g.from);
@@ -193,6 +196,12 @@
         await el.animate([{ transform: 'scale(.3)', opacity: 0 }, { transform: 'scale(1.15)', opacity: 1, offset: .7 }, { transform: 'scale(1)', opacity: 1 }],
             { duration: t(POP), easing: 'ease-out', fill: 'forwards' }).finished;
         await wait(t(SHOW));
+        if (g.points <= 0) {
+            await el.animate([{ transform: 'none', opacity: 1 }, { transform: 'scale(1.15)', opacity: 0 }],
+                { duration: t(TO_SCORE), easing: 'ease-in', fill: 'forwards' }).finished;
+            el.remove();
+            return;
+        }
         const end = centreOf(box);
         await el.animate([{ transform: 'none', opacity: 1 }, { transform: `translate(${end.x - x}px, ${end.y - y}px) scale(.4)`, opacity: .85 }],
             { duration: t(TO_SCORE), easing: 'cubic-bezier(.45,0,.8,.5)', fill: 'forwards' }).finished;

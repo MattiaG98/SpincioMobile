@@ -168,6 +168,9 @@ public sealed partial class GameRoom : IAsyncDisposable
         _rngs = [.. Seat.All.Select(s => new Pcg32(_seed, 100UL + (ulong)s.Index))];
         _log.Clear();
 
+        // The commitment goes out before anyone sees a card (it must not depend on the deal); then the deal, then
+        // the room again, now started.
+        await BroadcastRoomAsync();
         await AcceptAsync(SpincioEngine.NewMatch(_seed), command: null);
         await BroadcastRoomAsync();
         return CommandResult.Success;

@@ -123,9 +123,9 @@ else
         </section>
     </main>
 
-    @if (Session.SweepCount > 0 && Session.SweepCount != _sweepsAtStart)
+    @if (Session.BannerCount > 0 && Session.BannerCount != _bannersAtStart)
     {
-        <div class="sweep-flash" @key="Session.SweepCount" aria-hidden="true">Spazzino!</div>
+        <div class="sweep-flash" @key="Session.BannerCount" aria-hidden="true">@Session.BannerText</div>
     }
 
     @if (_choosing is { } chosen)
@@ -227,7 +227,7 @@ else
     private IGameSession? _subscribed;
     private IMoveAnimator? _animator;
     private bool _hasSave;
-    private int _sweepsAtStart;
+    private int _bannersAtStart;
     private GameSettings _settings = new();
     private bool _menuOpen;
     private bool _confirmLeave;
@@ -275,7 +275,7 @@ else
         _subscribed = Session;
         _subscribed.Changed += OnSessionChanged;
         _subscribed.Animator = _animator ??= new JsMoveAnimator(JS); // card plays fly over this page
-        _sweepsAtStart = Session.SweepCount; // no animation for sweeps replayed on resume
+        _bannersAtStart = Session.BannerCount; // no banner for plays replayed on resume
     }
 
     private void OnCurrentChanged()
@@ -355,7 +355,7 @@ else
             : (ulong)Random.Shared.NextInt64(long.MaxValue);
         SeedParameter = null; // "Nuova partita" after the end gets a fresh deal
         var local = Host.Local;
-        _sweepsAtStart = 0;
+        _bannersAtStart = 0;
         await local.NewGameAsync(seed, _settings.Difficulty);
     }
 
@@ -363,7 +363,7 @@ else
     {
         if (await Host.Local.TryResumeAsync())
         {
-            _sweepsAtStart = Host.Local.SweepCount;
+            _bannersAtStart = Host.Local.BannerCount;
         }
         else
         {
