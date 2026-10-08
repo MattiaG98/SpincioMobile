@@ -46,14 +46,16 @@ else
     var us = me.Team;
     var legal = Session.LegalCommands;
     var highlighted = _choices.SelectMany(c => c.Capture?.Cards ?? []).ToHashSet();
+    // While the round summary is open, the end-of-round points have not flown in yet: they land when it closes.
+    var score = Session.PendingSummary is { } pending ? PointsGain.ScoreBefore(pending) : view.Score;
 
     <header class="scorebar">
         <button type="button" class="icon-btn" aria-label="Menu" @onclick="() => _menuOpen = true">☰</button>
-        <div class="score"><span>Noi</span><strong>@view.Score.For(us)</strong></div>
+        <div class="score"><span>Noi</span><strong>@score.For(us)</strong></div>
         <div class="info">
             @(view.MatchNumber > 0 ? $"Spareggio {view.MatchNumber} · " : "")Smazzata @view.RoundNumber · Mazzo @view.DeckCount
         </div>
-        <div class="score"><span>Loro</span><strong>@view.Score.For(GameText.Other(us))</strong></div>
+        <div class="score"><span>Loro</span><strong>@score.For(GameText.Other(us))</strong></div>
     </header>
 
     <main class="board">
@@ -148,7 +150,10 @@ else
 
     @if (Session.PendingSummary is { } scored)
     {
-        <RoundSummary Scored="scored" Us="us" OnClose="Session.AcknowledgeSummaryAsync" />
+        @if (!_landingPoints)
+        {
+            <RoundSummary Scored="scored" Us="us" OnClose="CloseSummaryAsync" />
+        }
     }
     else if (Session.Result is { } result)
     {
@@ -220,6 +225,7 @@ else
     private bool _confirmLeave;
     private bool _optionsOpen;
     private bool _rulesOpen;
+    private bool _landingPoints;
     private Card? _choosing;
     private IReadOnlyList<PlayCard> _choices = [];
 
@@ -298,6 +304,34 @@ else
     {
         _choosing = null;
         _choices = [];
+    }
+
+    // Closing the round summary: the end-of-round points fly from the table to the scores, then the game goes on.
+    private async Task CloseSummaryAsync()
+    {
+        var session = Session;
+        if (_landingPoints || session.PendingSummary is not { } scored)
+        {
+            return;
+        }
+
+        var gains = PointsGain.ForRound(scored, session.Me.Team);
+        if (gains.Count > 0 && _animator is { } animator)
+        {
+            _landingPoints = true;
+            StateHasChanged();
+            await Task.Yield(); // let the summary disappear before the points start
+            try
+            {
+                await animator.PointsAsync(gains);
+            }
+            finally
+            {
+                _landingPoints = false;
+            }
+        }
+
+        await session.AcknowledgeSummaryAsync();
     }
 
     private Task NewGameAsync()
