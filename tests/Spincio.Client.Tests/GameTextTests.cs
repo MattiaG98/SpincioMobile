@@ -54,4 +54,13 @@ public class GameTextTests
         GameText.Banner(sweep).ShouldBe("Spazzino!");
         GameText.Banner(sweep with { IsSweep = false }).ShouldBeNull();
     }
+
+    [Fact]
+    public void Each_cpu_has_its_own_avatar_next_to_its_name()
+    {
+        string?[] avatars = [.. Enumerable.Range(0, 4).Select(p => GameText.Avatar(GameText.AtPosition(Me, p), Me))];
+
+        avatars.ShouldBe([null, "avatars/tito.svg", "avatars/titti.svg", "avatars/vava.svg"]);
+        GameText.SeatName(GameText.AtPosition(Me, 2), Me).ShouldBe("Titti"); // same position, same player
+    }
 }

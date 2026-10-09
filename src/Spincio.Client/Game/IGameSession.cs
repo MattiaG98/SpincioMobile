@@ -55,6 +55,9 @@ public interface IGameSession
 
     string SeatName(Seat seat);
 
+    /// <summary>Picture of a seat's player (offline CPUs), or null: the seat then shows the name's initial.</summary>
+    string? SeatAvatar(Seat seat);
+
     Task PlayAsync(Command command);
 
     Task AcknowledgeSummaryAsync();

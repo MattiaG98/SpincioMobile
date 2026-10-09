@@ -4,6 +4,12 @@ Versioni dell'app Spincio ([versionamento semantico](https://semver.org/lang/it/
 `Directory.Build.props` (`<Version>`) e si vede nel menu iniziale e nel menu di pausa. Le regole hanno una versione propria
 (`docs/SPEC.md`, "regole v1.4" nel menu di pausa).
 
+## 1.5.0 — 09/10/2026
+- **Avatar delle CPU**: ogni giocatore ha il suo ritratto accanto al nome, disegnato apposta per Spincio. **Titti**
+  (compagna: allegra, coda di cavallo), **Tito** (avversario: coppola, baffi, l'occhiolino del furbo) e **Vava**
+  (avversaria: chignon grigio e occhiali, la saggia del tavolo). Bordo oro per il compagno, rosso per gli avversari;
+  quando tocca a loro "ci pensano" ondeggiando. Nel gioco online al posto del ritratto c'è l'iniziale del nome.
+
 ## 1.4.0 — 09/10/2026
 - **Contributi**: nuovo pannello dal menu iniziale con chi ha contribuito a Spincio (Megako, Nandone) e la provenienza
   delle carte. Nel menu, Regole, Statistiche, Opzioni e Contributi sono ora su una griglia 2×2: il menu resta senza

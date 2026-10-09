@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Titti">
+  <!-- Titti, the partner: cheerful, ponytail, gold earrings. Original drawing for Spincio. -->
+  <defs><clipPath id="c"><circle cx="32" cy="32" r="32"/></clipPath></defs>
+  <g clip-path="url(#c)">
+    <rect width="64" height="64" fill="#8fd3c7"/>
+    <path d="M6 66 C8 51 19 46 32 46 C45 46 56 51 58 66 Z" fill="#2a9d8f"/>
+    <path d="M26 46 L32 53 L38 46 Z" fill="#f6f1e7"/>
+    <rect x="27" y="37" width="10" height="11" rx="4" fill="#e3ae6f"/>
+    <ellipse cx="50" cy="25" rx="5.5" ry="10" transform="rotate(18 50 25)" fill="#6b3e26"/>
+    <circle cx="46.5" cy="17" r="2.3" fill="#f2b705"/>
+    <circle cx="19.5" cy="30" r="3" fill="#f1c27d"/>
+    <circle cx="44.5" cy="30" r="3" fill="#f1c27d"/>
+    <circle cx="19.5" cy="34.5" r="1.4" fill="#f2b705"/>
+    <circle cx="44.5" cy="34.5" r="1.4" fill="#f2b705"/>
+    <ellipse cx="32" cy="28" rx="13" ry="15" fill="#f1c27d"/>
+    <path d="M18.5 28 C17 14 25 9.5 33 9.5 C41.5 9.5 47.5 15 45.5 28 C43 21 39 18.5 34 19.5 C30 17.5 23 20.5 18.5 28 Z" fill="#6b3e26"/>
+    <path d="M24 24.5 Q27 22.8 30 24.3" stroke="#4a2a18" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+    <path d="M34 24.3 Q37 22.8 40 24.5" stroke="#4a2a18" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+    <ellipse cx="27" cy="29" rx="1.9" ry="2.3" fill="#2b2b2b"/>
+    <ellipse cx="37" cy="29" rx="1.9" ry="2.3" fill="#2b2b2b"/>
+    <circle cx="27.6" cy="28.2" r=".6" fill="#fff"/>
+    <circle cx="37.6" cy="28.2" r=".6" fill="#fff"/>
+    <circle cx="23.5" cy="34" r="2.4" fill="#f28b82" opacity=".55"/>
+    <circle cx="40.5" cy="34" r="2.4" fill="#f28b82" opacity=".55"/>
+    <path d="M26.5 35.5 Q32 41.5 37.5 35.5 Z" fill="#8c2f2a"/>
+    <path d="M28 36 Q32 37.3 36 36" stroke="#fff" stroke-width="1.2" fill="none"/>
+  </g>
+</svg>

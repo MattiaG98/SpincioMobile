@@ -261,7 +261,7 @@ else
     private RenderFragment SeatAt(PlayerView view, int position)
     {
         var seat = GameText.AtPosition(Session.Me, position);
-        return @<SeatView Seat="seat" Position="position" Name="@Session.SeatName(seat)"
+        return @<SeatView Seat="seat" Position="position" Name="@Session.SeatName(seat)" Avatar="@Session.SeatAvatar(seat)" Ours="seat.Team == Session.Me.Team"
                           CardCount="view.HandCounts[seat.Index]" IsTurn="view.ToPlay == seat" IsDealer="view.Dealer == seat"
                           Declarations="view.Declarations.Where(d => d.Seat == seat)" />;
     }
