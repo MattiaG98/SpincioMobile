@@ -140,8 +140,8 @@ public class HomePageTests : BunitContext
     {
         var page = Render<Home>();
 
-        AppInfo.Version.ShouldBe("1.4.0");
-        page.Find("section.start .app-version").TextContent.ShouldBe("v1.4.0");
+        AppInfo.Version.ShouldBe("1.5.0");
+        page.Find("section.start .app-version").TextContent.ShouldBe("v1.5.0");
     }
 
     /// <summary>Seed 3: the CPUs empty the table before my first turn; seed 7: there are cards on it.</summary>
@@ -232,5 +232,21 @@ public class HomePageTests : BunitContext
         page.FindAll(".credits-people li").Select(li => li.TextContent).ShouldBe(["Megako", "Nandone"]);
         page.Find(".credits .btn-gold").Click();
         page.FindAll(".credits").ShouldBeEmpty();
+    }
+
+    [Fact]
+    public void Seats_show_each_cpu_avatar_with_a_team_ring()
+    {
+        var page = Render<Home>();
+        page.Find("section.start button").Click();
+        page.WaitForAssertion(() => page.FindAll(".hand .card").Count.ShouldBe(3));
+
+        string Avatar(int position) => page.Find($".seat-{position} img.avatar").GetAttribute("src")!;
+        Avatar(1).ShouldBe("avatars/tito.svg");
+        Avatar(2).ShouldBe("avatars/titti.svg");
+        Avatar(3).ShouldBe("avatars/vava.svg");
+        page.Find(".seat-2 .avatar").ClassList.ShouldContain("ours");
+        page.Find(".seat-1 .avatar").ClassList.ShouldContain("theirs");
+        page.Find(".seat-3 .avatar").ClassList.ShouldContain("theirs");
     }
 }

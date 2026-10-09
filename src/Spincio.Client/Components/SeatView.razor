@@ -1,7 +1,17 @@
 @using Spincio.Client.Game
 @* Another seat at the table. Position is relative to the viewer: 1 = right, 2 = across (partner), 3 = left. *@
 <div class="seat seat-@Position @(IsTurn ? "turn" : "")">
-    <div class="seat-name">@Name@if (IsDealer) {<small>mazziere</small>}</div>
+    <div class="seat-who">
+        @if (Avatar is { } picture)
+        {
+            <img class="avatar @(Ours ? "ours" : "theirs")" src="@picture" alt="" draggable="false" />
+        }
+        else
+        {
+            <span class="avatar initial @(Ours ? "ours" : "theirs")" aria-hidden="true">@Initial</span>
+        }
+        <div class="seat-name">@Name@if (IsDealer) {<small>mazziere</small>}</div>
+    </div>
     <div class="seat-cards">
         @for (int i = 0; i < CardCount; i++)
         {
@@ -23,6 +33,14 @@
     [Parameter, EditorRequired] public Seat Seat { get; set; }
     [Parameter] public int Position { get; set; }
     [Parameter] public string Name { get; set; } = "";
+
+    /// <summary>The player's picture (<see cref="IGameSession.SeatAvatar"/>); null shows the name's initial.</summary>
+    [Parameter] public string? Avatar { get; set; }
+
+    /// <summary>Partner (gold ring) or opponent (red ring).</summary>
+    [Parameter] public bool Ours { get; set; }
+
+    private string Initial => string.IsNullOrEmpty(Name) ? "?" : Name[..1].ToUpperInvariant();
     [Parameter] public int CardCount { get; set; }
     [Parameter] public bool IsTurn { get; set; }
     [Parameter] public bool IsDealer { get; set; }

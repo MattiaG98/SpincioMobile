@@ -93,6 +93,8 @@ public sealed class LocalGameSession : IGameSession
 
     public string SeatName(Seat seat) => GameText.SeatName(seat, Human);
 
+    public string? SeatAvatar(Seat seat) => GameText.Avatar(seat, Human);
+
     public Task LeaveAsync() => AbandonAsync();
 
     private MatchState State => _state ?? throw new InvalidOperationException("No match in progress.");

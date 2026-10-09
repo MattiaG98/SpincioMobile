@@ -24,6 +24,18 @@ public static class GameText
         _ => LeftOpponentName,
     };
 
+    /// <summary>
+    /// Avatar of each offline CPU (original drawings in wwwroot/avatars), by position like <see cref="SeatName"/>:
+    /// Tito on the right, Titti the partner, Vava on the left. None for the viewer.
+    /// </summary>
+    public static string? Avatar(Seat seat, Seat me) => Relative(seat, me) switch
+    {
+        1 => "avatars/tito.svg",
+        2 => "avatars/titti.svg",
+        3 => "avatars/vava.svg",
+        _ => null,
+    };
+
     public static string TeamName(Team team, Seat me) => team == me.Team ? "Noi" : "Loro";
 
     public static Team Other(Team team) => team == Team.A ? Team.B : Team.A;

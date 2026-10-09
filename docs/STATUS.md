@@ -30,7 +30,7 @@
 
 | Voce | Valore | Come si rimisura |
 |---|---|---|
-| Test automatici | **235** (Engine 93, Bots 33, Client 64, Architecture 23, Server 22) | `dotnet test Spincio.slnx` |
+| Test automatici | **237** (Engine 93, Bots 33, Client 66, Architecture 23, Server 22) | `dotnet test Spincio.slnx` |
 | L1 vs L0 | 92,9% (seed 1, regole v1.3 con asso pigliatutto); era 99,3% con la v1.2 | `--x Greedy --y Random` |
 | L2 vs L1 | 57,8% (4 mondi, 800 partite, seed 9000); 55,5% (8) / 60,3% (16) / 60,3% (32) su 400 partite, seed 5000 | `--x Pimc --y Greedy --worlds N` |
 | Livelli 1.2.0 contro 1.1.0 | "Normale" 59,7% · "Difficile" 53,1% (1000 partite ciascuno) | progetto di confronto, vedi ADR 0013 |
@@ -69,4 +69,4 @@
 | 29/09–01/10/2026 | Merge PR #1, GitHub Pages attivo (https://mattiag98.github.io/SpincioMobile/), app installata su iPhone dal proprietario; M9-A (PR #2); M9-B carte piacentine |
 | 02/10–07/10/2026 | M10–M12, regola P8 (SPEC v1.4), "napola" → "spincio"; versione 1.0.0 (M13) |
 | 08/10/2026 | Animazione dei punti, versione 1.1.0 (M14); statistiche e CPU più forti, versione 1.2.0 (M15) |
-| 09/10/2026 | Barra "Aggiorna" e controllo degli aggiornamenti al ritorno in primo piano, versione 1.2.1; scritta MARIANA, versione 1.3.0; pannello Contributi (Megako, Nandone), versione 1.4.0 |
+| 09/10/2026 | Barra "Aggiorna" e controllo degli aggiornamenti al ritorno in primo piano, versione 1.2.1; scritta MARIANA, versione 1.3.0; pannello Contributi (Megako, Nandone), versione 1.4.0; avatar delle CPU, versione 1.5.0 |

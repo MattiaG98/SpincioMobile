@@ -143,6 +143,9 @@ public sealed class RemoteGameSession : IGameSession, IAsyncDisposable
 
     public bool CanRestart => false;
 
+    /// <summary>Online seats are people (or a CPU standing in): no portrait, just the name's initial.</summary>
+    public string? SeatAvatar(Seat seat) => null;
+
     public string SeatName(Seat seat)
     {
         if (seat == Me)

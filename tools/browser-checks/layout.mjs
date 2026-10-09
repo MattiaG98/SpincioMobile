@@ -55,7 +55,7 @@ for (const screen of screens) {
         await page.screenshot({ path: `${out}/layout-${screen.name}-flight.png` });
         flightShot = true;
       }
-      if (moves === 20) await page.screenshot({ path: `${out}/layout-${screen.name}.png` });
+      if (moves === 10) await page.screenshot({ path: `${out}/layout-${screen.name}.png` });
     } else {
       await page.waitForTimeout(150);
     }
