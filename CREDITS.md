@@ -2,6 +2,11 @@
 
 Spincio è un progetto hobby. Il regolamento (`docs/SPEC.md`) è scritto da zero; nessun testo è copiato dal web.
 
+## Contributi
+Hanno contribuito a Spincio (elenco del proprietario, mostrato nell'app nel pannello "Contributi" del menu):
+- Megako
+- Nandone
+
 ## Grafica
 | Elemento | Origine | Licenza |
 |---|---|---|
