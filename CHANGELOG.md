@@ -4,6 +4,11 @@ Versioni dell'app Spincio ([versionamento semantico](https://semver.org/lang/it/
 `Directory.Build.props` (`<Version>`) e si vede nel menu iniziale e nel menu di pausa. Le regole hanno una versione propria
 (`docs/SPEC.md`, "regole v1.4" nel menu di pausa).
 
+## 1.5.1 — 09/10/2026
+- **Avatar**: tutti e tre i personaggi hanno i capelli rossi ricci (richiesta del proprietario). Titti con una nuvola di
+  ricci fino alle spalle, Tito con i ricci che spuntano dalla coppola e baffi rossi, Vava con i ricci raccolti in uno
+  chignon. Il resto dei tratti resta: orecchini, coppola e occhiolino, occhiali e perle.
+
 ## 1.5.0 — 09/10/2026
 - **Avatar delle CPU**: ogni giocatore ha il suo ritratto accanto al nome, disegnato apposta per Spincio. **Titti**
   (compagna: allegra, coda di cavallo), **Tito** (avversario: coppola, baffi, l'occhiolino del furbo) e **Vava**
