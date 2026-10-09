@@ -1,0 +1,33 @@
+@* "Contributi": the people who helped make Spincio, and where the cards come from (CREDITS.md). *@
+<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="credits-title">
+    <div class="panel game-panel credits">
+        <header class="panel-head">
+            <h2 id="credits-title">Contributi</h2>
+            <button type="button" class="close" aria-label="Chiudi" @onclick="OnClose">✕</button>
+        </header>
+
+        <section>
+            <h3>Hanno contribuito</h3>
+            <ul class="credits-people">
+                @foreach (var person in People)
+                {
+                    <li>@person</li>
+                }
+            </ul>
+        </section>
+
+        <section>
+            <h3>Le carte</h3>
+            <p>Carte piacentine dalla scansione del mazzo completo di Florixc su Wikimedia Commons.</p>
+        </section>
+
+        <button type="button" class="btn btn-gold" @onclick="OnClose">Chiudi</button>
+    </div>
+</div>
+
+@code {
+    /// <summary>Contributors, as the owner listed them (also in CREDITS.md).</summary>
+    public static readonly IReadOnlyList<string> People = ["Megako", "Nandone"];
+
+    [Parameter] public EventCallback OnClose { get; set; }
+}

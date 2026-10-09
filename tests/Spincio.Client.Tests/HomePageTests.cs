@@ -140,8 +140,8 @@ public class HomePageTests : BunitContext
     {
         var page = Render<Home>();
 
-        AppInfo.Version.ShouldBe("1.3.0");
-        page.Find("section.start .app-version").TextContent.ShouldBe("v1.3.0");
+        AppInfo.Version.ShouldBe("1.4.0");
+        page.Find("section.start .app-version").TextContent.ShouldBe("v1.4.0");
     }
 
     /// <summary>Seed 3: the CPUs empty the table before my first turn; seed 7: there are cards on it.</summary>
@@ -219,5 +219,18 @@ public class HomePageTests : BunitContext
         page.WaitForAssertion(() => page.Find(".stats").TextContent.ShouldContain("Abbandonate"));
         page.FindAll(".stat-tile").Single(t => t.TextContent.Contains("Abbandonate", StringComparison.Ordinal))
             .QuerySelector("strong")!.TextContent.ShouldBe("1");
+    }
+
+    [Fact]
+    public void Credits_open_from_the_main_menu_and_list_the_contributors()
+    {
+        var page = Render<Home>();
+
+        page.FindAll("section.start button").Single(b => b.TextContent.Contains("Contributi", StringComparison.Ordinal)).Click();
+
+        page.Find("#credits-title").TextContent.ShouldBe("Contributi");
+        page.FindAll(".credits-people li").Select(li => li.TextContent).ShouldBe(["Megako", "Nandone"]);
+        page.Find(".credits .btn-gold").Click();
+        page.FindAll(".credits").ShouldBeEmpty();
     }
 }

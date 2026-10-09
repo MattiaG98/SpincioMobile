@@ -34,9 +34,12 @@
             {
                 <a class="btn btn-green" href="online">Gioca online con gli amici</a>
             }
-            <button type="button" class="btn btn-dark" @onclick="() => _rulesOpen = true">📖 Regole</button>
-            <button type="button" class="btn btn-dark" @onclick="() => _statsOpen = true">📊 Statistiche</button>
-            <button type="button" class="btn btn-dark" @onclick="() => _optionsOpen = true">⚙ Opzioni</button>
+            <div class="menu-grid">
+                <button type="button" class="btn btn-dark" @onclick="() => _rulesOpen = true">📖 Regole</button>
+                <button type="button" class="btn btn-dark" @onclick="() => _statsOpen = true">📊 Statistiche</button>
+                <button type="button" class="btn btn-dark" @onclick="() => _optionsOpen = true">⚙ Opzioni</button>
+                <button type="button" class="btn btn-dark" @onclick="() => _creditsOpen = true">🤝 Contributi</button>
+            </div>
         </div>
         <p class="app-version">v@(AppInfo.Version)</p>
     </section>
@@ -209,6 +212,11 @@ else
     <RulesPanel OnClose="() => _rulesOpen = false" />
 }
 
+@if (_creditsOpen)
+{
+    <CreditsPanel OnClose="() => _creditsOpen = false" />
+}
+
 @if (_statsOpen)
 {
     <StatsPanel OnClose="() => _statsOpen = false" />
@@ -234,6 +242,7 @@ else
     private bool _optionsOpen;
     private bool _rulesOpen;
     private bool _statsOpen;
+    private bool _creditsOpen;
     private bool _landingPoints;
     private Card? _choosing;
     private IReadOnlyList<PlayCard> _choices = [];

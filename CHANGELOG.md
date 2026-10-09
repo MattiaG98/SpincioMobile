@@ -4,6 +4,11 @@ Versioni dell'app Spincio ([versionamento semantico](https://semver.org/lang/it/
 `Directory.Build.props` (`<Version>`) e si vede nel menu iniziale e nel menu di pausa. Le regole hanno una versione propria
 (`docs/SPEC.md`, "regole v1.4" nel menu di pausa).
 
+## 1.4.0 — 09/10/2026
+- **Contributi**: nuovo pannello dal menu iniziale con chi ha contribuito a Spincio (Megako, Nandone) e la provenienza
+  delle carte. Nel menu, Regole, Statistiche, Opzioni e Contributi sono ora su una griglia 2×2: il menu resta senza
+  scorrimento anche su iPhone SE.
+
 ## 1.3.0 — 09/10/2026
 - **Mariana**: quando un giocatore prende un 5 e un 3 (di qualunque seme) con un fante compare la scritta **MARIANA**.
   Non dà punti. Se la presa svuota la tavola compare MARIANA al posto di "Spazzino!" e lo spazzino vale comunque 1 punto.
