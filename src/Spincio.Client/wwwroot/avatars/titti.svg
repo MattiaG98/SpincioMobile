@@ -1,27 +1,41 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Titti">
-  <!-- Titti, the partner: cheerful, ponytail, gold earrings. Original drawing for Spincio. -->
+  <!-- Titti, the partner: cheerful, a cloud of curly red hair, gold earrings. Original drawing for Spincio. -->
   <defs><clipPath id="c"><circle cx="32" cy="32" r="32"/></clipPath></defs>
   <g clip-path="url(#c)">
     <rect width="64" height="64" fill="#8fd3c7"/>
+    <g fill="#c8441c">
+      <circle cx="17" cy="22" r="7"/><circle cx="14.5" cy="30" r="6.5"/><circle cx="16" cy="38.5" r="6"/><circle cx="19.5" cy="45" r="5"/>
+      <circle cx="47" cy="22" r="7"/><circle cx="49.5" cy="30" r="6.5"/><circle cx="48" cy="38.5" r="6"/><circle cx="44.5" cy="45" r="5"/>
+      <circle cx="22" cy="13" r="7"/><circle cx="32" cy="9.5" r="8"/><circle cx="42" cy="13" r="7"/>
+    </g>
+    <g stroke="#8f2a0c" stroke-width="1.2" fill="none" stroke-linecap="round">
+      <path d="M11.5 29 q2.5 -3 5 0"/><path d="M13 38 q2.5 -3 5 0"/><path d="M47 29 q2.5 -3 5 0"/><path d="M46 38 q2.5 -3 5 0"/>
+      <path d="M14 21 q2.5 -3 5 0"/><path d="M45 21 q2.5 -3 5 0"/><path d="M29 7 q3 -3 6 0"/>
+    </g>
     <path d="M6 66 C8 51 19 46 32 46 C45 46 56 51 58 66 Z" fill="#2a9d8f"/>
     <path d="M26 46 L32 53 L38 46 Z" fill="#f6f1e7"/>
     <rect x="27" y="37" width="10" height="11" rx="4" fill="#e3ae6f"/>
-    <ellipse cx="50" cy="25" rx="5.5" ry="10" transform="rotate(18 50 25)" fill="#6b3e26"/>
-    <circle cx="46.5" cy="17" r="2.3" fill="#f2b705"/>
     <circle cx="19.5" cy="30" r="3" fill="#f1c27d"/>
     <circle cx="44.5" cy="30" r="3" fill="#f1c27d"/>
     <circle cx="19.5" cy="34.5" r="1.4" fill="#f2b705"/>
     <circle cx="44.5" cy="34.5" r="1.4" fill="#f2b705"/>
     <ellipse cx="32" cy="28" rx="13" ry="15" fill="#f1c27d"/>
-    <path d="M18.5 28 C17 14 25 9.5 33 9.5 C41.5 9.5 47.5 15 45.5 28 C43 21 39 18.5 34 19.5 C30 17.5 23 20.5 18.5 28 Z" fill="#6b3e26"/>
-    <path d="M24 24.5 Q27 22.8 30 24.3" stroke="#4a2a18" stroke-width="1.4" fill="none" stroke-linecap="round"/>
-    <path d="M34 24.3 Q37 22.8 40 24.5" stroke="#4a2a18" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+    <g fill="#c8441c">
+      <circle cx="20.5" cy="20" r="4.6"/><circle cx="25.5" cy="16" r="5.2"/><circle cx="32" cy="14.5" r="5.4"/><circle cx="38.5" cy="16" r="5.2"/><circle cx="43.5" cy="20" r="4.6"/>
+    </g>
+    <g fill="#e8703a"><circle cx="24" cy="14.5" r="1.6"/><circle cx="33" cy="12.5" r="1.7"/><circle cx="40" cy="15" r="1.5"/></g>
+    <g stroke="#8f2a0c" stroke-width="1.1" fill="none" stroke-linecap="round">
+      <path d="M23 17.5 q2.5 -2.6 5 0"/><path d="M29.5 16.5 q2.5 -2.6 5 0"/><path d="M36 17.5 q2.5 -2.6 5 0"/>
+    </g>
+    <path d="M24 24.5 Q27 22.8 30 24.3" stroke="#8f2a0c" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+    <path d="M34 24.3 Q37 22.8 40 24.5" stroke="#8f2a0c" stroke-width="1.4" fill="none" stroke-linecap="round"/>
     <ellipse cx="27" cy="29" rx="1.9" ry="2.3" fill="#2b2b2b"/>
     <ellipse cx="37" cy="29" rx="1.9" ry="2.3" fill="#2b2b2b"/>
     <circle cx="27.6" cy="28.2" r=".6" fill="#fff"/>
     <circle cx="37.6" cy="28.2" r=".6" fill="#fff"/>
-    <circle cx="23.5" cy="34" r="2.4" fill="#f28b82" opacity=".55"/>
-    <circle cx="40.5" cy="34" r="2.4" fill="#f28b82" opacity=".55"/>
+    <g fill="#d9844a" opacity=".7"><circle cx="24" cy="32.5" r=".55"/><circle cx="25.6" cy="33.4" r=".55"/><circle cx="38.4" cy="33.4" r=".55"/><circle cx="40" cy="32.5" r=".55"/></g>
+    <circle cx="23.5" cy="34.5" r="2.4" fill="#f28b82" opacity=".5"/>
+    <circle cx="40.5" cy="34.5" r="2.4" fill="#f28b82" opacity=".5"/>
     <path d="M26.5 35.5 Q32 41.5 37.5 35.5 Z" fill="#8c2f2a"/>
     <path d="M28 36 Q32 37.3 36 36" stroke="#fff" stroke-width="1.2" fill="none"/>
   </g>
