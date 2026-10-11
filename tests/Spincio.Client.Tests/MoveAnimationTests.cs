@@ -130,4 +130,42 @@ public class MoveAnimationTests
         plain.Result.ShouldBe(animated.Result);
         plain.Feed.ShouldBe(animated.Feed);
     }
+
+    /// <summary>The card animation only ends when the test releases it, so the test can see what started meanwhile.</summary>
+    private sealed class GatedAnimator : IMoveAnimator
+    {
+        public TaskCompletionSource CardLanded { get; } = new();
+
+        public List<string> Started { get; } = [];
+
+        public Task PlayAsync(CardPlayed play, int position)
+        {
+            Started.Add("card");
+            return CardLanded.Task;
+        }
+
+        public Task PointsAsync(IReadOnlyList<PointsGain> gains)
+        {
+            Started.Add("points " + gains[0].Label);
+            return Task.CompletedTask;
+        }
+
+        public Task SettleAsync() => Task.CompletedTask;
+    }
+
+    [Fact]
+    public async Task The_points_start_with_the_move_from_the_player_who_makes_it()
+    {
+        var animator = new GatedAnimator();
+        var tito = GameText.AtPosition(LocalGameSession.Human, 1);
+        var sweep = new CardPlayed(tito, Card.Parse("7D"), [Card.Parse("3S"), Card.Parse("4B")], IsSweep: true);
+
+        var move = animator.AnimateMoveAsync([sweep], LocalGameSession.Human);
+
+        animator.Started.ShouldBe(["card", "points Spazzino!"]); // both under way, the card still flying
+        move.IsCompleted.ShouldBeFalse();
+        animator.CardLanded.SetResult();
+        (await move).ShouldBeTrue();
+        PointsGain.For(sweep, LocalGameSession.Human)!.From.ShouldBe(1); // from Tito's seat, not over the capture
+    }
 }

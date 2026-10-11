@@ -140,8 +140,8 @@ public class HomePageTests : BunitContext
     {
         var page = Render<Home>();
 
-        AppInfo.Version.ShouldBe("1.5.3");
-        page.Find("section.start .app-version").TextContent.ShouldBe("v1.5.3");
+        AppInfo.Version.ShouldBe("1.5.4");
+        page.Find("section.start .app-version").TextContent.ShouldBe("v1.5.4");
     }
 
     /// <summary>Seed 3: the CPUs empty the table before my first turn; seed 7: there are cards on it.</summary>

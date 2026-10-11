@@ -28,8 +28,9 @@ public sealed record PointsGain(PointsKind Kind, int From, bool Ours, int Points
     /// </summary>
     public static PointsGain? For(GameEvent e, Seat viewer) => e switch
     {
-        CardPlayed { IsSweep: true } p => new(PointsKind.Sweep, Table, p.Seat.Team == viewer.Team, 1, GameText.Banner(p)),
-        CardPlayed p when p.IsMariana() => new(PointsKind.Mariana, Table, p.Seat.Team == viewer.Team, 0, GameText.Banner(p)),
+        // From the player's seat: the banner starts with the move, while the card is still on its way to the table.
+        CardPlayed { IsSweep: true } p => new(PointsKind.Sweep, GameText.Relative(p.Seat, viewer), p.Seat.Team == viewer.Team, 1, GameText.Banner(p)),
+        CardPlayed p when p.IsMariana() => new(PointsKind.Mariana, GameText.Relative(p.Seat, viewer), p.Seat.Team == viewer.Team, 0, GameText.Banner(p)),
         Declared { Points: > 0 } d => new(PointsKind.Declaration, GameText.Relative(d.Seat, viewer), d.Seat.Team == viewer.Team, d.Points, GameText.DeclarationName(d.Kind)),
         _ => null,
     };

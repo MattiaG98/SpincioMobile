@@ -4,6 +4,12 @@ Versioni dell'app Spincio ([versionamento semantico](https://semver.org/lang/it/
 `Directory.Build.props` (`<Version>`) e si vede nel menu iniziale e nel menu di pausa. Le regole hanno una versione propria
 (`docs/SPEC.md`, "regole v1.4" nel menu di pausa).
 
+## 1.5.4 — 11/10/2026
+- **Punti insieme alla mossa**: la scritta dei punti di uno spazzino o di una Mariana parte insieme alla carta, non più
+  dopo. Esce dal giocatore che fa la mossa (non dal centro della tavola, dove coprirebbe la presa) e vola sul punteggio
+  mentre la carta va in tavola; il numero cambia sempre solo quando i punti sono arrivati. Gli accusi e i punti di fine
+  smazzata restano come prima (sono momenti a sé).
+
 ## 1.5.3 — 11/10/2026
 - **Accuso**: dopo aver premuto "Accusa" accanto a "Tocca a te" non resta più nulla. Prima restava fino a fine smazzata
   un'etichetta dorata con l'ultimo accuso, identica al pulsante. L'accuso si vede nei punti che volano sul punteggio e
