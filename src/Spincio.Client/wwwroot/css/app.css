@@ -235,7 +235,13 @@ button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 /* Fixed heights: the status line (with the "Accusa" button) and the hand keep their size even when the hand is empty. */
 .me .status { display: flex; gap: 8px; align-items: center; justify-content: center; font-size: .9rem; height: 38px; white-space: nowrap; }
 .hand { display: flex; gap: 8px; justify-content: center; min-height: calc(var(--card-w) * var(--card-ratio)); }
-.declare { color: #3b2600; background: linear-gradient(#ffe27a, #f2b705); box-shadow: 0 3px 0 #a87a00; font-weight: 800; border-radius: 12px; padding: 6px 12px; }
+.declare { display: inline-flex; flex-direction: column; align-items: center; line-height: 1.05; color: #3b2600;
+           background: linear-gradient(#ffe27a, #f2b705); box-shadow: 0 3px 0 #a87a00; border-radius: 12px; padding: 3px 12px; }
+.me .status { max-width: 100%; }
+.me .status > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; } /* the text gives way, the button never */
+.declare { flex: none; }
+.declare strong { font-size: .9rem; font-weight: 900; }
+.declare small { font-size: .62rem; font-weight: 700; opacity: .85; }
 .me .error { position: absolute; left: 8px; right: 8px; bottom: 100%; text-align: center; background: #000a; border-radius: 8px; padding: 4px 8px; }
 .badge { font-size: .72rem; background: var(--accent); color: var(--ink); border-radius: 999px; padding: 2px 8px; }
 .error { color: #ffd6d2; margin: 0; }

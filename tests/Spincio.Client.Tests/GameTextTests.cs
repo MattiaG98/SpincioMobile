@@ -63,4 +63,22 @@ public class GameTextTests
         avatars.ShouldBe([null, "avatars/tito.svg", "avatars/titti.svg", "avatars/vava.svg"]);
         GameText.SeatName(GameText.AtPosition(Me, 2), Me).ShouldBe("Titti"); // same position, same player
     }
+
+    [Fact]
+    public void Seat_labels_show_only_the_declarations_of_the_deal_in_play()
+    {
+        var tito = GameText.AtPosition(Me, 1);
+        var view = SpincioEngine.ViewFor(SpincioEngine.NewMatch(1).State, Me) with
+        {
+            DealNumber = 2,
+            Declarations =
+            [
+                new DeclarationRecord(tito, 1, DeclarationKind.LowSum, 2),
+                new DeclarationRecord(tito, 2, DeclarationKind.ThreeOfAKind, 7),
+                new DeclarationRecord(Me, 2, DeclarationKind.LowSum, 2),
+            ],
+        };
+
+        GameText.DeclarationsThisDeal(view, tito).ShouldHaveSingleItem().Points.ShouldBe(7);
+    }
 }

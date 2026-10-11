@@ -100,14 +100,13 @@ else
                 {
                     <span>Tocca a @Session.SeatName(view.ToPlay)…</span>
                 }
-                @foreach (var d in view.Declarations.Where(d => d.Seat == me))
-                {
-                    <span class="badge">@GameText.DeclarationName(d.Kind) +@d.Points</span>
-                }
+                @* Only while the declaration can be made: once made, it shows as points flying to the score and in the
+                   history, and nothing stays here. *@
                 @if (legal.OfType<Declare>().Any())
                 {
                     <button type="button" class="declare" @onclick="() => Session.PlayAsync(new Declare(me))">
-                        Accusa: @GameText.DeclarationName(view.AvailableDeclaration.Kind) (+@view.AvailableDeclaration.Points)
+                        <strong>Accusa +@view.AvailableDeclaration.Points</strong>
+                        <small>@GameText.DeclarationName(view.AvailableDeclaration.Kind)</small>
                     </button>
                 }
             </div>
@@ -263,7 +262,7 @@ else
         var seat = GameText.AtPosition(Session.Me, position);
         return @<SeatView Seat="seat" Position="position" Name="@Session.SeatName(seat)" Avatar="@Session.SeatAvatar(seat)" Ours="seat.Team == Session.Me.Team"
                           CardCount="view.HandCounts[seat.Index]" IsTurn="view.ToPlay == seat" IsDealer="view.Dealer == seat"
-                          Declarations="view.Declarations.Where(d => d.Seat == seat)" />;
+                          Declarations="GameText.DeclarationsThisDeal(view, seat)" />;
     }
 
     // The table keeps its size: its cards shrink to fit (.table in app.css). For 1–4 rows of cards, the columns needed.
