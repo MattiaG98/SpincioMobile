@@ -63,8 +63,9 @@ public sealed class JsMoveAnimator(IJSRuntime js) : IMoveAnimator
 public static class MoveAnimations
 {
     /// <summary>
-    /// Plays, in order, the animations for the events of one move on the board that still shows the state before it:
-    /// card plays, then the points they score (sweeps, declarations). True if anything was animated.
+    /// Plays the animations for the events of one move on the board that still shows the state before it. The points a
+    /// play scores (sweep, Mariana) start together with the card, not after it (owner's choice); a declaration is a move
+    /// of its own. True if anything was animated.
     /// </summary>
     public static async Task<bool> AnimateMoveAsync(this IMoveAnimator animator, IEnumerable<GameEvent> events, Seat viewer)
     {
@@ -73,13 +74,14 @@ public static class MoveAnimations
         bool animated = false;
         foreach (var e in events)
         {
+            var gain = PointsGain.For(e, viewer);
             if (e is CardPlayed play)
             {
-                await animator.PlayAsync(play, GameText.Relative(play.Seat, viewer));
+                var card = animator.PlayAsync(play, GameText.Relative(play.Seat, viewer));
+                await (gain is null ? card : Task.WhenAll(card, animator.PointsAsync([gain])));
                 animated = true;
             }
-
-            if (PointsGain.For(e, viewer) is { } gain)
+            else if (gain is not null)
             {
                 await animator.PointsAsync([gain]);
                 animated = true;

@@ -13,11 +13,11 @@ public class PointsGainTests
         new(20, 5, 2, 0, cards, coins, rebello, settebello, primiera, spincio);
 
     [Fact]
-    public void A_sweep_is_one_point_from_the_table_to_the_sweepers_team()
+    public void A_sweep_is_one_point_from_the_sweeper_to_the_sweepers_team()
     {
         var sweep = new CardPlayed(new Seat(1), new Card(Rank.Five, Suit.Swords), [new Card(Rank.Five, Suit.Cups)], IsSweep: true);
 
-        PointsGain.For(sweep, Me).ShouldBe(new PointsGain(PointsKind.Sweep, PointsGain.Table, Ours: false, 1, "Spazzino!"));
+        PointsGain.For(sweep, Me).ShouldBe(new PointsGain(PointsKind.Sweep, 1, Ours: false, 1, "Spazzino!"));
     }
 
     [Fact]
@@ -67,7 +67,7 @@ public class PointsGainTests
     {
         var mariana = new CardPlayed(new Seat(2), Card.Parse("JD"), [Card.Parse("5C"), Card.Parse("3S")], IsSweep: false);
 
-        PointsGain.For(mariana, Me).ShouldBe(new PointsGain(PointsKind.Mariana, PointsGain.Table, Ours: true, 0, "MARIANA"));
-        PointsGain.For(mariana with { IsSweep = true }, Me).ShouldBe(new PointsGain(PointsKind.Sweep, PointsGain.Table, Ours: true, 1, "MARIANA"));
+        PointsGain.For(mariana, Me).ShouldBe(new PointsGain(PointsKind.Mariana, 2, Ours: true, 0, "MARIANA"));
+        PointsGain.For(mariana with { IsSweep = true }, Me).ShouldBe(new PointsGain(PointsKind.Sweep, 2, Ours: true, 1, "MARIANA"));
     }
 }
