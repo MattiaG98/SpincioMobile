@@ -4,6 +4,14 @@ Versioni dell'app Spincio ([versionamento semantico](https://semver.org/lang/it/
 `Directory.Build.props` (`<Version>`) e si vede nel menu iniziale e nel menu di pausa. Le regole hanno una versione propria
 (`docs/SPEC.md`, "regole v1.4" nel menu di pausa).
 
+## 1.5.3 — 11/10/2026
+- **Accuso**: dopo aver premuto "Accusa" accanto a "Tocca a te" non resta più nulla. Prima restava fino a fine smazzata
+  un'etichetta dorata con l'ultimo accuso, identica al pulsante. L'accuso si vede nei punti che volano sul punteggio e
+  nello storico ("Tu accusi: …").
+- Il pulsante è più compatto ("Accusa +3" con il tipo sotto, in piccolo) e non esce più dallo schermo con gli accusi
+  dal nome lungo; se serve, si accorcia il testo accanto, mai il pulsante.
+- Le etichette "Accuso +N" sotto le CPU valgono solo per la distribuzione in corso (prima restavano per tutta la smazzata).
+
 ## 1.5.2 — 11/10/2026
 - **Avatar** (scelte del proprietario): tutti e tre i personaggi sono uomini con i capelli rossi ricci. **Titti** e
   **Vava** hanno la carnagione chiara, **Tito** è di colore. Titti è il giovane allegro con le lentiggini, Tito ha

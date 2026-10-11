@@ -36,6 +36,13 @@ public static class GameText
         _ => null,
     };
 
+    /// <summary>A seat's declarations in the deal being played: they tell something about the hand in play (A4).</summary>
+    public static IReadOnlyList<DeclarationRecord> DeclarationsThisDeal(PlayerView view, Seat seat)
+    {
+        ArgumentNullException.ThrowIfNull(view);
+        return [.. view.Declarations.Where(d => d.Seat == seat && d.DealNumber == view.DealNumber)];
+    }
+
     public static string TeamName(Team team, Seat me) => team == me.Team ? "Noi" : "Loro";
 
     public static Team Other(Team team) => team == Team.A ? Team.B : Team.A;

@@ -140,8 +140,8 @@ public class HomePageTests : BunitContext
     {
         var page = Render<Home>();
 
-        AppInfo.Version.ShouldBe("1.5.2");
-        page.Find("section.start .app-version").TextContent.ShouldBe("v1.5.2");
+        AppInfo.Version.ShouldBe("1.5.3");
+        page.Find("section.start .app-version").TextContent.ShouldBe("v1.5.3");
     }
 
     /// <summary>Seed 3: the CPUs empty the table before my first turn; seed 7: there are cards on it.</summary>
@@ -248,5 +248,24 @@ public class HomePageTests : BunitContext
         page.Find(".seat-2 .avatar").ClassList.ShouldContain("ours");
         page.Find(".seat-1 .avatar").ClassList.ShouldContain("theirs");
         page.Find(".seat-3 .avatar").ClassList.ShouldContain("theirs");
+    }
+
+    /// <summary>Seed 4: my first hand is declarable ("fino a 9 con coppia").</summary>
+    [Fact]
+    public void After_declaring_neither_the_button_nor_a_leftover_label_stays_on_screen()
+    {
+        Services.GetRequiredService<NavigationManager>().NavigateTo("/?seed=4");
+        var page = Render<Home>();
+        page.Find("section.start button").Click();
+        page.WaitForAssertion(() => page.FindAll(".hand .card").Count.ShouldBe(3));
+        page.FindAll(".declare").Count.ShouldBe(1, "the deal for this seed changed: pick another seed");
+        page.Find(".declare").TextContent.ShouldContain("Accusa +3");
+
+        page.Find(".declare").Click();
+
+        page.WaitForAssertion(() => page.FindAll(".hand .card.playable").Count.ShouldBeGreaterThan(0));
+        page.FindAll(".declare").ShouldBeEmpty();
+        page.FindAll(".me .badge").ShouldBeEmpty();
+        _session.Feed.ShouldContain(line => line.StartsWith("Tu accusi", StringComparison.Ordinal));
     }
 }
