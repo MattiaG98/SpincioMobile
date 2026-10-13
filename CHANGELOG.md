@@ -4,6 +4,14 @@ Versioni dell'app Spincio ([versionamento semantico](https://semver.org/lang/it/
 `Directory.Build.props` (`<Version>`) e si vede nel menu iniziale e nel menu di pausa. Le regole hanno una versione propria
 (`docs/SPEC.md`, "regole v1.4" nel menu di pausa).
 
+## 1.7.2 — 13/10/2026
+- **Le CPU tengono l'asso quando il tavolo è vuoto** (osservazione del proprietario). A tavola vuota l'asso si cala
+  senza prendere nulla, mentre più avanti prende tutta la tavola (P8). Prima le CPU lo calavano in circa un caso su
+  quattro ("Normale" e "Difficile"); ora solo se tutte le altre carte valgono molto di più (2–3% dei casi).
+  - Misurato con le CPU contro sé stesse: stessa forza di prima ("Normale" 50,5% su 3000 partite, "Difficile" 52,2%
+    su 1000); il livello base vince il 53,8% delle partite contro la sua versione precedente.
+  - Vale anche per le CPU delle partite online.
+
 ## 1.7.1 — 13/10/2026
 - **Server fisso su Render, preparato** (ADR 0016): il server online si può pubblicare gratis su Render con un clic
   (`render.yaml`, immagine Docker del server). Quando il proprietario lo attiva, l'app lo userà da sola (versione
