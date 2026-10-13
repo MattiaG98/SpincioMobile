@@ -1,0 +1,58 @@
+name: Server image
+
+# The container Render builds (ADR 0016): build it and start it the way Render does, with the port in PORT.
+on:
+  push:
+    branches: [main, "claude/**"]
+    paths:
+      - "src/Spincio.Server/**"
+      - "src/Spincio.Engine/**"
+      - "src/Spincio.Bots/**"
+      - "src/Spincio.Contracts/**"
+      - "Directory.Build.props"
+      - "Directory.Packages.props"
+      - "global.json"
+      - ".dockerignore"
+      - "render.yaml"
+      - ".github/workflows/server-image.yml"
+  pull_request:
+    paths:
+      - "src/Spincio.Server/**"
+      - "src/Spincio.Engine/**"
+      - "src/Spincio.Bots/**"
+      - "src/Spincio.Contracts/**"
+      - "Directory.Build.props"
+      - "Directory.Packages.props"
+      - "global.json"
+      - ".dockerignore"
+      - "render.yaml"
+      - ".github/workflows/server-image.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build
+        run: docker build -f src/Spincio.Server/Dockerfile -t spincio-server .
+
+      - name: Start with PORT=10000 and check /health
+        run: |
+          docker run -d --name spincio -e PORT=10000 -p 10000:10000 spincio-server
+          for _ in $(seq 1 30); do
+            if curl -fsS http://localhost:10000/health; then echo; docker logs spincio; exit 0; fi
+            sleep 1
+          done
+          docker logs spincio
+          exit 1
+
+      - name: The GitHub Pages app may connect (CORS)
+        run: |
+          curl -fsS -o /dev/null -D - -X POST "http://localhost:10000/hubs/lobby/negotiate?negotiateVersion=1" \
+            -H "Origin: https://mattiag98.github.io" | tee headers.txt
+          grep -qi "^access-control-allow-origin: https://mattiag98.github.io" headers.txt

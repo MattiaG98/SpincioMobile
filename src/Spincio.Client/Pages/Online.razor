@@ -151,7 +151,8 @@
     private string? LobbyStatus => Lobby.State switch
     {
         _ when _profile is not { HasName: true } => "Scrivi il tuo nome: comparirai nella lista e vedrai chi è online.",
-        LobbyState.Off or LobbyState.Connecting => "Collegamento al server…",
+        // A free server (Render, ADR 0016) sleeps when nobody plays and takes up to a minute to wake up.
+        LobbyState.Off or LobbyState.Connecting => "Collegamento al server… Se era spento ci vuole fino a un minuto.",
         LobbyState.Unreachable => "Server non raggiungibile: riprovo tra poco.",
         _ when Others.Count == 0 => "Per ora non c'è nessun altro. Qui compare chi apre l'app collegata a questo server.",
         _ => null,
