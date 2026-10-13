@@ -60,7 +60,20 @@ Tutte queste regole sono **verificate da test** in `tests/Spincio.Architecture.T
   2. quello ricordato in `localStorage["spincio.server"]`;
   3. `ServerUrl` di appsettings.
 - `OnlineService.Parse` accetta solo https (http solo per `localhost`) e tiene solo l'origine. `InviteLink` costruisce `…/online?server=…&room=…`.
-- Codespaces: `.devcontainer` lancia `tools/online/start-server.sh` (avvio, porta 5080 pubblica con `gh codespace ports visibility`, link stampato). `ActivityHeartbeat` scrive una riga ogni 5 minuti solo se qualcuno è collegato, così il codespace non va in pausa durante la partita.
+- Codespaces: `.devcontainer` lancia `tools/online/start-server.sh` (avvio, porta 5080 pubblica con `gh codespace ports visibility`, link stampato). `ActivityHeartbeat` scrive una riga ogni 5 minuti solo se qualcuno è collegato (in una stanza o, dalla 1.7.0, nella lista dei giocatori online), così il codespace non va in pausa durante la partita.
+
+### Giocatori online e inviti (1.7.0, ADR 0015)
+- Server: `LobbyHub` (`/hubs/lobby`) → `LobbyRegistry` (in memoria). Giocatori per id del dispositivo, ognuno con le
+  sue connessioni; inviti in attesa finché l'invitato risponde (riconsegnati al ritorno).
+  - Le liste partono una alla volta (`SemaphoreSlim`), così nessuno riceve una lista vecchia dopo una nuova.
+  - Chi invita è riconosciuto dal token del posto (`RoomRegistry.FindByToken`, `GameRoom.SnapshotForAsync`).
+- Client:
+  - `ProfileService`: id e nome in `localStorage["spincio.player"]`;
+  - `LobbyClient` (`ILobby`, singleton): si collega a ogni avvio se ci sono server e nome; riprova ogni 20 s;
+  - `InviteBanner` sta nel `MainLayout`, quindi in ogni pagina;
+  - accettare = `RemoteGameSession.JoinRoomAsAsync` (hub di gioco `JoinRoomAs`: posto nella squadra di chi invita o
+    nell'altra, ordine `GameRoom.JoinOrder`), poi `Answer(accepted: true)` e pagina Online.
+- `RemoteGameSession.LeaveAsync` azzera stanza e partita: la stessa sessione può entrare in una stanza nuova.
 
 ### Una mossa, online
 Client: `RemoteGameSession.PlayAsync` → hub `Play(token, expectedSequence, "P0:7D>3S+4B")` → `GameRoom` (coda seriale) valida token, sequenza e regole → `AcceptAsync` → a ogni posto `GameUpdate(sequence, ViewFor(seat), EventsFor(seat))` → timer: pausa CPU oppure timeout di turno (30 s) → a fine partita `MatchReveal(seed, salt, log)` e il client verifica con `Commitment.Verify`.
@@ -123,6 +136,8 @@ Mosse legali dalla vista → se c'è un accuso lo dichiara → per N mondi: dist
 | "Cliccando la x torno alla pagina iniziale" | Nel popup non c'era nessuna ✕: l'unica era quella della barra d'errore di Blazor, il cui "Ricarica" riporta all'inizio. Non riprodotto in Chromium | La barra d'errore ora mostra la prima riga dell'errore (script in `index.html`): con uno screenshot dal telefono si diagnostica. I popup hanno una ✕ vera che chiude e fa continuare |
 | L'animazione dei punti non partiva (nessun errore) | `InvokeVoidAsync(id, params object[] args)`: un array di oggetti passato da solo diventa l'array dei parametri, quindi JS riceveva un argomento per ogni elemento | Passare l'array come `object` (un solo argomento); un test bUnit controlla `Arguments.Count == 1` |
 | La tavola "cresceva" o si spostava durante la partita | Non per le carte in tavola: cambiavano le misure di ciò che le sta intorno (mano vuota durante il volo, pulsante Accusa, "· mazziere" che andava a capo, dichiarazioni) | Misure fisse per tutto ciò che sta intorno alla tavola; `layout.mjs` lo controlla a ogni mossa |
+| Test end-to-end degli inviti rosso: un giocatore vedeva solo sé stesso nella lista (1.7.0) | Due corse. Il server mandava le liste fuori dal lock, quindi in ordine qualsiasi. Il client sovrascriveva la lista appena arrivata con la risposta del proprio `Hello`, calcolata prima | Liste del server in serie (`SemaphoreSlim`); il client usa la risposta di `Hello` solo se nel frattempo non è arrivata nessuna lista (contatore) |
+| Pagina Online "senza server" aprendo un link di invito (1.7.0, trovato con `lobby.mjs`) | La barra degli inviti e la pagina leggevano entrambe il server ricordato. `_server ??= Parse(await …)` controlla `null` **prima** dell'`await`: la lettura più lenta cancellava il server appena preso dal link. In più la seconda lettura tornava subito, prima che la prima finisse | Letture fatte una volta sola (`_loading ??= ReadAsync()`, attesa da tutti) e assegnazione dopo l'`await` (`var x = await …; _server ??= x;`). Stessa cosa per il profilo. Test di regressione in `OnlineTests` |
 | Controllo nel browser che segnalava carte "rimaste in volo" | Lo script misurava durante l'animazione della mia carta, quando il resto della mano sembrava ancora giocabile | Mano disattivata durante il volo (anche un difetto per l'utente); i controlli aspettano una carta `playable` visibile e chiudono il riepilogo "Continua" |
 
 ## 6. Strategia di test

@@ -1,5 +1,6 @@
 using Spincio.Contracts;
 using Spincio.Server.Hubs;
+using Spincio.Server.Lobby;
 using Spincio.Server.Rooms;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -8,6 +9,8 @@ builder.Services.Configure<RoomOptions>(builder.Configuration.GetSection("Rooms"
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton<IRoomNotifier, HubRoomNotifier>();
 builder.Services.AddSingleton<RoomRegistry>();
+builder.Services.AddSingleton<ILobbyNotifier, HubLobbyNotifier>();
+builder.Services.AddSingleton<LobbyRegistry>();
 builder.Services.AddHostedService<ActivityHeartbeat>();
 builder.Services.AddSignalR().AddJsonProtocol(o => SpincioJson.Configure(o.PayloadSerializerOptions));
 
@@ -20,6 +23,7 @@ var app = builder.Build();
 app.UseCors();
 app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
 app.MapHub<GameHub>(HubPaths.Game);
+app.MapHub<LobbyHub>(HubPaths.Lobby);
 
 app.Run();
 

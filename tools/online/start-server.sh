@@ -18,7 +18,8 @@ banner() {
   echo
   echo "================================================================"
   echo " Server Spincio acceso."
-  echo " Apri questo link sul telefono, crea la stanza e premi \"Invita gli amici\":"
+  echo " Apri questo link sul telefono e scrivi il tuo nome. Invita chi è in \"Giocatori online\","
+  echo " oppure crea la stanza e premi \"Invita con un link\":"
   echo
   echo "   ${APP}online?server=${SERVER}"
   echo
@@ -31,6 +32,10 @@ if curl -fs "http://localhost:${PORT}/health" >/dev/null 2>&1; then
   banner # already running (the codespace was opened again)
   exit 0
 fi
+
+# A codespace keeps the code it was created with: bring it up to date, so the server matches the app on GitHub Pages
+# (e.g. the online players list of 1.7.0). Only a fast-forward: nothing changed by hand is ever overwritten.
+git pull --ff-only --quiet 2>/dev/null || echo "(Non riesco ad aggiornare il codice del server: uso la versione che c'è.)"
 
 echo "Preparo il server (la prima volta ci vuole un minuto)…"
 dotnet build src/Spincio.Server -c Release --nologo -v quiet

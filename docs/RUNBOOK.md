@@ -59,12 +59,19 @@ Chi ospita la partita:
 2. Aspetta che nel terminale compaia **"Server Spincio acceso"** con un link (la prima volta 2–3 minuti).
    - Se compare "ATTENZIONE: rendi pubblica la porta 5080": scheda **PORTE**, tasto destro sulla porta 5080,
      **Visibilità della porta**, **Pubblica**.
-3. Apre quel link sul telefono, mette il nome, **Crea una stanza**, poi **Invita gli amici** e manda il link
-   (WhatsApp va bene).
-4. Gli amici aprono il link, mettono il nome e premono **Entra**. Quando ci sono tutti: **Inizia la partita**. I posti
-   vuoti li prende la CPU.
+3. Apre quel link sul telefono e scrive il proprio nome.
+   - Chi ha già aperto l'app con questo server compare in **Giocatori online**: basta **Invita**. A chi viene invitato
+     compare una notifica in alto; può accettare e scegliere **Con** o **Contro** chi invita (ADR 0015).
+   - Per gli altri: **Crea una stanza**, poi **Invita con un link** e manda il link (WhatsApp va bene). Chi lo apre
+     scrive il nome e preme **Entra**; da quel momento compare anche nella lista.
+4. Quando ci sono tutti: **Inizia la partita**. I posti vuoti li prende la CPU. Gli inviti arrivano solo a chi ha l'app
+   aperta (niente notifiche push).
 5. Finito di giocare si chiude la scheda del codespace: si spegne da solo dopo 30 minuti senza giocatori. Il tempo si
    cambia in GitHub, **Settings → Codespaces → Default idle timeout**, fino a 4 ore. Gratis circa 60 ore al mese.
+
+All'avvio lo script aggiorna il codice del codespace (`git pull --ff-only`), così un codespace creato prima di una
+nuova versione ha comunque il server giusto (per esempio la lista dei giocatori online della 1.7.0). Se il server era
+già acceso da prima dell'aggiornamento: chiudere il codespace e riaprirlo.
 
 Il link di invito ha la forma `…/online?server=https://<codespace>-5080.app.github.dev&room=ABCDE`. Funziona anche con
 un server fisso: basta cambiare l'indirizzo. Le stanze vivono in memoria: se il server si spegne, le partite in corso
@@ -81,6 +88,9 @@ Verifiche:
 - lo script si prova anche in locale: `bash tools/online/start-server.sh` avvia il server su `http://localhost:5080`;
 - con il client pubblicato, `node tools/browser-checks/invite.mjs /tmp/pub/wwwroot /tmp/out` prova l'invito completo.
   Due giocatori: uno crea la stanza, l'altro apre il link ed entra, poi parte la partita.
+- `node tools/browser-checks/lobby.mjs /tmp/pub/wwwroot /tmp/out` prova la lista dei giocatori online con tre
+  giocatori: Cleo rifiuta un invito; Bea lo riceve nel menu iniziale, sceglie "Contro" ed entra nell'altra squadra; poi
+  la partita parte. Salva gli screenshot della lista, della notifica e della stanza.
 
 ## Verificare che una partita online non sia truccata
 A inizio partita tutti vedono l'impegno (`impegno xxxxxxxx` in fondo alla pagina). A fine partita il server rivela seed, sale e log. Il client ricalcola lo SHA-256 e **rigioca l'intera partita** con il motore; se il punteggio finale coincide mostra "partita verificata ✓". Codice: `Contracts/Commitment.Verify`.

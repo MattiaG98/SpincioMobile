@@ -1,6 +1,6 @@
 # Stato del progetto
 
-> Da aggiornare **a fine di ogni milestone** (regola in `CLAUDE.md`). Ultimo aggiornamento: **07/10/2026**.
+> Da aggiornare **a fine di ogni milestone** (regola in `CLAUDE.md`). Ultimo aggiornamento: **13/10/2026**.
 > Fonte delle regole: [`SPEC.md`](SPEC.md) · decisioni: [`adr/`](adr/) · conoscenza tecnica: [`KNOWLEDGE.md`](KNOWLEDGE.md) · procedure: [`RUNBOOK.md`](RUNBOOK.md)
 
 ## Milestone
@@ -25,13 +25,14 @@
 | M15 | Statistiche e CPU più forti (1.2.0) | ✅ Fatto | Pannello Statistiche (menu e pausa); "Normale" = L2 4 mondi (59,7% contro il vecchio), "Difficile" = L2 12 mondi + silenzi (53,1%); accusi delle CPU verificati su partite intere (ADR 0013) |
 | — | Scritta MARIANA (1.3.0, dettata dal proprietario) | ✅ Fatto | Fante che prende 5 e 3: scritta MARIANA, nessun punto; al posto di "Spazzino!" se svuota la tavola (lo spazzino vale). AT-40, pagina Regole |
 | M16 | Online con server temporaneo (1.6.0) | ✅ Fatto (da provare in un codespace vero) | Indirizzo del server nel link di invito, "Invita gli amici", codespace che avvia il server da solo, battito del server mentre si gioca (ADR 0014); punti più piccoli e rapidi |
+| M17 | Giocatori online e inviti (1.7.0) | ✅ Fatto (da provare in un codespace vero) | Lista "Giocatori online" con "Invita"; notifica in alto in ogni schermata con Accetta/Rifiuta e scelta "Con"/"Contro" (ADR 0015); test end-to-end con due client e `lobby.mjs` con tre giocatori nel browser |
 | — | Regola P8 "asso pigliatutto" (SPEC v1.3 → v1.4, dettata dal proprietario) | ✅ v1.3 (PR #6); v1.4 in revisione: con un asso in tavola si prende solo quello | AT-33…AT-39; versione delle regole nel piè di pagina | AT-33…AT-38; salvataggi v1.2 non ripresi |
 
 ## Metriche
 
 | Voce | Valore | Come si rimisura |
 |---|---|---|
-| Test automatici | **251** (Engine 93, Bots 33, Client 79, Architecture 23, Server 23) | `dotnet test Spincio.slnx` |
+| Test automatici | **277** (Engine 93, Bots 33, Client 95, Architecture 23, Server 33) | `dotnet test Spincio.slnx` |
 | L1 vs L0 | 92,9% (seed 1, regole v1.3 con asso pigliatutto); era 99,3% con la v1.2 | `--x Greedy --y Random` |
 | L2 vs L1 | 57,8% (4 mondi, 800 partite, seed 9000); 55,5% (8) / 60,3% (16) / 60,3% (32) su 400 partite, seed 5000 | `--x Pimc --y Greedy --worlds N` |
 | Livelli 1.2.0 contro 1.1.0 | "Normale" 59,7% · "Difficile" 53,1% (1000 partite ciascuno) | progetto di confronto, vedi ADR 0013 |
@@ -47,7 +48,8 @@
 | # | Decisione | Proposta | Chi |
 |---|---|---|---|
 | 1 | Attivare GitHub Pages | Settings → Pages → Source: **GitHub Actions**; poi merge su `main` | Proprietario |
-| 2 | Hosting del server online | ✅ 13/10: temporaneo su GitHub Codespaces con link di invito (ADR 0014, RUNBOOK). Un server fisso (Render) resta possibile più avanti | Proprietario |
+| 2 | Hosting del server online | ✅ 13/10: temporaneo su GitHub Codespaces con link di invito (ADR 0014, RUNBOOK). Un server fisso (Render) resta possibile più avanti: con la lista dei giocatori online (ADR 0015) avrebbe il vantaggio di un indirizzo che non cambia | Proprietario |
+| 6 | Notifiche push per gli inviti | Oggi l'invito arriva solo con l'app aperta (ADR 0015). Le push richiedono app sulla Home, permesso e un servizio di invio: da decidere se servono | Proprietario |
 | 3 | ~~Carte~~ | ✅ 01/10: scansione piacentina (ADR 0011). Rischio diritti accettato dal proprietario; se arriva una segnalazione si torna al ridisegno originale | — |
 | 4 | ~~Icone dell'app~~ | ✅ Fatto il 28/09: icona originale (`Assets/icon.svg`) | — |
 | 5 | Verifica del marchio "Spincio" (EUIPO/UIBM) | Prima di qualsiasi pubblicazione sugli store | Proprietario |
@@ -72,3 +74,4 @@
 | 08/10/2026 | Animazione dei punti, versione 1.1.0 (M14); statistiche e CPU più forti, versione 1.2.0 (M15) |
 | 09/10/2026 | Barra "Aggiorna" e controllo degli aggiornamenti al ritorno in primo piano, versione 1.2.1; scritta MARIANA, versione 1.3.0; pannello Contributi (Megako, Nandone), versione 1.4.0; avatar delle CPU, versione 1.5.0; capelli rossi ricci per tutti, 1.5.1 |
 | 11/10/2026 | Avatar tutti uomini con capelli rossi ricci, Tito di colore (scelte del proprietario), versione 1.5.2; accuso: niente etichetta dopo il clic, pulsante compatto, 1.5.3; punti che partono insieme alla mossa, 1.5.4 |
+| 13/10/2026 | Online con server temporaneo su Codespaces e link di invito, versione 1.6.0 (M16); giocatori online e inviti con scelta "con/contro", versione 1.7.0 (M17) |

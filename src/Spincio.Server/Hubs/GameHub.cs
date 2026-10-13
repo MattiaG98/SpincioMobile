@@ -27,6 +27,18 @@ public sealed class GameHub(RoomRegistry rooms) : Hub<IGameClient>, IGameHub
         return result;
     }
 
+    public async Task<JoinResult> JoinRoomAs(string roomCode, string playerName, int inviterSeat, bool sameTeam)
+    {
+        if (rooms.Find(roomCode) is not { } room)
+        {
+            return JoinResult.Fail("Stanza non trovata.");
+        }
+
+        var result = await room.JoinNearAsync(playerName, Context.ConnectionId, inviterSeat, sameTeam);
+        rooms.Track(result, room, Context.ConnectionId);
+        return result;
+    }
+
     public async Task<JoinResult> Rejoin(string token)
     {
         if (rooms.FindByToken(token) is not { } room)

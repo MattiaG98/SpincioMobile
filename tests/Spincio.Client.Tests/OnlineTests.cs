@@ -4,18 +4,24 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Spincio.Client.Game;
 using Spincio.Client.Pages;
+using Spincio.Contracts;
 
 namespace Spincio.Client.Tests;
 
 /// <summary>ADR 0014: the online server comes from an invite link (or is typed in) and is remembered on the device.</summary>
 public class OnlineTests : BunitContext
 {
+    private const string Server = "https://spincio-abc-5080.app.github.dev/";
+    private readonly FakeLobby _lobby = new();
+
     public OnlineTests()
     {
         JSInterop.Mode = JSRuntimeMode.Loose;
         Services.AddSingleton<IConfiguration>(new ConfigurationBuilder().Build());
         Services.AddSingleton<IOnlineSeatStore, InMemoryOnlineSeatStore>();
         Services.AddSingleton<OnlineService>();
+        Services.AddSingleton<ProfileService>();
+        Services.AddSingleton<ILobby>(_lobby);
         Services.AddSingleton(new GameHost(new LocalGameSession(new InMemoryGameStore(), delay: _ => Task.CompletedTask)));
     }
 
@@ -62,6 +68,112 @@ public class OnlineTests : BunitContext
         Services.GetRequiredService<OnlineService>().ServerUrl.ShouldBe(new Uri("https://spincio-abc-5080.app.github.dev/"));
         page.Find("input.code").GetAttribute("value").ShouldBe("K7QPZ");
         page.Find(".server-info").TextContent.ShouldContain("spincio-abc-5080.app.github.dev");
-        JSInterop.VerifyInvoke("localStorage.setItem").Arguments.ShouldBe(["spincio.server", "https://spincio-abc-5080.app.github.dev/"]);
+        JSInterop.Invocations["localStorage.setItem"].ShouldContain(i => i.Arguments.SequenceEqual(new object?[] { "spincio.server", Server }));
+    }
+
+    /// <summary>
+    /// The invitation bar and the online page both read the remembered server at start-up: the second must wait for
+    /// the same reading, and a server from an invite link chosen meanwhile must not be overwritten by it.
+    /// </summary>
+    [Fact]
+    public async Task The_remembered_server_is_read_once_and_an_invite_link_chosen_meanwhile_wins()
+    {
+        var remembered = JSInterop.Setup<string?>("localStorage.getItem", "spincio.server");
+        var online = Services.GetRequiredService<OnlineService>();
+
+        var first = online.LoadAsync();
+        var second = online.LoadAsync();
+        second.IsCompleted.ShouldBeFalse();
+        (await online.UseServerAsync(Server)).ShouldBeTrue();
+        remembered.SetResult("https://old-5080.app.github.dev/");
+        await Task.WhenAll(first, second);
+
+        online.ServerUrl.ShouldBe(new Uri(Server));
+    }
+
+    [Fact]
+    public async Task The_player_profile_is_created_once_even_when_asked_twice_at_start_up()
+    {
+        var stored = JSInterop.Setup<string?>("localStorage.getItem", "spincio.player");
+        var profiles = new ProfileService(JSInterop.JSRuntime);
+
+        var first = profiles.LoadAsync();
+        var second = profiles.LoadAsync();
+        stored.SetResult(null);
+        var (a, b) = (await first, await second);
+
+        a.ShouldBeSameAs(b);
+        a.Id.Length.ShouldBe(32);
+        a.HasName.ShouldBeFalse();
+        var saved = JSInterop.Invocations["localStorage.setItem"].ShouldHaveSingleItem();
+        saved.Arguments[1]!.ToString().ShouldBe($$"""{"Id":"{{a.Id}}","Name":""}""");
+    }
+
+    /// <summary>ADR 0015: everyone else with the app open on the same server, each with an "Invita" button.</summary>
+    [Fact]
+    public void The_list_shows_who_else_is_online_with_an_invite_button()
+    {
+        JSInterop.Setup<string?>("localStorage.getItem", "spincio.server").SetResult(Server);
+        JSInterop.Setup<string?>("localStorage.getItem", "spincio.player").SetResult("""{"Id":"ada1","Name":"Ada"}""");
+        var page = Render<Online>();
+
+        _lobby.State = LobbyState.Online;
+        _lobby.Players = [new("ada1", "Ada"), new("bea1", "Bea"), new("cleo1", "Cleo")];
+        _lobby.SentTo["bea1"] = "Ha rifiutato";
+        _lobby.Raise();
+
+        _lobby.Starts.ShouldHaveSingleItem().Profile.ShouldBe(new PlayerProfile("ada1", "Ada"));
+        page.FindAll(".online-players .player-name").Select(n => n.TextContent).ShouldBe(["Bea", "Cleo"]);
+        page.Find(".online-players .invite-status").TextContent.ShouldBe("Ha rifiutato");
+        page.FindAll(".online-players .invite-player").ShouldAllBe(b => !b.HasAttribute("disabled"));
+        page.FindAll(".lobby-status").ShouldBeEmpty();
+    }
+
+    [Theory]
+    [InlineData(LobbyState.Connecting, "Collegamento al server…")]
+    [InlineData(LobbyState.Unreachable, "Server non raggiungibile: riprovo tra poco.")]
+    [InlineData(LobbyState.Online, "Per ora non c'è nessun altro. Qui compare chi apre l'app collegata a questo server.")]
+    public void The_list_says_why_it_is_empty(LobbyState state, string status)
+    {
+        JSInterop.Setup<string?>("localStorage.getItem", "spincio.server").SetResult(Server);
+        JSInterop.Setup<string?>("localStorage.getItem", "spincio.player").SetResult("""{"Id":"ada1","Name":"Ada"}""");
+        var page = Render<Online>();
+
+        _lobby.State = state;
+        _lobby.Players = state == LobbyState.Online ? [new OnlinePlayer("ada1", "Ada")] : [];
+        _lobby.Raise();
+
+        page.Find(".lobby-status").TextContent.ShouldBe(status);
+        page.FindAll(".online-players").ShouldBeEmpty();
+    }
+
+    [Fact]
+    public void Writing_a_name_joins_the_online_list_and_remembers_the_name()
+    {
+        JSInterop.Setup<string?>("localStorage.getItem", "spincio.server").SetResult(Server);
+        var page = Render<Online>();
+        page.Find(".lobby-status").TextContent.ShouldStartWith("Scrivi il tuo nome");
+        _lobby.Starts.ShouldBeEmpty();
+
+        page.Find("input[placeholder='Nome']").Input("Bea ");
+        page.Find("input[placeholder='Nome']").Change("Bea ");
+
+        var start = _lobby.Starts.ShouldHaveSingleItem();
+        start.Server.ShouldBe(new Uri(Server));
+        start.Profile.Name.ShouldBe("Bea");
+        var saved = JSInterop.Invocations["localStorage.setItem"].Last(i => Equals(i.Arguments[0], "spincio.player"));
+        saved.Arguments[1]!.ToString()!.ShouldContain("\"Name\":\"Bea\"");
+    }
+
+    [Fact]
+    public void Forgetting_the_server_leaves_the_online_list()
+    {
+        JSInterop.Setup<string?>("localStorage.getItem", "spincio.server").SetResult(Server);
+        var page = Render<Online>();
+
+        page.Find(".server-info button.link").Click();
+
+        _lobby.Stops.ShouldBe(1);
+        page.Find("input[inputmode='url']").ShouldNotBeNull();
     }
 }
