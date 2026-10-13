@@ -54,6 +54,14 @@ Tutte queste regole sono **verificate da test** in `tests/Spincio.Architecture.T
 - Partita abbandonata = "Abbandona"/"Esci dalla stanza" prima della fine, oppure "Nuova partita" dal menu quando c'era una partita salvata. Azzera la serie di vittorie.
 - Gli aggiornamenti sono in catena (ognuno parte dal risultato del precedente), anche mentre il primo caricamento da localStorage è in corso.
 
+### Server online temporaneo (1.6.0, ADR 0014)
+- `OnlineService.ServerUrl`, in ordine di priorità:
+  1. il server dal link di invito (`?server=`) o dal campo della pagina Online;
+  2. quello ricordato in `localStorage["spincio.server"]`;
+  3. `ServerUrl` di appsettings.
+- `OnlineService.Parse` accetta solo https (http solo per `localhost`) e tiene solo l'origine. `InviteLink` costruisce `…/online?server=…&room=…`.
+- Codespaces: `.devcontainer` lancia `tools/online/start-server.sh` (avvio, porta 5080 pubblica con `gh codespace ports visibility`, link stampato). `ActivityHeartbeat` scrive una riga ogni 5 minuti solo se qualcuno è collegato, così il codespace non va in pausa durante la partita.
+
 ### Una mossa, online
 Client: `RemoteGameSession.PlayAsync` → hub `Play(token, expectedSequence, "P0:7D>3S+4B")` → `GameRoom` (coda seriale) valida token, sequenza e regole → `AcceptAsync` → a ogni posto `GameUpdate(sequence, ViewFor(seat), EventsFor(seat))` → timer: pausa CPU oppure timeout di turno (30 s) → a fine partita `MatchReveal(seed, salt, log)` e il client verifica con `Commitment.Verify`.
 

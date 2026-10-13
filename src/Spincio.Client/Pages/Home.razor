@@ -2,7 +2,6 @@
 @using Spincio.Client.Game
 @implements IDisposable
 @inject GameHost Host
-@inject IConfiguration Configuration
 @inject IJSRuntime JS
 @inject SettingsService Settings
 @inject StatsService Stats
@@ -30,10 +29,7 @@
                 Nuova partita
                 <small>CPU @(_settings.Difficulty == BotLevel.Pimc ? "difficile" : "normale")</small>
             </button>
-            @if (!string.IsNullOrWhiteSpace(Configuration["ServerUrl"]))
-            {
-                <a class="btn btn-green" href="online">Gioca online con gli amici</a>
-            }
+            <a class="btn btn-green btn-online" href="online">🌐 Gioca online con gli amici</a>
             <div class="menu-grid">
                 <button type="button" class="btn btn-dark" @onclick="() => _rulesOpen = true">📖 Regole</button>
                 <button type="button" class="btn btn-dark" @onclick="() => _statsOpen = true">📊 Statistiche</button>

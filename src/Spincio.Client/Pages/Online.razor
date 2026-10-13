@@ -5,6 +5,7 @@
 @inject OnlineService OnlineGames
 @inject GameHost Host
 @inject NavigationManager Navigation
+@inject IJSRuntime JS
 
 <PageTitle>Spincio online</PageTitle>
 
@@ -13,7 +14,16 @@
 
     @if (OnlineGames.ServerUrl is null)
     {
-        <p>Il gioco online non è configurato su questa installazione.</p>
+        <p>Per giocare con gli amici serve un server acceso. Chi ospita la partita avvia il server e crea la stanza, poi manda il <strong>link di invito</strong>: chi lo apre è già collegato.</p>
+        <label class="field">
+            Indirizzo del server
+            <input @bind="_serverInput" @bind:event="oninput" placeholder="https://…" inputmode="url" autocapitalize="off" spellcheck="false" />
+        </label>
+        <button type="button" class="primary" disabled="@(OnlineService.Parse(_serverInput) is null)" @onclick="UseServerAsync">Collega</button>
+        @if (_badServer)
+        {
+            <p class="error">Indirizzo non valido: deve iniziare con https://</p>
+        }
     }
     else if (Room is null)
     {
@@ -32,7 +42,13 @@
     else
     {
         <p>Codice stanza: <strong class="room-code">@Room.Code</strong></p>
-        <p>Condividi il codice con gli altri giocatori. I primi due sono compagni di squadra.</p>
+        <p>Manda il link di invito agli altri giocatori. I primi due sono compagni di squadra.</p>
+        <button type="button" class="btn btn-green" @onclick="InviteAsync">📨 Invita gli amici</button>
+        <input class="invite-link" readonly value="@InviteLink" aria-label="Link di invito" onfocus="this.select()" />
+        @if (_inviteNote is { } note)
+        {
+            <p class="invite-note">@note</p>
+        }
         <ol class="seats">
             @foreach (var seat in Room.Seats)
             {
@@ -48,21 +64,39 @@
 
     @if (_connectionError)
     {
-        <p class="error">Server non raggiungibile. Riprova più tardi.</p>
+        <p class="error">Server non raggiungibile. Se è un server temporaneo forse è spento: chiedi un nuovo link a chi ospita.</p>
     }
     else if (OnlineGames.ServerUrl is not null && Session.Error is { } error)
     {
         <p class="error">@error</p>
     }
 
+    @if (OnlineGames.ServerUrl is { } server && Room is null)
+    {
+        <p class="server-info">Server: @server.Host · <button type="button" class="link" @onclick="ForgetServerAsync">cambia</button></p>
+    }
+
     <a class="button-link" href="">Torna al gioco offline</a>
 </section>
 
 @code {
+    /// <summary>Invite links (ADR 0014): <c>online?server=https://…&amp;room=ABCDE</c>.</summary>
+    [SupplyParameterFromQuery(Name = "server")] public string? ServerParameter { get; set; }
+
+    [SupplyParameterFromQuery(Name = "room")] public string? RoomParameter { get; set; }
+
     private string _name = "";
     private string _code = "";
+    private string _serverInput = "";
     private bool _busy;
     private bool _connectionError;
+    private bool _badServer;
+    private string? _inviteNote;
+    private bool _subscribed;
+
+    private string InviteLink => Room is null || OnlineGames.ServerUrl is null
+        ? ""
+        : OnlineService.InviteLink(Navigation.BaseUri, OnlineGames.ServerUrl, Room.Code);
 
     private RemoteGameSession Session => OnlineGames.Session;
 
@@ -70,16 +104,71 @@
 
     protected override async Task OnInitializedAsync()
     {
-        if (OnlineGames.ServerUrl is null)
+        await OnlineGames.LoadAsync();
+        if (!string.IsNullOrWhiteSpace(ServerParameter))
+        {
+            _badServer = !await OnlineGames.UseServerAsync(ServerParameter);
+        }
+
+        if (!string.IsNullOrWhiteSpace(RoomParameter))
+        {
+            _code = RoomParameter.Trim().ToUpperInvariant();
+        }
+
+        await ConnectAsync();
+    }
+
+    private async Task ConnectAsync()
+    {
+        if (OnlineGames.ServerUrl is null || _subscribed)
         {
             return;
         }
 
+        _subscribed = true;
         Session.Changed += OnChanged;
         if (Session.Room is null && !Session.IsStarted)
         {
             // Back to a match or lobby left open earlier (the seat token is remembered in this browser).
             await Busy(async () => await Session.TryRejoinAsync());
+        }
+    }
+
+    private async Task UseServerAsync()
+    {
+        _badServer = !await OnlineGames.UseServerAsync(_serverInput);
+        await ConnectAsync();
+    }
+
+    private async Task ForgetServerAsync()
+    {
+        Unsubscribe();
+        _connectionError = false;
+        await OnlineGames.ForgetServerAsync();
+    }
+
+    // Phones open the share sheet (WhatsApp, Messaggi…); elsewhere the link is copied.
+    private async Task InviteAsync()
+    {
+        var link = InviteLink;
+        try
+        {
+            await JS.InvokeVoidAsync("navigator.share", new { title = "Spincio", text = $"Gioca a Spincio con me! Stanza {Room?.Code}", url = link });
+            _inviteNote = null;
+            return;
+        }
+        catch (JSException)
+        {
+        }
+
+        try
+        {
+            await JS.InvokeVoidAsync("navigator.clipboard.writeText", link);
+            _inviteNote = "Link copiato: incollalo in un messaggio.";
+        }
+        catch (JSException)
+        {
+            _inviteNote = "Copia il link qui sopra e mandalo agli amici.";
         }
     }
 
@@ -131,11 +220,15 @@
         }
     });
 
-    public void Dispose()
+    private void Unsubscribe()
     {
-        if (OnlineGames.ServerUrl is not null)
+        if (_subscribed && OnlineGames.ServerUrl is not null)
         {
             Session.Changed -= OnChanged;
         }
+
+        _subscribed = false;
     }
+
+    public void Dispose() => Unsubscribe();
 }

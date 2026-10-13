@@ -8,6 +8,7 @@ builder.Services.Configure<RoomOptions>(builder.Configuration.GetSection("Rooms"
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton<IRoomNotifier, HubRoomNotifier>();
 builder.Services.AddSingleton<RoomRegistry>();
+builder.Services.AddHostedService<ActivityHeartbeat>();
 builder.Services.AddSignalR().AddJsonProtocol(o => SpincioJson.Configure(o.PayloadSerializerOptions));
 
 // The PWA is served from another origin (e.g. GitHub Pages): allow the configured origins only.

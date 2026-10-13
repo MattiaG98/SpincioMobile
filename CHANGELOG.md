@@ -4,6 +4,16 @@ Versioni dell'app Spincio ([versionamento semantico](https://semver.org/lang/it/
 `Directory.Build.props` (`<Version>`) e si vede nel menu iniziale e nel menu di pausa. Le regole hanno una versione propria
 (`docs/SPEC.md`, "regole v1.4" nel menu di pausa).
 
+## 1.6.0 — 13/10/2026
+- **Gioca online con gli amici, con un server temporaneo gratuito** (ADR 0014):
+  - **"Gioca online con gli amici"** è sempre nel menu;
+  - l'app prende l'indirizzo del server dal **link di invito** (oppure da un campo) e lo ricorda;
+  - nella stanza, **"Invita gli amici"** apre la condivisione del telefono (WhatsApp, Messaggi…) con un link che
+    porta già al server e alla stanza;
+  - il server si accende con un clic su **GitHub Codespaces** (gratis con l'account GitHub) e stampa il link da aprire.
+    Resta acceso finché si gioca e poi si spegne da solo. Istruzioni passo passo in `docs/RUNBOOK.md`.
+- **Punti più piccoli e più rapidi**: la scritta dei punti è più piccola e dura circa metà (0,8 s invece di 1,2 s).
+
 ## 1.5.4 — 11/10/2026
 - **Punti insieme alla mossa**: la scritta dei punti di uno spazzino o di una Mariana parte insieme alla carta, non più
   dopo. Esce dal giocatore che fa la mossa (non dal centro della tavola, dove coprirebbe la presa) e vola sul punteggio

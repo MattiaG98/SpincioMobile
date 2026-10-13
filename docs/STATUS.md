@@ -24,13 +24,14 @@
 | M14 | Animazione dei punti (1.1.0) | ✅ Fatto | "+N" vola sul punteggio della squadra per spazzini, accusi e fine smazzata (alla chiusura del riepilogo); `points.mjs` nel browser |
 | M15 | Statistiche e CPU più forti (1.2.0) | ✅ Fatto | Pannello Statistiche (menu e pausa); "Normale" = L2 4 mondi (59,7% contro il vecchio), "Difficile" = L2 12 mondi + silenzi (53,1%); accusi delle CPU verificati su partite intere (ADR 0013) |
 | — | Scritta MARIANA (1.3.0, dettata dal proprietario) | ✅ Fatto | Fante che prende 5 e 3: scritta MARIANA, nessun punto; al posto di "Spazzino!" se svuota la tavola (lo spazzino vale). AT-40, pagina Regole |
+| M16 | Online con server temporaneo (1.6.0) | ✅ Fatto (da provare in un codespace vero) | Indirizzo del server nel link di invito, "Invita gli amici", codespace che avvia il server da solo, battito del server mentre si gioca (ADR 0014); punti più piccoli e rapidi |
 | — | Regola P8 "asso pigliatutto" (SPEC v1.3 → v1.4, dettata dal proprietario) | ✅ v1.3 (PR #6); v1.4 in revisione: con un asso in tavola si prende solo quello | AT-33…AT-39; versione delle regole nel piè di pagina | AT-33…AT-38; salvataggi v1.2 non ripresi |
 
 ## Metriche
 
 | Voce | Valore | Come si rimisura |
 |---|---|---|
-| Test automatici | **240** (Engine 93, Bots 33, Client 69, Architecture 23, Server 22) | `dotnet test Spincio.slnx` |
+| Test automatici | **251** (Engine 93, Bots 33, Client 79, Architecture 23, Server 23) | `dotnet test Spincio.slnx` |
 | L1 vs L0 | 92,9% (seed 1, regole v1.3 con asso pigliatutto); era 99,3% con la v1.2 | `--x Greedy --y Random` |
 | L2 vs L1 | 57,8% (4 mondi, 800 partite, seed 9000); 55,5% (8) / 60,3% (16) / 60,3% (32) su 400 partite, seed 5000 | `--x Pimc --y Greedy --worlds N` |
 | Livelli 1.2.0 contro 1.1.0 | "Normale" 59,7% · "Difficile" 53,1% (1000 partite ciascuno) | progetto di confronto, vedi ADR 0013 |
@@ -46,7 +47,7 @@
 | # | Decisione | Proposta | Chi |
 |---|---|---|---|
 | 1 | Attivare GitHub Pages | Settings → Pages → Source: **GitHub Actions**; poi merge su `main` | Proprietario |
-| 2 | Hosting del server online | Rimandato (ADR 0010). Opzioni gratuite o quasi in `RUNBOOK.md` | Proprietario |
+| 2 | Hosting del server online | ✅ 13/10: temporaneo su GitHub Codespaces con link di invito (ADR 0014, RUNBOOK). Un server fisso (Render) resta possibile più avanti | Proprietario |
 | 3 | ~~Carte~~ | ✅ 01/10: scansione piacentina (ADR 0011). Rischio diritti accettato dal proprietario; se arriva una segnalazione si torna al ridisegno originale | — |
 | 4 | ~~Icone dell'app~~ | ✅ Fatto il 28/09: icona originale (`Assets/icon.svg`) | — |
 | 5 | Verifica del marchio "Spincio" (EUIPO/UIBM) | Prima di qualsiasi pubblicazione sugli store | Proprietario |
