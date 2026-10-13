@@ -1,0 +1,11 @@
+# Only the server and the libraries it uses go into the image (src/Spincio.Server/Dockerfile).
+**/bin
+**/obj
+.git
+.github
+.devcontainer
+assets-source
+docs
+tests
+tools
+src/Spincio.Client

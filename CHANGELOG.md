@@ -4,6 +4,12 @@ Versioni dell'app Spincio ([versionamento semantico](https://semver.org/lang/it/
 `Directory.Build.props` (`<Version>`) e si vede nel menu iniziale e nel menu di pausa. Le regole hanno una versione propria
 (`docs/SPEC.md`, "regole v1.4" nel menu di pausa).
 
+## 1.7.1 — 13/10/2026
+- **Server fisso su Render, preparato** (ADR 0016): il server online si può pubblicare gratis su Render con un clic
+  (`render.yaml`, immagine Docker del server). Quando il proprietario lo attiva, l'app lo userà da sola (versione
+  successiva).
+- Mentre l'app si collega, la pagina Online avvisa che un server spento può metterci fino a un minuto a svegliarsi.
+
 ## 1.7.0 — 13/10/2026
 - **Giocatori online e inviti dall'app** (ADR 0015):
   - nella pagina Online c'è **"Giocatori online"**: tutti quelli che hanno l'app aperta sullo stesso server, ognuno con

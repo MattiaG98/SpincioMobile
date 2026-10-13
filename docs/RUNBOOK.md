@@ -51,6 +51,30 @@ Configurazione del server in `src/Spincio.Server/appsettings.json`:
 
 Il `<base href>` viene calcolato a runtime (sotto-percorso su github.io, `/` in locale): **non** riscrivere `index.html` dopo il publish, altrimenti il service worker rifiuta i file e l'app non funziona più offline.
 
+## Server fisso su Render (gratis, ADR 0016)
+Da fare una volta sola, dal computer (va bene anche il telefono in "versione desktop"):
+1. Apri https://render.com e registrati con **GitHub** ("Sign in with GitHub"). Se Render chiede l'accesso ai
+   repository, basta `MattiaG98/SpincioMobile`.
+2. Nel pannello: **New** → **Blueprint**. Scegli il repository `SpincioMobile`: Render legge `render.yaml` e mostra il
+   servizio **spincio-server** (Web Service, piano **Free**).
+3. Dai un nome al Blueprint (per esempio "Spincio") e conferma (**Apply** / **Deploy Blueprint**). Il piano Free non
+   costa nulla. Se Render chiede una carta di credito, fermati e avvisa: si decide insieme.
+4. La prima costruzione dura 5–10 minuti. Quando il servizio è **Live**, in alto c'è il suo indirizzo, per esempio
+   `https://spincio-server.onrender.com` (Render può aggiungere qualche lettera se il nome è già preso).
+5. Controllo: aprendo l'indirizzo con `/health` in fondo si legge `{"status":"ok"}`.
+6. Manda l'indirizzo a Claude. Lo mette in `ServerUrl` (`src/Spincio.Client/wwwroot/appsettings.json`) e pubblica
+   l'app: da lì l'app usa il server fisso senza link.
+
+Funzionamento:
+- Render aggiorna il server da solo a ogni merge su `main` che tocca il server (`buildFilter` in `render.yaml`). Si
+  vede nella scheda **Events** del servizio.
+- Il server dorme dopo 15 minuti senza nessuno collegato. Il primo che apre l'app lo sveglia, e ci vuole fino a un
+  minuto.
+- I **Logs** del servizio mostrano, ogni 5 minuti, quante stanze e quanti giocatori ci sono.
+- Verifica dell'immagine senza Render: workflow **Server image** su GitHub Actions. In locale, solo dove si possono
+  scaricare le immagini Microsoft:
+  `docker build -f src/Spincio.Server/Dockerfile -t spincio-server . && docker run -e PORT=10000 -p 10000:10000 spincio-server`.
+
 ## Giocare online con gli amici (server temporaneo, ADR 0014)
 Chi ospita la partita:
 1. da un computer (o dal telefono in "versione desktop") apre `https://github.com/MattiaG98/SpincioMobile`, pulsante

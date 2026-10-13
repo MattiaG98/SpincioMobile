@@ -1,0 +1,23 @@
+# Render Blueprint (ADR 0016): the online server on Render's free plan, built from src/Spincio.Server/Dockerfile.
+# One-time setup: Render → New → Blueprint → this repository (steps in docs/RUNBOOK.md).
+# A push to main that touches the server or the libraries it uses redeploys it; app-only changes do not, so they
+# never interrupt a match (rooms live in memory, ADR 0010).
+services:
+  - type: web
+    name: spincio-server
+    runtime: docker
+    plan: free
+    region: frankfurt
+    branch: main
+    dockerfilePath: ./src/Spincio.Server/Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    buildFilter:
+      paths:
+        - src/Spincio.Server/**
+        - src/Spincio.Engine/**
+        - src/Spincio.Bots/**
+        - src/Spincio.Contracts/**
+        - Directory.Packages.props
+        - global.json
+        - render.yaml

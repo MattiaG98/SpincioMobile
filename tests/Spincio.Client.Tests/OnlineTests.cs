@@ -130,7 +130,7 @@ public class OnlineTests : BunitContext
     }
 
     [Theory]
-    [InlineData(LobbyState.Connecting, "Collegamento al server…")]
+    [InlineData(LobbyState.Connecting, "Collegamento al server… Se era spento ci vuole fino a un minuto.")]
     [InlineData(LobbyState.Unreachable, "Server non raggiungibile: riprovo tra poco.")]
     [InlineData(LobbyState.Online, "Per ora non c'è nessun altro. Qui compare chi apre l'app collegata a questo server.")]
     public void The_list_says_why_it_is_empty(LobbyState state, string status)

@@ -75,6 +75,16 @@ Tutte queste regole sono **verificate da test** in `tests/Spincio.Architecture.T
     nell'altra, ordine `GameRoom.JoinOrder`), poi `Answer(accepted: true)` e pagina Online.
 - `RemoteGameSession.LeaveAsync` azzera stanza e partita: la stessa sessione può entrare in una stanza nuova.
 
+### Server fisso su Render (1.7.1, ADR 0016)
+- `src/Spincio.Server/Dockerfile`: build in due stadi dalla radice; ascolta su `PORT` (Render) o 8080; GC
+  workstation.
+- `render.yaml`: servizio `spincio-server`, piano free, regione frankfurt. Si ridistribuisce solo se cambiano server,
+  motore, bot, contratti o pacchetti; `Directory.Build.props` è escluso, così un rilascio della sola app non riavvia
+  il server.
+- Render spegne il servizio dopo 15 minuti senza traffico. I ping di SignalR (ogni 15 s, client → server) contano come
+  traffico: finché qualcuno è collegato, il server resta acceso.
+- Workflow `Server image`: build dell'immagine, avvio con `PORT=10000`, `/health`, CORS per GitHub Pages.
+
 ### Una mossa, online
 Client: `RemoteGameSession.PlayAsync` → hub `Play(token, expectedSequence, "P0:7D>3S+4B")` → `GameRoom` (coda seriale) valida token, sequenza e regole → `AcceptAsync` → a ogni posto `GameUpdate(sequence, ViewFor(seat), EventsFor(seat))` → timer: pausa CPU oppure timeout di turno (30 s) → a fine partita `MatchReveal(seed, salt, log)` e il client verifica con `Commitment.Verify`.
 
@@ -138,6 +148,7 @@ Mosse legali dalla vista → se c'è un accuso lo dichiara → per N mondi: dist
 | La tavola "cresceva" o si spostava durante la partita | Non per le carte in tavola: cambiavano le misure di ciò che le sta intorno (mano vuota durante il volo, pulsante Accusa, "· mazziere" che andava a capo, dichiarazioni) | Misure fisse per tutto ciò che sta intorno alla tavola; `layout.mjs` lo controlla a ogni mossa |
 | Test end-to-end degli inviti rosso: un giocatore vedeva solo sé stesso nella lista (1.7.0) | Due corse. Il server mandava le liste fuori dal lock, quindi in ordine qualsiasi. Il client sovrascriveva la lista appena arrivata con la risposta del proprio `Hello`, calcolata prima | Liste del server in serie (`SemaphoreSlim`); il client usa la risposta di `Hello` solo se nel frattempo non è arrivata nessuna lista (contatore) |
 | Pagina Online "senza server" aprendo un link di invito (1.7.0, trovato con `lobby.mjs`) | La barra degli inviti e la pagina leggevano entrambe il server ricordato. `_server ??= Parse(await …)` controlla `null` **prima** dell'`await`: la lettura più lenta cancellava il server appena preso dal link. In più la seconda lettura tornava subito, prima che la prima finisse | Letture fatte una volta sola (`_loading ??= ReadAsync()`, attesa da tutti) e assegnazione dopo l'`await` (`var x = await …; _server ??= x;`). Stessa cosa per il profilo. Test di regressione in `OnlineTests` |
+| Impossibile provare l'immagine Docker nell'ambiente cloud (1.7.1) | La rete dell'ambiente blocca `mcr.microsoft.com` (403 dalla policy) e i siti di Render; `dockerd` parte, ma non scarica le immagini base | Non aggirare il blocco: l'immagine si prova su GitHub Actions (workflow `Server image`); in locale si simula l'avvio con `dotnet publish` + `PORT` |
 | Controllo nel browser che segnalava carte "rimaste in volo" | Lo script misurava durante l'animazione della mia carta, quando il resto della mano sembrava ancora giocabile | Mano disattivata durante il volo (anche un difetto per l'utente); i controlli aspettano una carta `playable` visibile e chiudono il riepilogo "Continua" |
 
 ## 6. Strategia di test
