@@ -37,6 +37,25 @@ public class GreedyBotTests
         chosen.Capture.ShouldNotBeNull().Cards.ShouldContain(RoundScoring.Settebello);
     }
 
+    /// <summary>On an empty table an ace is only dropped (P8): kept, it takes the whole table later.</summary>
+    [Fact]
+    public void Keeps_the_ace_when_the_table_is_empty()
+    {
+        var view = Views.For("AS,4D,7B", ""); // before 1.7.2 the ace was the cheapest drop
+        var chosen = (PlayCard)Choose(view, Views.Memory("AS,4D,7B"));
+
+        chosen.Card.Rank.ShouldNotBe(Rank.Ace);
+        chosen.Capture.ShouldBeNull();
+    }
+
+    [Fact]
+    public void Drops_an_ace_when_it_holds_nothing_else()
+    {
+        var view = Views.For("AS,AC", "");
+
+        ((PlayCard)Choose(view, Views.Memory("AS,AC"))).Card.Rank.ShouldBe(Rank.Ace);
+    }
+
     [Fact]
     public void Avoids_leaving_a_sweepable_table()
     {
