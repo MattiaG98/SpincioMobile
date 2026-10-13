@@ -50,6 +50,7 @@
 |---|---|---|---|
 | 1 | Attivare GitHub Pages | Settings → Pages → Source: **GitHub Actions**; poi merge su `main` | Proprietario |
 | 2 | Hosting del server online | 13/10: server fisso su **Render**, piano gratuito (ADR 0016). Da fare: creare il servizio (RUNBOOK, "Server fisso su Render") e mandare l'indirizzo. Il codespace (ADR 0014) resta come riserva | Proprietario |
+| 7 | Partite che sopravvivono a un riavvio del server | Punto di ripristino cifrato consegnato ai client e ricostruzione della stanza dopo il riavvio (ADR 0016, "Conseguenze"); niente database | Claude propone, proprietario approva |
 | 6 | Notifiche push per gli inviti | Oggi l'invito arriva solo con l'app aperta (ADR 0015). Le push richiedono app sulla Home, permesso e un servizio di invio: da decidere se servono | Proprietario |
 | 3 | ~~Carte~~ | ✅ 01/10: scansione piacentina (ADR 0011). Rischio diritti accettato dal proprietario; se arriva una segnalazione si torna al ridisegno originale | — |
 | 4 | ~~Icone dell'app~~ | ✅ Fatto il 28/09: icona originale (`Assets/icon.svg`) | — |
