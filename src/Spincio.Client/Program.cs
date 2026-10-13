@@ -14,6 +14,8 @@ builder.Services.AddSingleton<SettingsService>();
 builder.Services.AddSingleton<IOnlineSeatStore, LocalStorageOnlineSeatStore>();
 builder.Services.AddSingleton<OnlineService>();
 builder.Services.AddSingleton<StatsService>();
+builder.Services.AddSingleton<ProfileService>();
+builder.Services.AddSingleton<ILobby>(_ => new LobbyClient());
 
 var host = builder.Build();
 host.Services.GetRequiredService<StatsService>(); // starts following the matches from the first one

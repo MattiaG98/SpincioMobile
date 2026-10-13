@@ -1,0 +1,120 @@
+@using Spincio.Client.Game
+@using Spincio.Contracts
+@implements IDisposable
+@inject ILobby Lobby
+@inject OnlineService OnlineGames
+@inject ProfileService Profiles
+@inject NavigationManager Navigation
+
+@* ADR 0015: an invitation shows at the top of any screen; whoever accepts chooses to play with or against the inviter. *@
+@if (Lobby.Pending is { } invitation)
+{
+    <div class="invite-banner" role="alert">
+        <p class="invite-text">📨 <strong>@invitation.FromName</strong> ti invita a una partita online</p>
+        @if (InOnlineGame)
+        {
+            <p class="invite-hint">Sei già in una partita online: per ora puoi solo rifiutare.</p>
+        }
+        else if (_choosing == invitation.Id)
+        {
+            <p class="invite-hint">Come vuoi giocare?</p>
+        }
+
+        @if (_error is { } error)
+        {
+            <p class="invite-error">@error</p>
+        }
+
+        <div class="invite-actions">
+            @if (!InOnlineGame && _choosing != invitation.Id)
+            {
+                <button type="button" class="invite-accept" @onclick="() => Choose(invitation)">Accetta</button>
+            }
+            else if (!InOnlineGame)
+            {
+                @if (invitation.CanJoinWith)
+                {
+                    <button type="button" class="invite-with" disabled="@_busy" @onclick="() => JoinAsync(invitation, sameTeam: true)">Con @invitation.FromName</button>
+                }
+                @if (invitation.CanJoinAgainst)
+                {
+                    <button type="button" class="invite-against" disabled="@_busy" @onclick="() => JoinAsync(invitation, sameTeam: false)">Contro @invitation.FromName</button>
+                }
+            }
+            <button type="button" class="invite-decline" disabled="@_busy" @onclick="() => DeclineAsync(invitation)">Rifiuta</button>
+        </div>
+    </div>
+}
+
+@code {
+    private string? _choosing;
+    private string? _error;
+    private bool _busy;
+
+    private bool InOnlineGame => OnlineGames.ServerUrl is not null && (OnlineGames.Session.Room is not null || OnlineGames.Session.IsStarted);
+
+    protected override async Task OnInitializedAsync()
+    {
+        Lobby.Changed += OnChanged;
+
+        // The list of players and invitations follows the app wherever it is, once a server and a name are known.
+        await OnlineGames.LoadAsync();
+        var profile = await Profiles.LoadAsync();
+        if (OnlineGames.ServerUrl is { } server && profile.HasName)
+        {
+            await Lobby.StartAsync(server, profile);
+        }
+    }
+
+    private void Choose(Invitation invitation)
+    {
+        _choosing = invitation.Id;
+        _error = null;
+    }
+
+    private async Task JoinAsync(Invitation invitation, bool sameTeam)
+    {
+        _busy = true;
+        _error = null;
+        try
+        {
+            var profile = await Profiles.LoadAsync();
+            var joined = await OnlineGames.Session.JoinRoomAsAsync(invitation.RoomCode, profile.Name, invitation.InviterSeat, sameTeam);
+            if (!joined.Ok)
+            {
+                _error = joined.Error ?? "Non è stato possibile entrare nella stanza.";
+                return;
+            }
+
+            _choosing = null;
+            await Lobby.AnswerAsync(invitation, accepted: true);
+            Navigation.NavigateTo("online");
+        }
+        catch (Exception)
+        {
+            _error = "Server non raggiungibile: riprova tra poco.";
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task DeclineAsync(Invitation invitation)
+    {
+        _choosing = null;
+        _error = null;
+        try
+        {
+            await Lobby.AnswerAsync(invitation, accepted: false);
+        }
+        catch (Exception)
+        {
+            // The invitation is gone from the screen anyway; the inviter's will simply stay unanswered.
+        }
+    }
+
+    private void OnChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Lobby.Changed -= OnChanged;
+}

@@ -3,6 +3,8 @@
 @using Spincio.Contracts
 @implements IDisposable
 @inject OnlineService OnlineGames
+@inject ILobby Lobby
+@inject ProfileService Profiles
 @inject GameHost Host
 @inject NavigationManager Navigation
 @inject IJSRuntime JS
@@ -25,41 +27,77 @@
             <p class="error">Indirizzo non valido: deve iniziare con https://</p>
         }
     }
-    else if (Room is null)
-    {
-        <p>Crea una stanza e condividi il codice, oppure entra con il codice di un amico. I posti vuoti vanno alla CPU.</p>
-        <label class="field">
-            Il tuo nome
-            <input @bind="_name" @bind:event="oninput" maxlength="16" placeholder="Nome" />
-        </label>
-        <button type="button" class="primary" disabled="@_busy" @onclick="CreateAsync">Crea una stanza</button>
-        <label class="field">
-            Codice stanza
-            <input @bind="_code" @bind:event="oninput" maxlength="5" placeholder="ABCDE" class="code" />
-        </label>
-        <button type="button" disabled="@(_busy || string.IsNullOrWhiteSpace(_code))" @onclick="JoinAsync">Entra</button>
-    }
     else
     {
-        <p>Codice stanza: <strong class="room-code">@Room.Code</strong></p>
-        <p>Manda il link di invito agli altri giocatori. I primi due sono compagni di squadra.</p>
-        <button type="button" class="btn btn-green" @onclick="InviteAsync">📨 Invita gli amici</button>
-        <input class="invite-link" readonly value="@InviteLink" aria-label="Link di invito" onfocus="this.select()" />
-        @if (_inviteNote is { } note)
+        @if (Room is { } room)
         {
-            <p class="invite-note">@note</p>
+            <p class="room-line">Stanza <strong class="room-code">@room.Code</strong></p>
+            <ol class="seats">
+                @foreach (var seat in room.Seats)
+                {
+                    <li>
+                        @(seat.Seat % 2 == 0 ? "Squadra A" : "Squadra B") ·
+                        @(string.IsNullOrEmpty(seat.Name) ? "libero (CPU)" : seat.Name)
+                        @(seat.Seat == Session.Me.Index ? " (tu)" : "")
+                    </li>
+                }
+            </ol>
+            <button type="button" class="primary" disabled="@_busy" @onclick="StartAsync">Inizia la partita</button>
         }
-        <ol class="seats">
-            @foreach (var seat in Room.Seats)
+        @if (Room is null || _profile is not { HasName: true })
+        {
+            <label class="field">
+                Il tuo nome
+                <input @bind="_name" @bind:event="oninput" @onchange="SaveNameAsync" maxlength="16" placeholder="Nome" autocomplete="nickname" />
+            </label>
+        }
+
+        <h2 class="online-title">Giocatori online</h2>
+        @if (LobbyStatus is { } status)
+        {
+            <p class="lobby-status">@status</p>
+        }
+        @if (Others.Count > 0)
+        {
+            <ul class="online-players">
+                @foreach (var player in Others)
+                {
+                    <li>
+                        <span class="player-name">@player.Name</span>
+                        @if (Lobby.Sent.TryGetValue(player.Id, out var sent))
+                        {
+                            <span class="invite-status">@sent</span>
+                        }
+                        @if (Room is null || sent != InviteStatus.Accepted)
+                        {
+                            <button type="button" class="invite-player" disabled="@(!CanInvite)" @onclick="() => InvitePlayerAsync(player)">Invita</button>
+                        }
+                    </li>
+                }
+            </ul>
+        }
+
+        @if (Room is null)
+        {
+            <h2 class="online-title">Oppure con un codice</h2>
+            <p class="online-hint">Crea una stanza e manda il codice, oppure entra con il codice di un amico. I posti vuoti vanno alla CPU.</p>
+            <button type="button" class="primary" disabled="@(_busy || string.IsNullOrWhiteSpace(_name))" @onclick="CreateAsync">Crea una stanza</button>
+            <label class="field">
+                Codice stanza
+                <input @bind="_code" @bind:event="oninput" maxlength="5" placeholder="ABCDE" class="code" />
+            </label>
+            <button type="button" disabled="@(_busy || string.IsNullOrWhiteSpace(_code) || string.IsNullOrWhiteSpace(_name))" @onclick="JoinAsync">Entra</button>
+        }
+        else
+        {
+            <p class="online-hint">Oppure manda il link di invito: chi lo apre entra in stanza. I primi due sono compagni di squadra.</p>
+            <button type="button" class="btn btn-green" @onclick="InviteAsync">📨 Invita con un link</button>
+            <input class="invite-link" readonly value="@InviteLink" aria-label="Link di invito" onfocus="this.select()" />
+            @if (_inviteNote is { } note)
             {
-                <li>
-                    @(seat.Seat % 2 == 0 ? "Squadra A" : "Squadra B") ·
-                    @(string.IsNullOrEmpty(seat.Name) ? "libero (CPU)" : seat.Name)
-                    @(seat.Seat == Session.Me.Index ? " (tu)" : "")
-                </li>
+                <p class="invite-note">@note</p>
             }
-        </ol>
-        <button type="button" class="primary" disabled="@_busy" @onclick="StartAsync">Inizia la partita</button>
+        }
     }
 
     @if (_connectionError)
@@ -93,6 +131,7 @@
     private bool _badServer;
     private string? _inviteNote;
     private bool _subscribed;
+    private PlayerProfile? _profile;
 
     private string InviteLink => Room is null || OnlineGames.ServerUrl is null
         ? ""
@@ -101,6 +140,22 @@
     private RemoteGameSession Session => OnlineGames.Session;
 
     private RoomInfo? Room => OnlineGames.ServerUrl is null ? null : Session.Room;
+
+    /// <summary>The players online (ADR 0015), this device left out.</summary>
+    private IReadOnlyList<OnlinePlayer> Others => [.. Lobby.Players.Where(p => p.Id != Lobby.MyId)];
+
+    // Inviting creates the room first if needed; a room with every seat taken by a person cannot take anyone else.
+    private bool CanInvite => !_busy && Lobby.State == LobbyState.Online
+        && (Room is null ? !string.IsNullOrWhiteSpace(_name) : !Room.Started && Room.Seats.Any(s => string.IsNullOrEmpty(s.Name)));
+
+    private string? LobbyStatus => Lobby.State switch
+    {
+        _ when _profile is not { HasName: true } => "Scrivi il tuo nome: comparirai nella lista e vedrai chi è online.",
+        LobbyState.Off or LobbyState.Connecting => "Collegamento al server…",
+        LobbyState.Unreachable => "Server non raggiungibile: riprovo tra poco.",
+        _ when Others.Count == 0 => "Per ora non c'è nessun altro. Qui compare chi apre l'app collegata a questo server.",
+        _ => null,
+    };
 
     protected override async Task OnInitializedAsync()
     {
@@ -115,7 +170,61 @@
             _code = RoomParameter.Trim().ToUpperInvariant();
         }
 
+        _profile = await Profiles.LoadAsync();
+        _name = _profile.Name;
+        Lobby.Changed += OnLobbyChanged;
+        await StartLobbyAsync();
         await ConnectAsync();
+    }
+
+    private async Task StartLobbyAsync()
+    {
+        if (OnlineGames.ServerUrl is { } server && _profile is { HasName: true } profile)
+        {
+            await Lobby.StartAsync(server, profile);
+        }
+    }
+
+    private async Task SaveNameAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_name) || _name.Trim() == _profile?.Name)
+        {
+            return;
+        }
+
+        _profile = await Profiles.SetNameAsync(_name);
+        await StartLobbyAsync();
+    }
+
+    private async Task InvitePlayerAsync(OnlinePlayer player)
+    {
+        _busy = true;
+        try
+        {
+            if (Room is null)
+            {
+                await SaveNameAsync();
+                if (!(await Session.CreateRoomAsync(_name)).Ok)
+                {
+                    return;
+                }
+            }
+
+            if (Session.SeatToken is { } token)
+            {
+                await Lobby.InviteAsync(player, token);
+            }
+
+            _connectionError = false;
+        }
+        catch (Exception)
+        {
+            _connectionError = true;
+        }
+        finally
+        {
+            _busy = false;
+        }
     }
 
     private async Task ConnectAsync()
@@ -137,6 +246,7 @@
     private async Task UseServerAsync()
     {
         _badServer = !await OnlineGames.UseServerAsync(_serverInput);
+        await StartLobbyAsync();
         await ConnectAsync();
     }
 
@@ -144,6 +254,7 @@
     {
         Unsubscribe();
         _connectionError = false;
+        await Lobby.StopAsync();
         await OnlineGames.ForgetServerAsync();
     }
 
@@ -172,9 +283,17 @@
         }
     }
 
-    private async Task CreateAsync() => await Busy(() => Session.CreateRoomAsync(_name));
+    private async Task CreateAsync()
+    {
+        await SaveNameAsync();
+        await Busy(() => Session.CreateRoomAsync(_name));
+    }
 
-    private async Task JoinAsync() => await Busy(() => Session.JoinRoomAsync(_code.Trim().ToUpperInvariant(), _name));
+    private async Task JoinAsync()
+    {
+        await SaveNameAsync();
+        await Busy(() => Session.JoinRoomAsync(_code.Trim().ToUpperInvariant(), _name));
+    }
 
     private async Task StartAsync() => await Busy(() => Session.StartMatchAsync());
 
@@ -230,5 +349,11 @@
         _subscribed = false;
     }
 
-    public void Dispose() => Unsubscribe();
+    private void OnLobbyChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        Lobby.Changed -= OnLobbyChanged;
+        Unsubscribe();
+    }
 }

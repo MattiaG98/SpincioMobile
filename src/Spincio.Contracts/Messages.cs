@@ -5,6 +5,9 @@ namespace Spincio.Contracts;
 public static class HubPaths
 {
     public const string Game = "/hubs/game";
+
+    /// <summary>Who is online and invitations (ADR 0015).</summary>
+    public const string Lobby = "/hubs/lobby";
 }
 
 /// <summary>Result of creating, joining or rejoining a room. <see cref="Token"/> identifies the player's seat.</summary>
@@ -54,6 +57,12 @@ public interface IGameHub
 
     Task<JoinResult> JoinRoom(string roomCode, string playerName);
 
+    /// <summary>
+    /// Joins next to a player who sent an invitation: on the same team as <paramref name="inviterSeat"/>
+    /// (<paramref name="sameTeam"/>) or on the other one. Fails if that team has no free seat.
+    /// </summary>
+    Task<JoinResult> JoinRoomAs(string roomCode, string playerName, int inviterSeat, bool sameTeam);
+
     /// <summary>Reconnects a seat after a disconnection; the server answers with a fresh snapshot.</summary>
     Task<JoinResult> Rejoin(string token);
 
@@ -62,4 +71,38 @@ public interface IGameHub
 
     /// <summary>Plays a command encoded with <see cref="CommandCodec"/>. Rejected if the sequence is stale.</summary>
     Task<CommandResult> Play(string token, int expectedSequence, string command);
+}
+
+/// <summary>Someone with the app open and connected to the server (ADR 0015). <see cref="Id"/> identifies the device.</summary>
+public sealed record OnlinePlayer(string Id, string Name);
+
+/// <summary>
+/// An invitation to a room. The invited player chooses to play with the inviter (<see cref="CanJoinWith"/>: a free seat
+/// on the inviter's team) or against (<see cref="CanJoinAgainst"/>).
+/// </summary>
+public sealed record Invitation(
+    string Id, string FromId, string FromName, string RoomCode, int InviterSeat, bool CanJoinWith, bool CanJoinAgainst);
+
+/// <summary>Lobby, server → client calls.</summary>
+public interface ILobbyClient
+{
+    Task PlayersChanged(IReadOnlyList<OnlinePlayer> players);
+
+    Task Invited(Invitation invitation);
+
+    /// <summary>To the inviter: the invited player accepted (and joined the room) or declined.</summary>
+    Task InvitationAnswered(string invitationId, string byId, string byName, bool accepted);
+}
+
+/// <summary>Lobby, client → server calls (ADR 0015).</summary>
+public interface ILobbyHub
+{
+    /// <summary>Announces this device (its random id and the player's name); returns who is online.</summary>
+    Task<IReadOnlyList<OnlinePlayer>> Hello(string playerId, string name);
+
+    /// <summary>Invites an online player to the room of the seat identified by <paramref name="seatToken"/>.</summary>
+    Task<CommandResult> Invite(string targetId, string seatToken);
+
+    /// <summary>The invited player's answer; when accepting, call it after joining the room.</summary>
+    Task Answer(string invitationId, bool accepted);
 }

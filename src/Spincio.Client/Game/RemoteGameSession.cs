@@ -176,6 +176,16 @@ public sealed class RemoteGameSession : IGameSession, IAsyncDisposable
         return await AfterJoinAsync(await _hub.InvokeAsync<JoinResult>(nameof(IGameHub.JoinRoom), roomCode, playerName));
     }
 
+    /// <summary>Accepts an invitation: joins with the inviter (same team) or against (ADR 0015).</summary>
+    public async Task<JoinResult> JoinRoomAsAsync(string roomCode, string playerName, int inviterSeat, bool sameTeam)
+    {
+        await ConnectAsync();
+        return await AfterJoinAsync(await _hub.InvokeAsync<JoinResult>(nameof(IGameHub.JoinRoomAs), roomCode, playerName, inviterSeat, sameTeam));
+    }
+
+    /// <summary>The secret of this player's seat, which proves who is inviting to the room (ADR 0015).</summary>
+    public string? SeatToken => _token;
+
     /// <summary>Comes back to the match remembered in the seat store, if any.</summary>
     public async Task<bool> TryRejoinAsync()
     {
@@ -190,6 +200,7 @@ public sealed class RemoteGameSession : IGameSession, IAsyncDisposable
         if (result is not { Ok: true })
         {
             await _store.ClearAsync();
+            _token = null;
             return false;
         }
 
@@ -224,11 +235,31 @@ public sealed class RemoteGameSession : IGameSession, IAsyncDisposable
         return Task.CompletedTask;
     }
 
+    /// <summary>Leaves the room or match; the session can then create or join a new one (e.g. accept an invitation).</summary>
     public async Task LeaveAsync()
     {
         await _store.ClearAsync();
         _token = null;
         await _hub.StopAsync();
+        await _updates.WaitAsync();
+        try
+        {
+            Room = null;
+            _view = null;
+            _sequence = 0;
+            _feed = [];
+            PendingSummary = null;
+            Result = null;
+            Verified = null;
+            Error = null;
+            TurnSecondsLeft = 0;
+        }
+        finally
+        {
+            _updates.Release();
+        }
+
+        Changed?.Invoke();
     }
 
     public async ValueTask DisposeAsync()
@@ -363,7 +394,6 @@ public sealed class RemoteGameSession : IGameSession, IAsyncDisposable
     }
 }
 
-/// <summary>Creates the online session when a server is configured (<c>ServerUrl</c> in appsettings.json).</summary>
 /// <summary>
 /// The online game and its server (ADR 0014): the server in an invite link, else the one remembered on this device,
 /// else the one built into the app (<c>ServerUrl</c> in appsettings, empty on GitHub Pages).
@@ -373,30 +403,18 @@ public sealed class OnlineService(IConfiguration configuration, IOnlineSeatStore
     private const string Key = "spincio.server";
     private RemoteGameSession? _session;
     private Uri? _server;
-    private bool _loaded;
+    private Task? _loading;
 
     public Uri? ServerUrl => _server ?? Parse(configuration["ServerUrl"]);
 
     public RemoteGameSession Session =>
         _session ??= new RemoteGameSession(ServerUrl ?? throw new InvalidOperationException("No server chosen."), store);
 
-    /// <summary>Reads the server remembered on this device (once).</summary>
-    public async Task LoadAsync()
-    {
-        if (_loaded)
-        {
-            return;
-        }
-
-        _loaded = true;
-        try
-        {
-            _server ??= Parse(await js.InvokeAsync<string?>("localStorage.getItem", Key));
-        }
-        catch (Exception e) when (e is JSException or InvalidOperationException)
-        {
-        }
-    }
+    /// <summary>
+    /// Reads the server remembered on this device, once: the invitation bar and the online page both ask at start-up,
+    /// and both wait for the same reading.
+    /// </summary>
+    public Task LoadAsync() => _loading ??= ReadAsync();
 
     /// <summary>Switches to <paramref name="address"/> and remembers it. False if it is not a usable server address.</summary>
     public async Task<bool> UseServerAsync(string? address)
@@ -412,7 +430,6 @@ public sealed class OnlineService(IConfiguration configuration, IOnlineSeatStore
         }
 
         _server = url;
-        _loaded = true;
         await StoreAsync(url.ToString());
         return true;
     }
@@ -454,6 +471,18 @@ public sealed class OnlineService(IConfiguration configuration, IOnlineSeatStore
     {
         ArgumentNullException.ThrowIfNull(server);
         return $"{appBase}online?server={Uri.EscapeDataString(server.GetLeftPart(UriPartial.Authority))}&room={Uri.EscapeDataString(roomCode)}";
+    }
+
+    private async Task ReadAsync()
+    {
+        try
+        {
+            var remembered = Parse(await js.InvokeAsync<string?>("localStorage.getItem", Key));
+            _server ??= remembered; // a server from an invite link, chosen meanwhile, wins
+        }
+        catch (Exception e) when (e is JSException or InvalidOperationException)
+        {
+        }
     }
 
     private async Task StoreAsync(string? value)

@@ -4,6 +4,17 @@ Versioni dell'app Spincio ([versionamento semantico](https://semver.org/lang/it/
 `Directory.Build.props` (`<Version>`) e si vede nel menu iniziale e nel menu di pausa. Le regole hanno una versione propria
 (`docs/SPEC.md`, "regole v1.4" nel menu di pausa).
 
+## 1.7.0 — 13/10/2026
+- **Giocatori online e inviti dall'app** (ADR 0015):
+  - nella pagina Online c'è **"Giocatori online"**: tutti quelli che hanno l'app aperta sullo stesso server, ognuno con
+    il pulsante **Invita** (se serve crea la stanza);
+  - chi viene invitato vede **in alto, in qualunque schermata**, "📨 *Nome* ti invita a una partita online" con
+    **Accetta** e **Rifiuta**; dopo Accetta sceglie **Con *Nome*** o **Contro *Nome*** (solo dove c'è posto) ed entra
+    nella stanza;
+  - chi invita vede accanto al nome "Invitato…", "Ha accettato" o "Ha rifiutato";
+  - il nome si scrive una volta e l'app lo ricorda; il link di invito resta ("Invita con un link").
+- Corretto: dopo aver lasciato una partita online, entrare in una nuova stanza riapriva la partita finita.
+
 ## 1.6.0 — 13/10/2026
 - **Gioca online con gli amici, con un server temporaneo gratuito** (ADR 0014):
   - **"Gioca online con gli amici"** è sempre nel menu;

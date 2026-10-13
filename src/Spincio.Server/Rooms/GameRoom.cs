@@ -60,7 +60,32 @@ public sealed partial class GameRoom : IAsyncDisposable
     internal MatchState? State => _state;
 
     public Task<JoinResult> JoinAsync(string playerName, string connectionId) =>
-        RunAsync(() => JoinCoreAsync(playerName, connectionId));
+        RunAsync(() => JoinCoreAsync(playerName, connectionId, JoinOrder));
+
+    /// <summary>
+    /// Joins on the same team as <paramref name="inviterSeat"/> (<paramref name="sameTeam"/>) or on the other one
+    /// (ADR 0015): the first free seat of that team.
+    /// </summary>
+    public Task<JoinResult> JoinNearAsync(string playerName, string connectionId, int inviterSeat, bool sameTeam)
+    {
+        if (inviterSeat is < 0 or >= 4)
+        {
+            return Task.FromResult(JoinResult.Fail("Posto non valido."));
+        }
+
+        int[] order = [.. JoinOrder.Where(i => i != inviterSeat && (i % 2 == inviterSeat % 2) == sameTeam)];
+        return RunAsync(() => JoinCoreAsync(playerName, connectionId, order, sameTeam ? "Nella squadra di chi ti ha invitato non c'è più posto." : "Nella squadra avversaria non c'è più posto."));
+    }
+
+    /// <summary>The seat and name of the player holding <paramref name="token"/>, and the free seats, before the match starts.</summary>
+    public Task<SeatSnapshot?> SnapshotForAsync(string token) => RunAsync(() =>
+    {
+        int index = SeatOf(token);
+        SeatSnapshot? snapshot = index < 0 || _state is not null
+            ? null
+            : new SeatSnapshot(index, _seats[index].Name, [.. Enumerable.Range(0, 4).Where(i => _seats[i].Token is null && !_seats[i].IsBot)]);
+        return Task.FromResult(snapshot);
+    });
 
     public Task<JoinResult> RejoinAsync(string token, string connectionId) =>
         RunAsync(() => RejoinCoreAsync(token, connectionId));
@@ -86,7 +111,7 @@ public sealed partial class GameRoom : IAsyncDisposable
         }
     }
 
-    private async Task<JoinResult> JoinCoreAsync(string playerName, string connectionId)
+    private async Task<JoinResult> JoinCoreAsync(string playerName, string connectionId, int[] order, string full = "La stanza è piena.")
     {
         Touch();
         if (_state is not null)
@@ -94,10 +119,10 @@ public sealed partial class GameRoom : IAsyncDisposable
             return JoinResult.Fail("La partita è già iniziata.");
         }
 
-        int index = JoinOrder.FirstOrDefault(i => _seats[i].Token is null && !_seats[i].IsBot, -1);
+        int index = order.FirstOrDefault(i => _seats[i].Token is null && !_seats[i].IsBot, -1);
         if (index < 0)
         {
-            return JoinResult.Fail("La stanza è piena.");
+            return JoinResult.Fail(full);
         }
 
         var slot = _seats[index];
@@ -439,4 +464,12 @@ public sealed partial class GameRoom : IAsyncDisposable
 
         public bool PlayedByCpu => IsBot || BotControlled;
     }
+}
+
+/// <summary>Who is inviting (seat and name) and which seats are still free, for an invitation (ADR 0015).</summary>
+public sealed record SeatSnapshot(int Seat, string Name, IReadOnlyList<int> FreeSeats)
+{
+    public bool CanJoinWith => FreeSeats.Any(s => s != Seat && s % 2 == Seat % 2);
+
+    public bool CanJoinAgainst => FreeSeats.Any(s => s % 2 != Seat % 2);
 }
