@@ -21,6 +21,9 @@ public sealed class RoomRegistry(IOptions<RoomOptions> options, TimeProvider tim
 
     public int Count => _rooms.Count;
 
+    /// <summary>Rooms with someone connected, and how many people are connected.</summary>
+    public (int Rooms, int Players) Activity() => (_byConnection.Values.Distinct().Count(), _byConnection.Count);
+
     public GameRoom Create()
     {
         Purge();

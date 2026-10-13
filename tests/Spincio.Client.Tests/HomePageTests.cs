@@ -22,12 +22,13 @@ public class HomePageTests : BunitContext
         JSInterop.Mode = JSRuntimeMode.Loose; // card animations call into JS (js/moves.js)
     }
 
+    /// <summary>ADR 0014: the server can come from an invite link, so online play is always on offer.</summary>
     [Fact]
-    public void Online_link_is_hidden_without_a_server()
+    public void Online_play_is_always_offered()
     {
         var page = Render<Home>();
 
-        page.FindAll("a[href='online']").ShouldBeEmpty();
+        page.Find("a[href='online']").TextContent.ShouldContain("Gioca online");
     }
 
     [Fact]
@@ -140,8 +141,8 @@ public class HomePageTests : BunitContext
     {
         var page = Render<Home>();
 
-        AppInfo.Version.ShouldBe("1.5.4");
-        page.Find("section.start .app-version").TextContent.ShouldBe("v1.5.4");
+        AppInfo.Version.ShouldBe("1.6.0");
+        page.Find("section.start .app-version").TextContent.ShouldBe("v1.6.0");
     }
 
     /// <summary>Seed 3: the CPUs empty the table before my first turn; seed 7: there are cards on it.</summary>

@@ -364,15 +364,66 @@ public sealed class RemoteGameSession : IGameSession, IAsyncDisposable
 }
 
 /// <summary>Creates the online session when a server is configured (<c>ServerUrl</c> in appsettings.json).</summary>
-public sealed class OnlineService(IConfiguration configuration, IOnlineSeatStore store)
+/// <summary>
+/// The online game and its server (ADR 0014): the server in an invite link, else the one remembered on this device,
+/// else the one built into the app (<c>ServerUrl</c> in appsettings, empty on GitHub Pages).
+/// </summary>
+public sealed class OnlineService(IConfiguration configuration, IOnlineSeatStore store, IJSRuntime js)
 {
+    private const string Key = "spincio.server";
     private RemoteGameSession? _session;
+    private Uri? _server;
+    private bool _loaded;
 
-    public Uri? ServerUrl =>
-        Uri.TryCreate(configuration["ServerUrl"], UriKind.Absolute, out var url) ? url : null;
+    public Uri? ServerUrl => _server ?? Parse(configuration["ServerUrl"]);
 
     public RemoteGameSession Session =>
-        _session ??= new RemoteGameSession(ServerUrl ?? throw new InvalidOperationException("No ServerUrl configured."), store);
+        _session ??= new RemoteGameSession(ServerUrl ?? throw new InvalidOperationException("No server chosen."), store);
+
+    /// <summary>Reads the server remembered on this device (once).</summary>
+    public async Task LoadAsync()
+    {
+        if (_loaded)
+        {
+            return;
+        }
+
+        _loaded = true;
+        try
+        {
+            _server ??= Parse(await js.InvokeAsync<string?>("localStorage.getItem", Key));
+        }
+        catch (Exception e) when (e is JSException or InvalidOperationException)
+        {
+        }
+    }
+
+    /// <summary>Switches to <paramref name="address"/> and remembers it. False if it is not a usable server address.</summary>
+    public async Task<bool> UseServerAsync(string? address)
+    {
+        if (Parse(address) is not { } url)
+        {
+            return false;
+        }
+
+        if (url != ServerUrl)
+        {
+            await ResetAsync();
+        }
+
+        _server = url;
+        _loaded = true;
+        await StoreAsync(url.ToString());
+        return true;
+    }
+
+    /// <summary>Forgets the chosen server (e.g. a temporary one that has been switched off).</summary>
+    public async Task ForgetServerAsync()
+    {
+        await ResetAsync();
+        _server = null;
+        await StoreAsync(null);
+    }
 
     public async Task ResetAsync()
     {
@@ -380,6 +431,46 @@ public sealed class OnlineService(IConfiguration configuration, IOnlineSeatStore
         {
             await _session.DisposeAsync();
             _session = null;
+        }
+    }
+
+    /// <summary>
+    /// A server address the app can use: https (http only on this computer, for development), reduced to its origin.
+    /// Null otherwise.
+    /// </summary>
+    public static Uri? Parse(string? address)
+    {
+        if (!Uri.TryCreate(address?.Trim(), UriKind.Absolute, out var url)
+            || !(url.Scheme == Uri.UriSchemeHttps || (url.Scheme == Uri.UriSchemeHttp && url.IsLoopback)))
+        {
+            return null;
+        }
+
+        return new Uri(url.GetLeftPart(UriPartial.Authority) + "/");
+    }
+
+    /// <summary>The link that opens the online page already connected to <paramref name="server"/>, with the room code filled in.</summary>
+    public static string InviteLink(string appBase, Uri server, string roomCode)
+    {
+        ArgumentNullException.ThrowIfNull(server);
+        return $"{appBase}online?server={Uri.EscapeDataString(server.GetLeftPart(UriPartial.Authority))}&room={Uri.EscapeDataString(roomCode)}";
+    }
+
+    private async Task StoreAsync(string? value)
+    {
+        try
+        {
+            if (value is null)
+            {
+                await js.InvokeVoidAsync("localStorage.removeItem", Key);
+            }
+            else
+            {
+                await js.InvokeVoidAsync("localStorage.setItem", Key, value);
+            }
+        }
+        catch (Exception e) when (e is JSException or InvalidOperationException)
+        {
         }
     }
 }

@@ -5,7 +5,7 @@
 // Points scored (sweeps, declarations, end of round) pop up as "+N" and fly to the team's score: points().
 (function () {
     const FLY = 380, HOLD = 260, GATHER = 220, CARRY = 420; // ms at normal speed
-    const POP = 260, SHOW = 420, TO_SCORE = 520, BUMP = 360; // points: appear, stay, fly to the score, score bump
+    const POP = 180, SHOW = 220, TO_SCORE = 380, BUMP = 300; // points: appear, stay, fly to the score, score bump (1.6.0: quicker)
     let speed = 1; // "Opzioni" → velocità animazioni: 1.5 slow, 1 normal, 0.6 fast, 0 off
     const t = ms => ms * speed;
     const hidden = [];

@@ -51,13 +51,36 @@ Configurazione del server in `src/Spincio.Server/appsettings.json`:
 
 Il `<base href>` viene calcolato a runtime (sotto-percorso su github.io, `/` in locale): **non** riscrivere `index.html` dopo il publish, altrimenti il service worker rifiuta i file e l'app non funziona più offline.
 
-## Online pubblico (non attivo: ADR 0010)
-Serve un host che esegua ASP.NET Core con WebSocket (o long polling). Poi:
-1. aggiungere l'origine del client (es. `https://mattiag98.github.io`) ad `AllowedOrigins`;
-2. impostare `ServerUrl` in `src/Spincio.Client/wwwroot/appsettings.json` con l'URL **radice** del server;
-3. rifare il deploy del client.
+## Giocare online con gli amici (server temporaneo, ADR 0014)
+Chi ospita la partita:
+1. da un computer (o dal telefono in "versione desktop") apre `https://github.com/MattiaG98/SpincioMobile`, pulsante
+   verde **Code**, scheda **Codespaces**, **Create codespace on main**. Le volte dopo basta riaprire lo stesso codespace
+   da `https://github.com/codespaces`: è più veloce.
+2. Aspetta che nel terminale compaia **"Server Spincio acceso"** con un link (la prima volta 2–3 minuti).
+   - Se compare "ATTENZIONE: rendi pubblica la porta 5080": scheda **PORTE**, tasto destro sulla porta 5080,
+     **Visibilità della porta**, **Pubblica**.
+3. Apre quel link sul telefono, mette il nome, **Crea una stanza**, poi **Invita gli amici** e manda il link
+   (WhatsApp va bene).
+4. Gli amici aprono il link, mettono il nome e premono **Entra**. Quando ci sono tutti: **Inizia la partita**. I posti
+   vuoti li prende la CPU.
+5. Finito di giocare si chiude la scheda del codespace: si spegne da solo dopo 30 minuti senza giocatori. Il tempo si
+   cambia in GitHub, **Settings → Codespaces → Default idle timeout**, fino a 4 ore. Gratis circa 60 ore al mese.
 
-Le stanze vivono in memoria: un riavvio del server chiude le partite in corso.
+Il link di invito ha la forma `…/online?server=https://<codespace>-5080.app.github.dev&room=ABCDE`. Funziona anche con
+un server fisso: basta cambiare l'indirizzo. Le stanze vivono in memoria: se il server si spegne, le partite in corso
+finiscono.
+
+Alternative (ADR 0014):
+- **computer di casa con .NET**: `bash tools/online/start-server.sh` e
+  `cloudflared tunnel --url http://localhost:5080` (Cloudflare Quick Tunnel, senza account); nei link si mette
+  l'indirizzo `https://….trycloudflare.com`;
+- **hosting fisso**: aggiungere l'origine del client ad `AllowedOrigins` e mettere il suo indirizzo nei link o in
+  `ServerUrl`.
+
+Verifiche:
+- lo script si prova anche in locale: `bash tools/online/start-server.sh` avvia il server su `http://localhost:5080`;
+- con il client pubblicato, `node tools/browser-checks/invite.mjs /tmp/pub/wwwroot /tmp/out` prova l'invito completo.
+  Due giocatori: uno crea la stanza, l'altro apre il link ed entra, poi parte la partita.
 
 ## Verificare che una partita online non sia truccata
 A inizio partita tutti vedono l'impegno (`impegno xxxxxxxx` in fondo alla pagina). A fine partita il server rivela seed, sale e log. Il client ricalcola lo SHA-256 e **rigioca l'intera partita** con il motore; se il punteggio finale coincide mostra "partita verificata ✓". Codice: `Contracts/Commitment.Verify`.

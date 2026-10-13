@@ -1,0 +1,16 @@
+{
+  // GitHub Codespaces: a temporary online server for Spincio (ADR 0014). Opening the codespace builds and starts the
+  // server (tools/online/start-server.sh), makes port 5080 public and prints the link to open on the phone.
+  "name": "Spincio · server online",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+  "features": {
+    "ghcr.io/devcontainers/features/dotnet:2": { "version": "10.0" },
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+  "hostRequirements": { "cpus": 2 },
+  "forwardPorts": [5080],
+  "portsAttributes": {
+    "5080": { "label": "Server Spincio", "onAutoForward": "silent" }
+  },
+  "postAttachCommand": "bash tools/online/start-server.sh"
+}
