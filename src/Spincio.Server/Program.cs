@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Options;
 using Spincio.Contracts;
 using Spincio.Server.Hubs;
 using Spincio.Server.Lobby;
@@ -8,6 +9,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.Configure<RoomOptions>(builder.Configuration.GetSection("Rooms"));
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton<IRoomNotifier, HubRoomNotifier>();
+builder.Services.AddSingleton(sp => new CheckpointProtector(sp.GetRequiredService<IOptions<RoomOptions>>().Value.CheckpointKey));
 builder.Services.AddSingleton<RoomRegistry>();
 builder.Services.AddSingleton<ILobbyNotifier, HubLobbyNotifier>();
 builder.Services.AddSingleton<LobbyRegistry>();

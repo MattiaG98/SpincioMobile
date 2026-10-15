@@ -35,7 +35,14 @@ public sealed record RoomInfo(string Code, IReadOnlyList<SeatInfo> Seats, bool S
 /// What one seat receives after every accepted command: its own view and the events addressed to it.
 /// <see cref="Sequence"/> is the value to send back as <c>expectedSequence</c>.
 /// </summary>
-public sealed record GameUpdate(int Sequence, PlayerView View, IReadOnlyList<GameEvent> Events, int TurnSecondsLeft);
+public sealed record GameUpdate(int Sequence, PlayerView View, IReadOnlyList<GameEvent> Events, int TurnSecondsLeft)
+{
+    /// <summary>
+    /// Sealed restore point of the whole match (ADR 0017): the client keeps it and hands it back with
+    /// <see cref="IGameHub.Resume"/> if the server restarted. Only the server can read it.
+    /// </summary>
+    public string? Checkpoint { get; init; }
+}
 
 /// <summary>End of match: everything needed to verify the commitment and replay the whole match.</summary>
 public sealed record MatchReveal(ulong Seed, string Salt, IReadOnlyList<string> Commands);
@@ -65,6 +72,12 @@ public interface IGameHub
 
     /// <summary>Reconnects a seat after a disconnection; the server answers with a fresh snapshot.</summary>
     Task<JoinResult> Rejoin(string token);
+
+    /// <summary>
+    /// Like <see cref="Rejoin"/>, but if the server no longer knows the match (it restarted), it rebuilds it from
+    /// <paramref name="checkpoint"/>, the last <see cref="GameUpdate.Checkpoint"/> this player received (ADR 0017).
+    /// </summary>
+    Task<JoinResult> Resume(string token, string checkpoint);
 
     /// <summary>Starts the match; empty seats are taken by CPU players.</summary>
     Task<CommandResult> Start(string token);

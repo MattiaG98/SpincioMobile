@@ -51,6 +51,23 @@ public sealed class GameHub(RoomRegistry rooms) : Hub<IGameClient>, IGameHub
         return result;
     }
 
+    public async Task<JoinResult> Resume(string token, string checkpoint)
+    {
+        if ((rooms.FindByToken(token) ?? await rooms.RestoreAsync(token, checkpoint)) is not { } room)
+        {
+            return JoinResult.Fail("Partita non trovata.");
+        }
+
+        var result = await room.RejoinAsync(token, Context.ConnectionId);
+        rooms.Track(result, room, Context.ConnectionId);
+        if (result.Ok)
+        {
+            await rooms.ExtendAsync(room, checkpoint); // this player may know moves the others missed
+        }
+
+        return result;
+    }
+
     public Task<CommandResult> Start(string token) =>
         rooms.FindByToken(token) is { } room ? room.StartAsync(token) : Task.FromResult(CommandResult.Fail("Partita non trovata."));
 

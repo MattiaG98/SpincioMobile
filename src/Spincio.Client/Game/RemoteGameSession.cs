@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using Microsoft.AspNetCore.Http.Connections;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
@@ -8,42 +9,75 @@ using Spincio.Engine;
 
 namespace Spincio.Client.Game;
 
-/// <summary>Remembers the secret seat token, so a player can come back after closing the page.</summary>
+/// <summary>
+/// Remembers the secret seat token, so a player can come back after closing the page, and the match's latest
+/// restore point, so the match can come back even if the server restarted (ADR 0017).
+/// </summary>
 public interface IOnlineSeatStore
 {
     Task<string?> LoadAsync();
 
+    /// <summary>A new seat: also forgets the previous match's restore point.</summary>
     Task SaveAsync(string token);
 
     Task ClearAsync();
+
+    Task<string?> LoadCheckpointAsync();
+
+    Task SaveCheckpointAsync(string checkpoint);
 }
 
 public sealed class LocalStorageOnlineSeatStore(IJSRuntime js) : IOnlineSeatStore
 {
     private const string Key = "spincio.onlineSeat";
+    private const string CheckpointKey = "spincio.onlineCheckpoint";
 
     public async Task<string?> LoadAsync() => await js.InvokeAsync<string?>("localStorage.getItem", Key);
 
-    public async Task SaveAsync(string token) => await js.InvokeVoidAsync("localStorage.setItem", Key, token);
+    public async Task SaveAsync(string token)
+    {
+        await js.InvokeVoidAsync("localStorage.setItem", Key, token);
+        await js.InvokeVoidAsync("localStorage.removeItem", CheckpointKey);
+    }
 
-    public async Task ClearAsync() => await js.InvokeVoidAsync("localStorage.removeItem", Key);
+    public async Task ClearAsync()
+    {
+        await js.InvokeVoidAsync("localStorage.removeItem", Key);
+        await js.InvokeVoidAsync("localStorage.removeItem", CheckpointKey);
+    }
+
+    public async Task<string?> LoadCheckpointAsync() => await js.InvokeAsync<string?>("localStorage.getItem", CheckpointKey);
+
+    public async Task SaveCheckpointAsync(string checkpoint) => await js.InvokeVoidAsync("localStorage.setItem", CheckpointKey, checkpoint);
 }
 
 public sealed class InMemoryOnlineSeatStore : IOnlineSeatStore
 {
     public string? Token { get; private set; }
 
+    public string? Checkpoint { get; private set; }
+
     public Task<string?> LoadAsync() => Task.FromResult(Token);
 
     public Task SaveAsync(string token)
     {
         Token = token;
+        Checkpoint = null;
         return Task.CompletedTask;
     }
 
     public Task ClearAsync()
     {
         Token = null;
+        Checkpoint = null;
+        return Task.CompletedTask;
+    }
+
+    public Task<string?> LoadCheckpointAsync() => Task.FromResult(Checkpoint);
+
+    public Task SaveCheckpointAsync(string checkpoint)
+    {
+        Checkpoint = checkpoint;
         return Task.CompletedTask;
     }
 }
@@ -64,6 +98,8 @@ public sealed class RemoteGameSession : IGameSession, IAsyncDisposable
     private PlayerView? _view;
     private int _sequence;
     private string? _token;
+    private string? _checkpoint;
+    private CancellationTokenSource _life = new(); // cancelled when leaving or disposing: no more reconnecting
 
     /// <param name="handler">Test hook: routes the connection through an in-memory server (long polling).</param>
     public RemoteGameSession(Uri serverUrl, IOnlineSeatStore store, Func<HttpMessageHandler>? handler = null)
@@ -87,7 +123,15 @@ public sealed class RemoteGameSession : IGameSession, IAsyncDisposable
         _hub.On<GameUpdate>(nameof(IGameClient.Updated), OnUpdatedAsync);
         _hub.On<MatchReveal>(nameof(IGameClient.Revealed), OnRevealed);
         _hub.Reconnected += async _ => await RejoinAsync();
+        _hub.Closed += _ => KeepReconnectingAsync();
     }
+
+    /// <summary>
+    /// How long to keep trying after the automatic reconnection gave up (e.g. the server restarting, ADR 0017).
+    /// </summary>
+    public static readonly TimeSpan ReconnectFor = TimeSpan.FromMinutes(3);
+
+    public static readonly TimeSpan ReconnectEvery = TimeSpan.FromSeconds(5);
 
     public event Action? Changed;
 
@@ -190,6 +234,7 @@ public sealed class RemoteGameSession : IGameSession, IAsyncDisposable
     public async Task<bool> TryRejoinAsync()
     {
         _token = await _store.LoadAsync();
+        _checkpoint = await _store.LoadCheckpointAsync();
         if (string.IsNullOrEmpty(_token))
         {
             return false;
@@ -240,6 +285,10 @@ public sealed class RemoteGameSession : IGameSession, IAsyncDisposable
     {
         await _store.ClearAsync();
         _token = null;
+        _checkpoint = null;
+        await _life.CancelAsync();
+        _life.Dispose();
+        _life = new CancellationTokenSource();
         await _hub.StopAsync();
         await _updates.WaitAsync();
         try
@@ -264,7 +313,9 @@ public sealed class RemoteGameSession : IGameSession, IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
+        await _life.CancelAsync();
         await _hub.DisposeAsync();
+        _life.Dispose();
         _updates.Dispose();
     }
 
@@ -284,6 +335,19 @@ public sealed class RemoteGameSession : IGameSession, IAsyncDisposable
         }
 
         var result = await _hub.InvokeAsync<JoinResult>(nameof(IGameHub.Rejoin), _token);
+        if (!result.Ok && _checkpoint is { } checkpoint)
+        {
+            // The server no longer knows the match (it restarted): bring it back from the restore point (ADR 0017).
+            try
+            {
+                result = await _hub.InvokeAsync<JoinResult>(nameof(IGameHub.Resume), _token, checkpoint);
+            }
+            catch (HubException)
+            {
+                // A server older than 1.8.0 has no Resume: the match is lost, as before.
+            }
+        }
+
         if (result.Ok)
         {
             Me = new Seat(result.Seat);
@@ -292,11 +356,55 @@ public sealed class RemoteGameSession : IGameSession, IAsyncDisposable
         return result;
     }
 
+    /// <summary>
+    /// After the automatic reconnection gave up, keeps trying for <see cref="ReconnectFor"/> while a match is on:
+    /// a restarting server takes up to a minute to answer again (ADR 0016, ADR 0017).
+    /// </summary>
+    private async Task KeepReconnectingAsync()
+    {
+        CancellationToken stop;
+        try
+        {
+            stop = _life.Token;
+        }
+        catch (ObjectDisposedException)
+        {
+            return; // disposed
+        }
+
+        var until = DateTimeOffset.UtcNow + ReconnectFor;
+        while (!stop.IsCancellationRequested && _token is not null && Result is null && DateTimeOffset.UtcNow < until)
+        {
+            try
+            {
+                await Task.Delay(ReconnectEvery, stop);
+                if (_hub.State == HubConnectionState.Disconnected)
+                {
+                    await _hub.StartAsync(stop);
+                }
+
+                if (await RejoinAsync() is { Ok: true })
+                {
+                    return;
+                }
+            }
+            catch (Exception)
+            {
+                // Not answering yet (or leaving): try again unless stopped.
+                if (stop.IsCancellationRequested)
+                {
+                    return;
+                }
+            }
+        }
+    }
+
     private async Task<JoinResult> AfterJoinAsync(JoinResult result)
     {
         if (result is { Ok: true, Token: { } token })
         {
             _token = token;
+            _checkpoint = null;
             Me = new Seat(result.Seat);
             await _store.SaveAsync(token);
             Error = null;
@@ -308,6 +416,24 @@ public sealed class RemoteGameSession : IGameSession, IAsyncDisposable
 
         Changed?.Invoke();
         return result;
+    }
+
+    private async Task KeepCheckpointAsync(string? checkpoint)
+    {
+        if (checkpoint is null || checkpoint == _checkpoint)
+        {
+            return;
+        }
+
+        _checkpoint = checkpoint;
+        try
+        {
+            await _store.SaveCheckpointAsync(checkpoint);
+        }
+        catch (Exception e) when (e is JSException or InvalidOperationException)
+        {
+            // Not saved on the device: it still works while the app stays open.
+        }
     }
 
     private void OnRoomChanged(RoomInfo room)
@@ -339,6 +465,7 @@ public sealed class RemoteGameSession : IGameSession, IAsyncDisposable
 
             Apply(update);
             LiveEvents?.Invoke(update.Events);
+            await KeepCheckpointAsync(update.Checkpoint);
             if (animated && Animator is { } settle)
             {
                 await settle.SettleAsync();

@@ -85,6 +85,20 @@ Tutte queste regole sono **verificate da test** in `tests/Spincio.Architecture.T
   traffico: finché qualcuno è collegato, il server resta acceso.
 - Workflow `Server image`: build dell'immagine, avvio con `PORT=10000`, `/health`, CORS per GitHub Pages.
 
+### Partite che sopravvivono a un riavvio (1.8.0, ADR 0017)
+- Server:
+  - `GameRoom.AcceptAsync` sigilla a ogni mossa un `RoomCheckpoint` (seed, sale, posti con token, mosse) con
+    `CheckpointProtector`: Brotli + AES-GCM, chiave = SHA-256 di `Rooms:CheckpointKey`. Viaggia in
+    `GameUpdate.Checkpoint`;
+  - `GameHub.Resume(token, checkpoint)`: `FindByToken` oppure `RoomRegistry.RestoreAsync`, che crea la stanza con lo
+    stesso codice, accoda il ripristino prima di renderla raggiungibile e registra i token di tutti; poi `RejoinAsync`
+    ed `ExtendAsync` se il client conosce più mosse.
+- Client: `RemoteGameSession` salva il checkpoint (`IOnlineSeatStore.SaveCheckpointAsync`) e prova
+  `Rejoin` → `Resume`; dopo che la riconnessione automatica si arrende, `KeepReconnectingAsync` riprova ogni 5 s per
+  3 minuti.
+- Chiave: Render `generateValue` (render.yaml); codespace `~/.spincio-checkpoint-key` (start-server.sh); senza chiave,
+  una casuale valida finché il processo resta acceso.
+
 ### Una mossa, online
 Client: `RemoteGameSession.PlayAsync` → hub `Play(token, expectedSequence, "P0:7D>3S+4B")` → `GameRoom` (coda seriale) valida token, sequenza e regole → `AcceptAsync` → a ogni posto `GameUpdate(sequence, ViewFor(seat), EventsFor(seat))` → timer: pausa CPU oppure timeout di turno (30 s) → a fine partita `MatchReveal(seed, salt, log)` e il client verifica con `Commitment.Verify`.
 
@@ -150,6 +164,9 @@ Mosse legali dalla vista → se c'è un accuso lo dichiara → per N mondi: dist
 | Test end-to-end degli inviti rosso: un giocatore vedeva solo sé stesso nella lista (1.7.0) | Due corse. Il server mandava le liste fuori dal lock, quindi in ordine qualsiasi. Il client sovrascriveva la lista appena arrivata con la risposta del proprio `Hello`, calcolata prima | Liste del server in serie (`SemaphoreSlim`); il client usa la risposta di `Hello` solo se nel frattempo non è arrivata nessuna lista (contatore) |
 | Pagina Online "senza server" aprendo un link di invito (1.7.0, trovato con `lobby.mjs`) | La barra degli inviti e la pagina leggevano entrambe il server ricordato. `_server ??= Parse(await …)` controlla `null` **prima** dell'`await`: la lettura più lenta cancellava il server appena preso dal link. In più la seconda lettura tornava subito, prima che la prima finisse | Letture fatte una volta sola (`_loading ??= ReadAsync()`, attesa da tutti) e assegnazione dopo l'`await` (`var x = await …; _server ??= x;`). Stessa cosa per il profilo. Test di regressione in `OnlineTests` |
 | Impossibile provare l'immagine Docker nell'ambiente cloud (1.7.1) | La rete dell'ambiente blocca `mcr.microsoft.com` (403 dalla policy) e i siti di Render; `dockerd` parte, ma non scarica le immagini base | Non aggirare il blocco: l'immagine si prova su GitHub Actions (workflow `Server image`); in locale si simula l'avvio con `dotnet publish` + `PORT` |
+| Test end-to-end del riavvio rosso una volta su sette, solo con tutta la suite (1.8.0) | Il test leggeva il codice da `session.Room` appena dopo `CreateRoomAsync`, ma `RoomChanged` è un messaggio a parte e può arrivare dopo la risposta | Nei test usare il `JoinResult` restituito (`RoomCode`, `Seat`, `Token`); lo stato che arriva per messaggio va aspettato con `Eventually` |
+| Compilazione bloccata da un giorno all'altro, senza modifiche al codice (NU1903, 15/10) | Il controllo dei pacchetti di NuGet trova una vulnerabilità nuova (SignalR 10.0.12), e gli avvisi sono errori | Aggiornare la versione in `Directory.Packages.props` (tutti i pacchetti ASP.NET alla stessa patch); un CI rosso su `main` senza modifiche fa sospettare questo |
+| Server pubblicato avviato da un'altra cartella: nessun client si collega | `appsettings.json` (con `AllowedOrigins`) si legge dalla cartella di lavoro, non da quella della DLL: senza, il CORS rifiuta tutti | Avviare `dotnet Spincio.Server.dll` dalla sua cartella (`restart.mjs` usa `cwd`); nell'immagine Docker `WORKDIR /app` lo garantisce |
 | Controllo nel browser che segnalava carte "rimaste in volo" | Lo script misurava durante l'animazione della mia carta, quando il resto della mano sembrava ancora giocabile | Mano disattivata durante il volo (anche un difetto per l'utente); i controlli aspettano una carta `playable` visibile e chiudono il riepilogo "Continua" |
 
 ## 6. Strategia di test

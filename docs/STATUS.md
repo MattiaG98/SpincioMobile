@@ -27,13 +27,14 @@
 | M16 | Online con server temporaneo (1.6.0) | ✅ Fatto (da provare in un codespace vero) | Indirizzo del server nel link di invito, "Invita gli amici", codespace che avvia il server da solo, battito del server mentre si gioca (ADR 0014); punti più piccoli e rapidi |
 | M17 | Giocatori online e inviti (1.7.0) | ✅ Fatto (da provare in un codespace vero) | Lista "Giocatori online" con "Invita"; notifica in alto in ogni schermata con Accetta/Rifiuta e scelta "Con"/"Contro" (ADR 0015); test end-to-end con due client e `lobby.mjs` con tre giocatori nel browser |
 | M18 | Server fisso su Render (1.7.1 → 1.8.0) | 🟡 In corso | Immagine Docker, `render.yaml` e workflow "Server image" pronti (ADR 0016). **Manca:** il proprietario crea il servizio su Render e manda l'indirizzo; poi l'indirizzo va in `ServerUrl` (1.8.0) |
+| M19 | Partite che sopravvivono a un riavvio del server (1.8.0) | ✅ Fatto | Punto di ripristino sigillato (AES-GCM) nei client, `Resume` sull'hub, ricostruzione con il motore e verifica finale che regge (ADR 0017); test end-to-end con riavvio vero del server |
 | — | Regola P8 "asso pigliatutto" (SPEC v1.3 → v1.4, dettata dal proprietario) | ✅ v1.3 (PR #6); v1.4 in revisione: con un asso in tavola si prende solo quello | AT-33…AT-39; versione delle regole nel piè di pagina | AT-33…AT-38; salvataggi v1.2 non ripresi |
 
 ## Metriche
 
 | Voce | Valore | Come si rimisura |
 |---|---|---|
-| Test automatici | **277** (Engine 93, Bots 33, Client 95, Architecture 23, Server 33) | `dotnet test Spincio.slnx` |
+| Test automatici | **284** (Engine 93, Bots 35, Client 95, Architecture 23, Server 38) | `dotnet test Spincio.slnx` |
 | L1 vs L0 | 92,9% (seed 1, regole v1.3 con asso pigliatutto); era 99,3% con la v1.2 | `--x Greedy --y Random` |
 | L2 vs L1 | 57,8% (4 mondi, 800 partite, seed 9000); 55,5% (8) / 60,3% (16) / 60,3% (32) su 400 partite, seed 5000 | `--x Pimc --y Greedy --worlds N` |
 | Livelli 1.2.0 contro 1.1.0 | "Normale" 59,7% · "Difficile" 53,1% (1000 partite ciascuno) | progetto di confronto, vedi ADR 0013 |
@@ -50,7 +51,7 @@
 |---|---|---|---|
 | 1 | Attivare GitHub Pages | Settings → Pages → Source: **GitHub Actions**; poi merge su `main` | Proprietario |
 | 2 | Hosting del server online | 13/10: server fisso su **Render**, piano gratuito (ADR 0016). Da fare: creare il servizio (RUNBOOK, "Server fisso su Render") e mandare l'indirizzo. Il codespace (ADR 0014) resta come riserva | Proprietario |
-| 7 | Partite che sopravvivono a un riavvio del server | Punto di ripristino cifrato consegnato ai client e ricostruzione della stanza dopo il riavvio (ADR 0016, "Conseguenze"); niente database | Claude propone, proprietario approva |
+| 7 | ~~Partite che sopravvivono a un riavvio del server~~ | ✅ 15/10: fatto nella 1.8.0 (ADR 0017) | — |
 | 6 | Notifiche push per gli inviti | Oggi l'invito arriva solo con l'app aperta (ADR 0015). Le push richiedono app sulla Home, permesso e un servizio di invio: da decidere se servono | Proprietario |
 | 3 | ~~Carte~~ | ✅ 01/10: scansione piacentina (ADR 0011). Rischio diritti accettato dal proprietario; se arriva una segnalazione si torna al ridisegno originale | — |
 | 4 | ~~Icone dell'app~~ | ✅ Fatto il 28/09: icona originale (`Assets/icon.svg`) | — |

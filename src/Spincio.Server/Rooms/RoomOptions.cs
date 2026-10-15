@@ -19,4 +19,16 @@ public sealed class RoomOptions
 
     /// <summary>Finished or abandoned rooms are dropped after this idle time.</summary>
     public TimeSpan IdleLifetime { get; set; } = TimeSpan.FromHours(2);
+
+    /// <summary>
+    /// Secret that seals the restore points given to players (ADR 0017). It must stay the same across restarts
+    /// (on Render: generated once, <c>Rooms__CheckpointKey</c>); without it a room cannot be rebuilt after a restart.
+    /// </summary>
+    public string? CheckpointKey { get; set; }
+
+    /// <summary>
+    /// After a room is rebuilt, the next move waits at least this long, so the other players can come back with a
+    /// possibly more recent restore point before the game moves on.
+    /// </summary>
+    public TimeSpan RestoreSettle { get; set; } = TimeSpan.FromSeconds(3);
 }

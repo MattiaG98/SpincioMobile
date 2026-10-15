@@ -66,6 +66,8 @@ Da fare una volta sola, dal computer (va bene anche il telefono in "versione des
    l'app: da lì l'app usa il server fisso senza link.
 
 Funzionamento:
+- La chiave dei punti di ripristino (`Rooms__CheckpointKey`, ADR 0017) la genera Render la prima volta, dal
+  `render.yaml`. Non va toccata: se cambia, le partite in corso non si possono più riprendere dopo un riavvio.
 - Render aggiorna il server da solo a ogni merge su `main` che tocca il server (`buildFilter` in `render.yaml`). Si
   vede nella scheda **Events** del servizio.
 - Il server dorme dopo 15 minuti senza nessuno collegato. Il primo che apre l'app lo sveglia, e ci vuole fino a un
@@ -112,6 +114,13 @@ Verifiche:
 - lo script si prova anche in locale: `bash tools/online/start-server.sh` avvia il server su `http://localhost:5080`;
 - con il client pubblicato, `node tools/browser-checks/invite.mjs /tmp/pub/wwwroot /tmp/out` prova l'invito completo.
   Due giocatori: uno crea la stanza, l'altro apre il link ed entra, poi parte la partita.
+- **Riavvio del server** (ADR 0017):
+  1. `dotnet publish src/Spincio.Server -c Release -o /tmp/srv` e il client pubblicato come sopra;
+  2. `node tools/browser-checks/restart.mjs /tmp/pub/wwwroot /tmp/srv/Spincio.Server.dll /tmp/out`.
+
+  Avvia lui il server sulla porta 5080: Ada inizia una partita contro 3 CPU; al suo turno il server viene ucciso e ne
+  parte uno nuovo con la stessa chiave. L'app deve ricollegarsi da sola (in locale circa 3 s), mostrare la stessa mano
+  e accettare la mossa successiva.
 - `node tools/browser-checks/lobby.mjs /tmp/pub/wwwroot /tmp/out` prova la lista dei giocatori online con tre
   giocatori: Cleo rifiuta un invito; Bea lo riceve nel menu iniziale, sceglie "Contro" ed entra nell'altra squadra; poi
   la partita parte. Salva gli screenshot della lista, della notifica e della stanza.

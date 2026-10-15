@@ -4,6 +4,19 @@ Versioni dell'app Spincio ([versionamento semantico](https://semver.org/lang/it/
 `Directory.Build.props` (`<Version>`) e si vede nel menu iniziale e nel menu di pausa. Le regole hanno una versione propria
 (`docs/SPEC.md`, "regole v1.4" nel menu di pausa).
 
+## 1.8.0 — 15/10/2026
+- **Le partite online sopravvivono a un riavvio del server** (ADR 0017). A ogni mossa il server dà a ogni giocatore un
+  "punto di ripristino" sigillato, che l'app tiene sul telefono.
+  - Se il server si riavvia (un aggiornamento, una manutenzione di Render, il risveglio dopo una pausa), il primo che
+    rientra lo riconsegna e la partita riparte da dove era, con le stesse carte e lo stesso punteggio.
+  - Gli altri ritrovano la stessa stanza; chi non rientra viene sostituito dalla CPU come sempre.
+  - Il punto di ripristino è cifrato: nessuno può leggere le carte degli altri o cambiare una mossa, e la verifica
+    "partita verificata ✓" resta valida.
+- Se il collegamento si interrompe durante una partita, l'app riprova da sola per 3 minuti invece di arrendersi dopo
+  circa 40 secondi.
+- **Aggiornamento di sicurezza:** i pacchetti ASP.NET (SignalR, Blazor) passano a 10.0.13. La 10.0.12 ha una
+  vulnerabilità grave segnalata il 15/10 (GHSA-334f-vvp4-7g6p), e il controllo dei pacchetti blocca la compilazione.
+
 ## 1.7.2 — 13/10/2026
 - **Le CPU tengono l'asso quando il tavolo è vuoto** (osservazione del proprietario). A tavola vuota l'asso si cala
   senza prendere nulla, mentre più avanti prende tutta la tavola (P8). Prima le CPU lo calavano in circa un caso su

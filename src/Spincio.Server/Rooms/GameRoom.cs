@@ -26,6 +26,7 @@ public sealed partial class GameRoom : IAsyncDisposable
     private readonly ILogger _logger;
     private readonly Func<ulong> _newSeed;
     private readonly IBot _bot;
+    private readonly CheckpointProtector _checkpoints;
     private readonly List<string> _log = [];
     private readonly Task _processing;
     private BotMemory[] _memories = [];
@@ -35,9 +36,16 @@ public sealed partial class GameRoom : IAsyncDisposable
     private string _salt = "";
     private ITimer? _moveTimer;
     private DateTimeOffset _turnDeadline;
+    private string? _checkpoint;
 
     public GameRoom(
-        string code, RoomOptions options, TimeProvider time, IRoomNotifier notifier, ILogger logger, Func<ulong>? newSeed = null)
+        string code,
+        RoomOptions options,
+        TimeProvider time,
+        IRoomNotifier notifier,
+        ILogger logger,
+        Func<ulong>? newSeed = null,
+        CheckpointProtector? checkpoints = null)
     {
         Code = code;
         _options = options;
@@ -46,6 +54,7 @@ public sealed partial class GameRoom : IAsyncDisposable
         _logger = logger;
         _newSeed = newSeed ?? (() => BitConverter.ToUInt64(RandomNumberGenerator.GetBytes(sizeof(ulong))));
         _bot = BotFactory.Create(options.BotLevel);
+        _checkpoints = checkpoints ?? new CheckpointProtector(options.CheckpointKey);
         LastActivity = time.GetUtcNow();
         _processing = Task.Run(ProcessAsync);
     }
@@ -96,6 +105,18 @@ public sealed partial class GameRoom : IAsyncDisposable
         RunAsync(() => PlayCoreAsync(token, expectedSequence, command));
 
     public Task DisconnectedAsync(string connectionId) => RunAsync(() => DisconnectedCoreAsync(connectionId));
+
+    /// <summary>
+    /// Rebuilds a started match from a restore point (ADR 0017), in a new room with the same code, after the server
+    /// restarted. Everyone is away until they rejoin with their token. False if the checkpoint does not replay.
+    /// </summary>
+    public Task<bool> RestoreAsync(RoomCheckpoint checkpoint) => RunAsync(() => Task.FromResult(RestoreCore(checkpoint)));
+
+    /// <summary>
+    /// Brings a rebuilt room forward with a more recent restore point of the same match, as long as nothing
+    /// different has been played in the meantime. True if moves were added.
+    /// </summary>
+    public Task<bool> ExtendAsync(RoomCheckpoint checkpoint) => RunAsync(() => ExtendCoreAsync(checkpoint));
 
     /// <summary>Completes once everything queued so far has run (used by tests).</summary>
     public Task WhenIdleAsync() => RunAsync(() => Task.FromResult(true));
@@ -310,6 +331,7 @@ public sealed partial class GameRoom : IAsyncDisposable
             memory.Observe(transition.EventsFor(memory.Seat));
         }
 
+        _checkpoint = _checkpoints.Protect(CheckpointOf());
         if (_state.Phase == MatchPhase.MatchOver)
         {
             _moveTimer?.Dispose();
@@ -336,13 +358,18 @@ public sealed partial class GameRoom : IAsyncDisposable
     }
 
     /// <summary>Arms the timer for whoever plays next: a short pause for CPUs, the turn timeout for people.</summary>
-    private void ScheduleNext()
+    private void ScheduleNext(TimeSpan atLeast = default)
     {
         _moveTimer?.Dispose();
         var state = _state!;
         int sequence = state.Sequence;
         bool cpu = _seats[state.ToPlay.Index].PlayedByCpu;
         var delay = cpu ? _options.BotDelay : _options.TurnTimeout;
+        if (delay < atLeast)
+        {
+            delay = atLeast;
+        }
+
         _turnDeadline = _time.GetUtcNow() + delay;
         _moveTimer = _time.CreateTimer(
             _ => _ = RunAsync(() => CpuMoveAsync(sequence)), null, delay, Timeout.InfiniteTimeSpan);
@@ -356,7 +383,8 @@ public sealed partial class GameRoom : IAsyncDisposable
         }
 
         var seat = new Seat(index);
-        await _notifier.Updated(connection, new GameUpdate(_state.Sequence, SpincioEngine.ViewFor(_state, seat), events, SecondsLeft(seat)));
+        var update = new GameUpdate(_state.Sequence, SpincioEngine.ViewFor(_state, seat), events, SecondsLeft(seat)) { Checkpoint = _checkpoint };
+        await _notifier.Updated(connection, update);
     }
 
     private int SecondsLeft(Seat seat)
@@ -383,6 +411,98 @@ public sealed partial class GameRoom : IAsyncDisposable
     }
 
     private MatchReveal Reveal() => new(_seed, _salt, [.. _log]);
+
+    private RoomCheckpoint CheckpointOf() =>
+        new(Code, _seed, _salt, [.. _seats.Select(s => new CheckpointSeat(s.Name, s.Token, s.IsBot))], [.. _log]);
+
+    private bool RestoreCore(RoomCheckpoint checkpoint)
+    {
+        if (_state is not null || checkpoint.Seats.Count != Seat.Count || !string.Equals(checkpoint.Code, Code, StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        var transition = SpincioEngine.NewMatch(checkpoint.Seed);
+        var state = transition.State;
+        var memories = Seat.All.Select(s => new BotMemory(s)).ToArray();
+        Observe(memories, transition);
+        foreach (string text in checkpoint.Log)
+        {
+            if (!CommandCodec.TryDecode(text, out var command) || SpincioEngine.Apply(state, command!) is not { IsSuccess: true } step)
+            {
+                return false;
+            }
+
+            state = step.Value.State;
+            Observe(memories, step.Value);
+        }
+
+        for (int i = 0; i < Seat.Count; i++)
+        {
+            var slot = _seats[i];
+            slot.Name = checkpoint.Seats[i].Name;
+            slot.Token = checkpoint.Seats[i].Token;
+            slot.IsBot = checkpoint.Seats[i].IsBot;
+            slot.ConnectionId = null;
+        }
+
+        _seed = checkpoint.Seed;
+        _salt = checkpoint.Salt;
+        Commitment = Contracts.Commitment.Of(_seed, _salt);
+        _memories = memories;
+        _rngs = [.. Seat.All.Select(s => new Pcg32(_seed, 100UL + (ulong)s.Index))];
+        _log.Clear();
+        _log.AddRange(checkpoint.Log);
+        _state = state;
+        _checkpoint = _checkpoints.Protect(CheckpointOf());
+        Touch();
+
+        if (state.Phase == MatchPhase.AwaitingPlay)
+        {
+            // People who do not come back are replaced by a CPU after the usual grace period.
+            for (int i = 0; i < Seat.Count; i++)
+            {
+                if (!_seats[i].IsBot)
+                {
+                    int index = i;
+                    _seats[i].GraceTimer = _time.CreateTimer(
+                        _ => _ = RunAsync(() => TakeOverAsync(index)), null, _options.ReconnectGrace, Timeout.InfiniteTimeSpan);
+                }
+            }
+
+            ScheduleNext(_options.RestoreSettle);
+        }
+
+        return true;
+    }
+
+    private async Task<bool> ExtendCoreAsync(RoomCheckpoint checkpoint)
+    {
+        if (_state is null || checkpoint.Seed != _seed || checkpoint.Log.Count <= _log.Count || !checkpoint.Log.Take(_log.Count).SequenceEqual(_log))
+        {
+            return false;
+        }
+
+        foreach (string text in checkpoint.Log.Skip(_log.Count).ToList())
+        {
+            if (!CommandCodec.TryDecode(text, out var command) || SpincioEngine.Apply(_state, command!) is not { IsSuccess: true } step)
+            {
+                return false;
+            }
+
+            await AcceptAsync(step.Value, text);
+        }
+
+        return true;
+    }
+
+    private static void Observe(BotMemory[] memories, Transition transition)
+    {
+        foreach (var memory in memories)
+        {
+            memory.Observe(transition.EventsFor(memory.Seat));
+        }
+    }
 
     private List<string> Connections() =>
         _seats.Select(s => s.ConnectionId).OfType<string>().ToList();
