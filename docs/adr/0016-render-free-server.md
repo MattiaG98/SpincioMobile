@@ -1,6 +1,7 @@
 # ADR 0016 — Server online fisso su Render (piano gratuito)
 
 - **Stato:** Accettato (13/10/2026). Richiesta del proprietario: "procediamo con il server fisso su Render".
+  **Attivo dal 15/10/2026** su `https://spincio-server.onrender.com`, creato dal proprietario. È nell'app dalla 1.8.1.
 - **Integra:** ADR 0014. Il server temporaneo su Codespaces resta come alternativa; la sua decisione 5 prevedeva già un
   server fisso. ADR 0010: le stanze restano in memoria.
 

@@ -4,6 +4,13 @@ Versioni dell'app Spincio ([versionamento semantico](https://semver.org/lang/it/
 `Directory.Build.props` (`<Version>`) e si vede nel menu iniziale e nel menu di pausa. Le regole hanno una versione propria
 (`docs/SPEC.md`, "regole v1.4" nel menu di pausa).
 
+## 1.8.1 — 15/10/2026
+- **L'online funziona subito, senza link** (ADR 0016): l'app usa il server fisso di Spincio su Render
+  (`https://spincio-server.onrender.com`). Basta aprire "Gioca online con gli amici" e scrivere il proprio nome: chi ha
+  l'app aperta compare in "Giocatori online" e si può invitare. Se il server dormiva, la prima volta ci vuole fino a un
+  minuto.
+- Un server diverso, aperto da un link di invito, si può lasciare con "torna al server di Spincio".
+
 ## 1.8.0 — 15/10/2026
 - **Le partite online sopravvivono a un riavvio del server** (ADR 0017). A ogni mossa il server dà a ogni giocatore un
   "punto di ripristino" sigillato, che l'app tiene sul telefono.

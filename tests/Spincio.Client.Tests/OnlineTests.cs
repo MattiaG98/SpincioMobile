@@ -71,6 +71,43 @@ public class OnlineTests : BunitContext
         JSInterop.Invocations["localStorage.setItem"].ShouldContain(i => i.Arguments.SequenceEqual(new object?[] { "spincio.server", Server }));
     }
 
+    private void UseBuiltInServer() =>
+        Services.AddSingleton<IConfiguration>(new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?> { ["ServerUrl"] = "https://spincio-server.onrender.com" })
+            .Build());
+
+    /// <summary>ADR 0016: with the server built into the app, online play needs no link and nothing to change.</summary>
+    [Fact]
+    public void The_built_in_server_is_used_without_a_link()
+    {
+        UseBuiltInServer();
+
+        var page = Render<Online>();
+
+        Services.GetRequiredService<OnlineService>().ServerUrl.ShouldBe(new Uri("https://spincio-server.onrender.com/"));
+        page.FindAll("input[inputmode='url']").ShouldBeEmpty();
+        page.Find("input[placeholder='Nome']").ShouldNotBeNull();
+        page.Find(".server-info").TextContent.ShouldContain("spincio-server.onrender.com");
+        page.FindAll(".server-info button").ShouldBeEmpty();
+    }
+
+    [Fact]
+    public void A_server_from_an_invite_link_can_be_dropped_for_the_built_in_one()
+    {
+        UseBuiltInServer();
+        JSInterop.Setup<string?>("localStorage.getItem", "spincio.player").SetResult("""{"Id":"ada1","Name":"Ada"}""");
+        Services.GetRequiredService<NavigationManager>().NavigateTo("/online?server=https%3A%2F%2Fspincio-abc-5080.app.github.dev");
+        var page = Render<Online>();
+        page.Find(".server-info").TextContent.ShouldContain("spincio-abc-5080.app.github.dev");
+
+        page.Find(".server-info button").Click();
+
+        Services.GetRequiredService<OnlineService>().ServerUrl.ShouldBe(new Uri("https://spincio-server.onrender.com/"));
+        page.Find(".server-info").TextContent.ShouldContain("spincio-server.onrender.com");
+        page.FindAll(".server-info button").ShouldBeEmpty();
+        _lobby.Starts[^1].Server.ShouldBe(new Uri("https://spincio-server.onrender.com/")); // the online list follows
+    }
+
     /// <summary>
     /// The invitation bar and the online page both read the remembered server at start-up: the second must wait for
     /// the same reading, and a server from an invite link chosen meanwhile must not be overwritten by it.
