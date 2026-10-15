@@ -37,6 +37,12 @@ fi
 # (e.g. the online players list of 1.7.0). Only a fast-forward: nothing changed by hand is ever overwritten.
 git pull --ff-only --quiet 2>/dev/null || echo "(Non riesco ad aggiornare il codice del server: uso la versione che c'è.)"
 
+# The key that seals the restore points (ADR 0017): created once and kept in the home folder, so a match survives
+# closing and reopening the codespace.
+KEY_FILE="${HOME}/.spincio-checkpoint-key"
+[ -s "$KEY_FILE" ] || head -c 32 /dev/urandom | base64 > "$KEY_FILE"
+export Rooms__CheckpointKey="$(cat "$KEY_FILE")"
+
 echo "Preparo il server (la prima volta ci vuole un minuto)…"
 dotnet build src/Spincio.Server -c Release --nologo -v quiet
 dotnet run --project src/Spincio.Server -c Release --no-build --no-launch-profile --urls "http://0.0.0.0:${PORT}" &

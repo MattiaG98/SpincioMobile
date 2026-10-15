@@ -12,6 +12,11 @@ services:
     dockerfilePath: ./src/Spincio.Server/Dockerfile
     dockerContext: .
     healthCheckPath: /health
+    envVars:
+      # Seals the restore points players keep, so a match survives a restart (ADR 0017). Render generates it once
+      # and keeps it across deploys; nobody needs to know it.
+      - key: Rooms__CheckpointKey
+        generateValue: true
     buildFilter:
       paths:
         - src/Spincio.Server/**

@@ -27,12 +27,16 @@ public class ContractsTests
         {
             foreach (var seat in Seat.All)
             {
-                var update = new GameUpdate(step.State.Sequence, SpincioEngine.ViewFor(step.State, seat), [.. step.EventsFor(seat)], 12);
+                var update = new GameUpdate(step.State.Sequence, SpincioEngine.ViewFor(step.State, seat), [.. step.EventsFor(seat)], 12)
+                {
+                    Checkpoint = "c1.sealed",
+                };
                 string json = JsonSerializer.Serialize(update, SpincioJson.Options);
                 var back = JsonSerializer.Deserialize<GameUpdate>(json, SpincioJson.Options)!;
 
                 JsonSerializer.Serialize(back, SpincioJson.Options).ShouldBe(json);
                 back.View.Seat.ShouldBe(seat);
+                back.Checkpoint.ShouldBe("c1.sealed");
                 back.View.Hand.ShouldBe(update.View.Hand);
                 back.Events.Select(e => e.GetType()).ShouldBe(update.Events.Select(e => e.GetType()));
             }

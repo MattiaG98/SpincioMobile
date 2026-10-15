@@ -1,5 +1,9 @@
+using System.Text.Json;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.DependencyInjection;
 using Spincio.Client.Game;
+using Spincio.Contracts;
+using Spincio.Server.Rooms;
 
 namespace Spincio.Server.Tests;
 
@@ -92,6 +96,39 @@ public class OnlineEndToEndTests
     }
 
     /// <summary>ADR 0015: Ada sees Bea online, invites her, Bea accepts to play against Ada, Ada starts.</summary>
+    /// <summary>
+    /// ADR 0017: the server restarts in the middle of a match (a new instance with the same key and no rooms). The
+    /// app reconnects by itself, hands back its restore point and finds the same match, which goes on.
+    /// </summary>
+    [Fact]
+    public async Task A_match_survives_a_server_restart()
+    {
+        static WebApplicationFactory<Program> Instance() => new WebApplicationFactory<Program>()
+            .WithWebHostBuilder(b => b.UseSetting("Rooms:BotDelay", "00:00:00.020").UseSetting("Rooms:CheckpointKey", "e2e-key"));
+
+        var first = Instance();
+        var current = first;
+        var store = new InMemoryOnlineSeatStore();
+        await using var ada = new RemoteGameSession(first.Server.BaseAddress, store, () => current.Server.CreateHandler());
+        var created = await ada.CreateRoomAsync("Ada");
+        created.Ok.ShouldBeTrue();
+        string code = created.RoomCode!; // not ada.Room: the room message may arrive just after the answer
+        (await ada.StartMatchAsync()).Ok.ShouldBeTrue();
+        await Eventually(() => ada.IsStarted && ada.View.IsMyTurn && store.Checkpoint is not null, "Ada's turn, with a restore point");
+        string before = JsonSerializer.Serialize(ada.View, SpincioJson.Options);
+
+        await using var second = Instance();
+        _ = second.Server; // the new instance is up before the old one goes away, as on Render
+        current = second;
+        await first.DisposeAsync();
+
+        await Eventually(() => second.Services.GetRequiredService<RoomRegistry>().Count == 1, "the match is rebuilt on the new instance");
+        await Eventually(() => ada.Room?.Code == code && JsonSerializer.Serialize(ada.View, SpincioJson.Options) == before, "Ada sees the same match");
+        await ada.PlayAsync(ada.LegalCommands[0]);
+        ada.Error.ShouldBeNull();
+        await Eventually(() => JsonSerializer.Serialize(ada.View, SpincioJson.Options) != before, "the match goes on");
+    }
+
     [Fact]
     public async Task Online_friends_see_each_other_and_an_invitation_starts_a_match_with_the_chosen_sides()
     {
