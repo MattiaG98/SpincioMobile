@@ -111,7 +111,13 @@
 
     @if (OnlineGames.ServerUrl is { } server && Room is null)
     {
-        <p class="server-info">Server: @server.Host · <button type="button" class="link" @onclick="ForgetServerAsync">cambia</button></p>
+        <p class="server-info">
+            Server: @server.Host
+            @if (OnlineGames.UsesOtherServer || OnlineGames.BuiltInServer is null)
+            {
+                <span> · </span><button type="button" class="link" @onclick="ForgetServerAsync">@(OnlineGames.BuiltInServer is null ? "cambia" : "torna al server di Spincio")</button>
+            }
+        </p>
     }
 
     <a class="button-link" href="">Torna al gioco offline</a>
@@ -257,6 +263,10 @@
         _connectionError = false;
         await Lobby.StopAsync();
         await OnlineGames.ForgetServerAsync();
+
+        // Back to the server built into the app, if there is one (ADR 0016).
+        await StartLobbyAsync();
+        await ConnectAsync();
     }
 
     // Phones open the share sheet (WhatsApp, Messaggi…); elsewhere the link is copied.

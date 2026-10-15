@@ -55,6 +55,9 @@ Tutte queste regole sono **verificate da test** in `tests/Spincio.Architecture.T
 - Gli aggiornamenti sono in catena (ognuno parte dal risultato del precedente), anche mentre il primo caricamento da localStorage è in corso.
 
 ### Server online temporaneo (1.6.0, ADR 0014)
+- Dalla 1.8.1 il server predefinito è Render (`ServerUrl` = `https://spincio-server.onrender.com`, ADR 0016).
+  `OnlineService.UsesOtherServer` dice se un link o un indirizzo scritto a mano lo hanno sostituito; in quel caso la
+  pagina Online offre "torna al server di Spincio".
 - `OnlineService.ServerUrl`, in ordine di priorità:
   1. il server dal link di invito (`?server=`) o dal campo della pagina Online;
   2. quello ricordato in `localStorage["spincio.server"]`;

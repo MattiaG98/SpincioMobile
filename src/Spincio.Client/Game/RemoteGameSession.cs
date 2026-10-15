@@ -532,7 +532,13 @@ public sealed class OnlineService(IConfiguration configuration, IOnlineSeatStore
     private Uri? _server;
     private Task? _loading;
 
-    public Uri? ServerUrl => _server ?? Parse(configuration["ServerUrl"]);
+    public Uri? ServerUrl => _server ?? BuiltInServer;
+
+    /// <summary>The server built into the app (ADR 0016: Render), if any.</summary>
+    public Uri? BuiltInServer => Parse(configuration["ServerUrl"]);
+
+    /// <summary>A server other than the built-in one, from an invite link or typed in: it can be dropped.</summary>
+    public bool UsesOtherServer => _server is not null && _server != BuiltInServer;
 
     public RemoteGameSession Session =>
         _session ??= new RemoteGameSession(ServerUrl ?? throw new InvalidOperationException("No server chosen."), store);

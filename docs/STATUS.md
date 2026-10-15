@@ -26,7 +26,7 @@
 | — | Scritta MARIANA (1.3.0, dettata dal proprietario) | ✅ Fatto | Fante che prende 5 e 3: scritta MARIANA, nessun punto; al posto di "Spazzino!" se svuota la tavola (lo spazzino vale). AT-40, pagina Regole |
 | M16 | Online con server temporaneo (1.6.0) | ✅ Fatto (da provare in un codespace vero) | Indirizzo del server nel link di invito, "Invita gli amici", codespace che avvia il server da solo, battito del server mentre si gioca (ADR 0014); punti più piccoli e rapidi |
 | M17 | Giocatori online e inviti (1.7.0) | ✅ Fatto (da provare in un codespace vero) | Lista "Giocatori online" con "Invita"; notifica in alto in ogni schermata con Accetta/Rifiuta e scelta "Con"/"Contro" (ADR 0015); test end-to-end con due client e `lobby.mjs` con tre giocatori nel browser |
-| M18 | Server fisso su Render (1.7.1 → 1.8.0) | 🟡 In corso | Immagine Docker, `render.yaml` e workflow "Server image" pronti (ADR 0016). **Manca:** il proprietario crea il servizio su Render e manda l'indirizzo; poi l'indirizzo va in `ServerUrl` (1.8.0) |
+| M18 | Server fisso su Render (1.7.1 → 1.8.1) | ✅ Fatto | Immagine Docker, `render.yaml` e workflow "Server image" (ADR 0016). Servizio creato dal proprietario il 15/10 (`/health` ok), indirizzo `https://spincio-server.onrender.com` in `ServerUrl` dalla 1.8.1 |
 | M19 | Partite che sopravvivono a un riavvio del server (1.8.0) | ✅ Fatto | Punto di ripristino sigillato (AES-GCM) nei client, `Resume` sull'hub, ricostruzione con il motore e verifica finale che regge (ADR 0017); test end-to-end con riavvio vero del server |
 | — | Regola P8 "asso pigliatutto" (SPEC v1.3 → v1.4, dettata dal proprietario) | ✅ v1.3 (PR #6); v1.4 in revisione: con un asso in tavola si prende solo quello | AT-33…AT-39; versione delle regole nel piè di pagina | AT-33…AT-38; salvataggi v1.2 non ripresi |
 
@@ -34,7 +34,7 @@
 
 | Voce | Valore | Come si rimisura |
 |---|---|---|
-| Test automatici | **284** (Engine 93, Bots 35, Client 95, Architecture 23, Server 38) | `dotnet test Spincio.slnx` |
+| Test automatici | **286** (Engine 93, Bots 35, Client 97, Architecture 23, Server 38) | `dotnet test Spincio.slnx` |
 | L1 vs L0 | 92,9% (seed 1, regole v1.3 con asso pigliatutto); era 99,3% con la v1.2 | `--x Greedy --y Random` |
 | L2 vs L1 | 57,8% (4 mondi, 800 partite, seed 9000); 55,5% (8) / 60,3% (16) / 60,3% (32) su 400 partite, seed 5000 | `--x Pimc --y Greedy --worlds N` |
 | Livelli 1.2.0 contro 1.1.0 | "Normale" 59,7% · "Difficile" 53,1% (1000 partite ciascuno) | progetto di confronto, vedi ADR 0013 |
@@ -50,7 +50,7 @@
 | # | Decisione | Proposta | Chi |
 |---|---|---|---|
 | 1 | Attivare GitHub Pages | Settings → Pages → Source: **GitHub Actions**; poi merge su `main` | Proprietario |
-| 2 | Hosting del server online | 13/10: server fisso su **Render**, piano gratuito (ADR 0016). Da fare: creare il servizio (RUNBOOK, "Server fisso su Render") e mandare l'indirizzo. Il codespace (ADR 0014) resta come riserva | Proprietario |
+| 2 | ~~Hosting del server online~~ | ✅ 15/10: server fisso su Render, piano gratuito (ADR 0016), `https://spincio-server.onrender.com`. Da controllare una volta: il Blueprint su Render deve seguire il ramo `main`. Il codespace (ADR 0014) resta come riserva | Proprietario |
 | 7 | ~~Partite che sopravvivono a un riavvio del server~~ | ✅ 15/10: fatto nella 1.8.0 (ADR 0017) | — |
 | 6 | Notifiche push per gli inviti | Oggi l'invito arriva solo con l'app aperta (ADR 0015). Le push richiedono app sulla Home, permesso e un servizio di invio: da decidere se servono | Proprietario |
 | 3 | ~~Carte~~ | ✅ 01/10: scansione piacentina (ADR 0011). Rischio diritti accettato dal proprietario; se arriva una segnalazione si torna al ridisegno originale | — |
@@ -78,3 +78,4 @@
 | 09/10/2026 | Barra "Aggiorna" e controllo degli aggiornamenti al ritorno in primo piano, versione 1.2.1; scritta MARIANA, versione 1.3.0; pannello Contributi (Megako, Nandone), versione 1.4.0; avatar delle CPU, versione 1.5.0; capelli rossi ricci per tutti, 1.5.1 |
 | 11/10/2026 | Avatar tutti uomini con capelli rossi ricci, Tito di colore (scelte del proprietario), versione 1.5.2; accuso: niente etichetta dopo il clic, pulsante compatto, 1.5.3; punti che partono insieme alla mossa, 1.5.4 |
 | 13/10/2026 | Online con server temporaneo su Codespaces e link di invito, versione 1.6.0 (M16); giocatori online e inviti con scelta "con/contro", versione 1.7.0 (M17); server fisso su Render preparato, versione 1.7.1 (M18) |
+| 13/10–15/10/2026 | CPU che tengono l'asso a tavola vuota (1.7.2); partite che sopravvivono a un riavvio del server e aggiornamento di sicurezza SignalR (1.8.0, M19); server Render attivo e nell'app (1.8.1) |
