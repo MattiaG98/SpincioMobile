@@ -87,6 +87,15 @@ Tutte queste regole sono **verificate da test** in `tests/Spincio.Architecture.T
 - Render spegne il servizio dopo 15 minuti senza traffico. I ping di SignalR (ogni 15 s, client → server) contano come
   traffico: finché qualcuno è collegato, il server resta acceso.
 - Workflow `Server image`: build dell'immagine, avvio con `PORT=10000`, `/health`, CORS per GitHub Pages.
+- **Limiti del piano gratuito** (nuovi piani Render dal 23/04/2026):
+  - 5 GB di traffico in uscita al mese per workspace. Oltre: 0,15 $/GB se c'è un metodo di pagamento, altrimenti i
+    servizi gratuiti vengono sospesi fino al mese dopo;
+  - 750 ore di istanza al mese;
+  - 512 MB di memoria e 0,1 CPU.
+
+  Traffico misurato: ~270 KB per persona per partita (metà punti di ripristino). Il limite pratico è quindi il
+  traffico: circa 4.300 partite in 4 al mese. Se un giorno servisse, il traffico si dimezza mandando il punto di
+  ripristino a ogni presa invece che a ogni mossa. Il consumo si vede su Render in **Billing → Usage**.
 
 ### Partite che sopravvivono a un riavvio (1.8.0, ADR 0017)
 - Server:

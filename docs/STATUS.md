@@ -43,6 +43,8 @@
 | Tempo decisione L2 (.NET) | media 2,8 ms (4 mondi), 4,6 ms (16 mondi); max 74 / 104 ms | `--timing Pimc --worlds N` |
 | Decisione CPU nel browser | "Normale" (4 mondi) mediana 29 ms, max 0,27 s; "Difficile" (12 mondi) mediana 33 ms, p90 150 ms, max 0,39 s — Chromium desktop | `cpu-time.mjs` |
 | Mossa CPU "Difficile" nel browser | mediana 944 ms, max 2172 ms (02/10): 450 ms di pausa voluta + animazione della carta | Playwright, vedi RUNBOOK |
+| Traffico del server per partita | ~270 KB per persona collegata (1,1 MB per una partita in 4); metà sono i punti di ripristino (max 1,4 KB l'uno). Lista online a riposo: ~11 KB/ora per app aperta | misura del 15/10 su 15 partite complete (messaggi SignalR JSON, senza compressione) |
+| Capacità del piano gratuito Render | 5 GB di traffico al mese ≈ 17.000 "partite-persona": ~4.300 partite in 4, ~8.700 in 2 + 2 CPU. Ore: 750 al mese, bastano per un server sempre acceso. Contemporanee: ~15–20 partite con CPU (0,1 CPU), di più senza CPU | `docs/KNOWLEDGE.md`, "Server fisso su Render" |
 | Download dell'app (Brotli) | ~3,0 MB | `dotnet publish`, somma dei `.br` in `_framework` |
 
 ## Decisioni aperte
