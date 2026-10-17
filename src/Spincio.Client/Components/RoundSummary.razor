@@ -27,6 +27,10 @@
                 {
                     <tr class="live"><td>Prese dello stesso seme (già contate)</td><td>@Scored.Ledger.SameSuit.For(Us)</td><td>@Scored.Ledger.SameSuit.For(themTeam)</td></tr>
                 }
+                @if (Scored.Ledger.Twins != TeamScores.Zero)
+                {
+                    <tr class="live"><td>Gemelle (già contate)</td><td>@Scored.Ledger.Twins.For(Us)</td><td>@Scored.Ledger.Twins.For(themTeam)</td></tr>
+                }
                 <tr class="live"><td>Accusi (già contati)</td><td>@Scored.Ledger.Declarations.For(Us)</td><td>@Scored.Ledger.Declarations.For(themTeam)</td></tr>
                 <tr class="total"><td>Punteggio partita</td><td>@Scored.MatchScore.For(Us)</td><td>@Scored.MatchScore.For(themTeam)</td></tr>
             </tbody>

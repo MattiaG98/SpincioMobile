@@ -160,16 +160,27 @@ public static class GameText
 
     /// <summary>
     /// The banner a play deserves: "MARIANA" for a jack taking a 5 and a 3 (instead of "Spazzino!" when it also empties
-    /// the table: the sweep still scores), "Spazzino!" for any other sweep, null otherwise.
+    /// the table: the sweep still scores), "Gemella" for a card taking its twin ("Gemella con cappella" with the sweep,
+    /// SP10), "Spazzino!" for any other sweep, "Stesso seme!" for a capture all of one suit (SP3), null otherwise.
     /// </summary>
     public static string? Banner(CardPlayed play)
     {
         ArgumentNullException.ThrowIfNull(play);
+        if (play.IsTwin)
+        {
+            return play.IsSweep ? "Gemella con cappella" : "Gemella";
+        }
+
         return play.IsMariana() ? "MARIANA" : play.IsSweep ? "Spazzino!" : play.IsSameSuit ? "Stesso seme!" : null;
     }
 
     private static string Callout(CardPlayed play)
     {
+        if (play.IsTwin)
+        {
+            return play.IsSweep ? " — GEMELLA CON CAPPELLA! +3" : " — GEMELLA! +2"; // SP10, Spincione
+        }
+
         string callout = (play.IsMariana(), play.IsSweep) switch
         {
             (true, true) => " — MARIANA! +1",

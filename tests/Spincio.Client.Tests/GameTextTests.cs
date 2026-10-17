@@ -112,6 +112,23 @@ public class GameTextTests
         PointsGain.For(sameSuit, Me).ShouldNotBeNull().Label.ShouldBe("Stesso seme!");
     }
 
+    /// <summary>SP10: a card taking its twin says "Gemella", and "Gemella con cappella" when it also empties the table.</summary>
+    [Fact]
+    public void A_twin_capture_is_announced()
+    {
+        var tito = GameText.AtPosition(Me, 1);
+        var twin = new CardPlayed(tito, Card.Parse("5D"), [Card.Parse("5D")], IsSweep: false) { IsTwin = true };
+        var withSweep = twin with { IsSweep = true };
+
+        GameText.Banner(twin).ShouldBe("Gemella");
+        GameText.Banner(withSweep).ShouldBe("Gemella con cappella");
+        GameText.Describe(twin, Me, Name).ShouldEndWith(" — GEMELLA! +2");
+        GameText.Describe(withSweep, Me, Name).ShouldEndWith(" — GEMELLA CON CAPPELLA! +3");
+        PointsGain.For(twin, Me).ShouldNotBeNull().Points.ShouldBe(2);
+        PointsGain.For(withSweep, Me).ShouldNotBeNull().Points.ShouldBe(3);
+        PointsGain.For(withSweep, Me)!.Label.ShouldBe("Gemella con cappella");
+    }
+
     [Fact]
     public void Identical_cards_get_distinct_keys()
     {

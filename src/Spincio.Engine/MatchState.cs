@@ -8,13 +8,16 @@ public enum MatchPhase
     MatchOver,
 }
 
-/// <summary>Points scored live during the current round (sweeps P6, declarations A1, same-suit captures SP3).</summary>
+/// <summary>Points scored live during the current round (sweeps P6, declarations A1, same-suit SP3 and twin SP10 captures).</summary>
 public sealed record RoundLedger(TeamScores Sweeps, TeamScores Declarations)
 {
     public static RoundLedger Empty { get; } = new(TeamScores.Zero, TeamScores.Zero);
 
     /// <summary>SP3, Spincione only: captures all of one suit.</summary>
     public TeamScores SameSuit { get; init; }
+
+    /// <summary>SP10, Spincione only: points of the twin captures (2 each).</summary>
+    public TeamScores Twins { get; init; }
 }
 
 /// <summary>

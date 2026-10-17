@@ -24,8 +24,8 @@ public sealed record PointsGain(PointsKind Kind, int From, bool Ours, int Points
 
     /// <summary>
     /// Points scored live by an event: a sweep (P6, "Spazzino!" or "MARIANA") or, in the Spincione, a capture all of
-    /// one suit (SP3, "Stesso seme!"), or a declaration (A1); a Mariana that does not score shows its banner with no
-    /// points. Null for anything else.
+    /// one suit (SP3, "Stesso seme!") or of the twin (SP10, "Gemella"), or a declaration (A1); a Mariana that does not
+    /// score shows its banner with no points. Null for anything else.
     /// </summary>
     public static PointsGain? For(GameEvent e, Seat viewer) => e switch
     {

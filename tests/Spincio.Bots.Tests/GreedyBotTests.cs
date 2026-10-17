@@ -109,4 +109,19 @@ public class GreedyBotTests
     {
         GreedyBot.SweepValue(Many(table)).ShouldBe(expected);
     }
+
+    /// <summary>Spincione (SP10): of two fives on the table, the twin of the played one is worth 2 points more.</summary>
+    [Fact]
+    public void Prefers_taking_the_twin_in_the_spincione()
+    {
+        var view = Views.For("5S", "5S,5C,KB") with { Variant = GameVariant.Spincione };
+        var memory = new BotMemory(new Seat(0), GameVariant.Spincione);
+        memory.Observe(new HandDealt(new Seat(0), Many("5S,5S,5C,KB")));
+        var bot = new GreedyBot();
+        var twin = new PlayCard(new Seat(0), C("5S"), Take("5S"));
+
+        (bot.Evaluate(twin, view, memory) - bot.Evaluate(new PlayCard(new Seat(0), C("5S"), Take("5C")), view, memory))
+            .ShouldBe(new GreedyWeights().Twin, tolerance: 1e-9);
+        Choose(view, memory).ShouldBe(twin);
+    }
 }

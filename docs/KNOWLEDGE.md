@@ -126,9 +126,13 @@ Tutte queste regole sono **verificate da test** in `tests/Spincio.Architecture.T
   carte e 10 con 4), più colore e scala (2). In prima mano raddoppia e aggiunge il flag `DoubledFirstHand`, che
   l'interfaccia mostra come "· prima mano ×2".
 - Presa dello stesso seme: `CardPlayed.IsSameSuit`, `CardPlayed.Points` (spazzino + seme), `RoundLedger.SameSuit`.
+- Gemella (1.10.0, SP10): `CardPlayed.IsTwin` (la carta presa è una sola ed è identica a quella giocata); allora
+  `IsSameSuit` è falso e `Points` = 2 (`VariantRules.TwinPoints`) + lo spazzino. `RoundLedger.Twins` tiene i punti (2
+  ciascuna). Scritte: `GameText.Banner` "Gemella" / "Gemella con cappella".
 - Online: `CreateRoomFor(name, variant)` (`CreateRoom` = Spincio, per i server vecchi), `RoomInfo.Variant`,
   `Invitation.Variant`, `MatchReveal.Variant` (serve a rigiocare per la verifica), `RoomCheckpoint.Variant`.
-- Salvataggi: `SavedGame.Variant` (manca = Spincio); `RulesVersion` 1.5, si riprendono anche quelli 1.4.
+- Salvataggi: `SavedGame.Variant` (manca = Spincio); `RulesVersion` 1.6. Lo Spincio si riprende anche dalle regole
+  1.4 e 1.5; lo Spincione solo con le regole attuali (`LocalGameSession.IsResumable`), perché la 1.6 ne ha cambiato i punti.
 
 ### Una mossa, online
 Client: `RemoteGameSession.PlayAsync` → hub `Play(token, expectedSequence, "P0:7D>3S+4B")` → `GameRoom` (coda seriale) valida token, sequenza e regole → `AcceptAsync` → a ogni posto `GameUpdate(sequence, ViewFor(seat), EventsFor(seat))` → timer: pausa CPU oppure timeout di turno (30 s) → a fine partita `MatchReveal(seed, salt, log)` e il client verifica con `Commitment.Verify`.
@@ -154,6 +158,7 @@ Mosse legali dalla vista → se c'è un accuso lo dichiara → per N mondi: dist
 |---|---|---|
 | Pesi di L1 (`GreedyWeights`) | carta 1, denaro +1, sette +1,5, settebello +5, rebello +4, spazzino 10, rischio spazzino 8, costo calata 0,3 | Ablazione M2: ogni componente fa vincere; ×2 e ×0,5 sul rischio peggiorano |
 | Asso calato a tavola vuota (`GreedyWeights.AceDrop`) | **4** (1.7.2) | Osservazione del proprietario: le CPU calavano l'asso a tavola vuota (L1 nel 60% dei casi possibili, L2 ~28%). Tenuto, l'asso prende tutta la tavola più avanti (P8). L1 con 4 contro L1 senza: 53,8% su 10.000 partite (1: 52,6%, 2: 53,1%, 3: 53,6%, 6 e 8: 53,8%). Ora l'asso è calato nell'1,2% dei casi (L1) e nel 2–3% (L2), quando le altre carte valgono molto di più. L2 con il nuovo peso contro L2 senza: "Normale" 50,5% su 3000 partite, "Difficile" 52,2% su 1000, cioè stessa forza e gioco più sensato |
+| Gemella per L1 (`GreedyWeights.Twin`) | **20** (1.10.0), lo stesso seme 10 | 2 punti = il doppio dello stesso seme. Spincione, L1 con il peso contro L1 senza (2000 partite, seed 777): 10 → 51,3%, 15 → 52,3%, 20 → 52,4%, 30 → 52,2% |
 | Mondi L2 | 16 nel simulatore/server; nel browser **4 ("Normale") e 12 ("Difficile")** (1.2.0, ADR 0013) | Nel browser (interpretato) 12 mondi stanno sotto ~0,4 s per mossa su desktop; oltre 16 mondi non si guadagna (16 contro 8: 52,2%) |
 | Silenzi in L2 (`InferSilence`) | attivo | Chi gioca la prima carta della distribuzione senza accusare non aveva accusi: 51,5% contro senza (1000 partite, non significativo), costo quasi nullo |
 | `PriorWeight` L2 | **1,0** | Senza prior, con 8 mondi L2 perde contro L1 (44,6%). Screening: 0 → 44%, 0,2 → 59%, 1 → 65%, 2 → 66%, 4 → 61% |
