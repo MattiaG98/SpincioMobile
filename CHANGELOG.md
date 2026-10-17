@@ -2,7 +2,16 @@
 
 Versioni dell'app Spincio ([versionamento semantico](https://semver.org/lang/it/), ADR 0012). La versione è in
 `Directory.Build.props` (`<Version>`) e si vede nel menu iniziale e nel menu di pausa. Le regole hanno una versione propria
-(`docs/SPEC.md`, "regole v1.4" nel menu di pausa).
+(`docs/SPEC.md`, "regole v1.6" nel menu di pausa).
+
+## 1.10.0 — 17/10/2026
+- **Gemella** nello Spincione (regolamento v1.6, SP10), dettata dal proprietario: se la carta giocata prende la sua
+  gemella (la stessa carta dell'altro mazzo) la presa vale **2 punti**, al posto del punto dello stesso seme. Se svuota
+  la tavola si aggiunge lo spazzino: **3 punti**, con la scritta **"Gemella con cappella"**; altrimenti la scritta è
+  **"Gemella"**. Vale anche all'ultima giocata (2 punti).
+- Il riepilogo di fine smazzata ha la riga "Gemelle"; la pagina Regole spiega la gemella.
+- La CPU dà alla gemella il doppio del valore dello stesso seme: tra due carte uguali in tavola sceglie la gemella.
+- Le partite di Spincione salvate con la 1.9.0 non si riprendono (i punti sono cambiati); quelle di Spincio sì.
 
 ## 1.9.0 — 17/10/2026
 - **Nuova modalità Spincione**, con le regole dettate dal proprietario (regolamento v1.5, §1.7). Si sceglie nel menu

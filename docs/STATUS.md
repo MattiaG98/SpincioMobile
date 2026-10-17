@@ -29,15 +29,16 @@
 | M18 | Server fisso su Render (1.7.1 → 1.8.1) | ✅ Fatto | Immagine Docker, `render.yaml` e workflow "Server image" (ADR 0016). Servizio creato dal proprietario il 15/10 (`/health` ok), indirizzo `https://spincio-server.onrender.com` in `ServerUrl` dalla 1.8.1 |
 | M19 | Partite che sopravvivono a un riavvio del server (1.8.0) | ✅ Fatto | Punto di ripristino sigillato (AES-GCM) nei client, `Resume` sull'hub, ricostruzione con il motore e verifica finale che regge (ADR 0017); test end-to-end con riavvio vero del server |
 | M20 | Modalità Spincione (1.9.0, regole v1.5) | ✅ Fatto | Regole dettate dal proprietario (SPEC §1.7, AT-41…AT-50, ADR 0018); motore con due mazzi e Spincio identico al bit (AT-50); CPU e simulatore; menu, pagina Online, inviti, Regole; online con punto di ripristino; `layout.mjs … spincione` su 3 schermi |
+| M21 | Gemella nello Spincione (1.10.0, regole v1.6) | ✅ Fatto | Dettata dal proprietario (SP10, AT-51): la carta che prende la gemella vale 2, con lo spazzino 3 ("Gemella con cappella"); riepilogo, pagina Regole, CPU (peso 20); salvataggi di Spincione 1.9.0 non ripresi |
 | — | Regola P8 "asso pigliatutto" (SPEC v1.3 → v1.4, dettata dal proprietario) | ✅ v1.3 (PR #6); v1.4 in revisione: con un asso in tavola si prende solo quello | AT-33…AT-39; versione delle regole nel piè di pagina | AT-33…AT-38; salvataggi v1.2 non ripresi |
 
 ## Metriche
 
 | Voce | Valore | Come si rimisura |
 |---|---|---|
-| Test automatici | **341** (Engine 131, Bots 38, Client 109, Architecture 23, Server 40) | `dotnet test Spincio.slnx` |
-| L1 vs L0 | 92,9% (seed 1, regole v1.3 con asso pigliatutto); era 99,3% con la v1.2. Spincione: 96,4% | `--x Greedy --y Random [--variant Spincione]` |
-| L2 vs L1, Spincione | 51,2% (4 mondi) / 52,7% (12 mondi) su 400 partite: le partite durano ~2 smazzate e la fortuna pesa di più | `--x Pimc --y Greedy --variant Spincione` |
+| Test automatici | **352** (Engine 137, Bots 39, Client 113, Architecture 23, Server 40) | `dotnet test Spincio.slnx` |
+| L1 vs L0 | 92,9% (seed 1, regole v1.3 con asso pigliatutto); era 99,3% con la v1.2. Spincione: 96,0% (regole v1.6) | `--x Greedy --y Random [--variant Spincione]` |
+| L2 vs L1, Spincione | 53,2% (4 mondi, regole v1.6); con la v1.5 51,2% (4 mondi) / 52,7% (12 mondi), sempre su 400 partite: le partite durano ~2 smazzate e la fortuna pesa di più | `--x Pimc --y Greedy --variant Spincione` |
 | L2 vs L1 | 57,8% (4 mondi, 800 partite, seed 9000); 55,5% (8) / 60,3% (16) / 60,3% (32) su 400 partite, seed 5000 | `--x Pimc --y Greedy --worlds N` |
 | Livelli 1.2.0 contro 1.1.0 | "Normale" 59,7% · "Difficile" 53,1% (1000 partite ciascuno) | progetto di confronto, vedi ADR 0013 |
 | L2 16 mondi vs 8 | 52,2% (600 partite): più mondi aiutano poco | `--x Pimc --y Pimc --worlds 16 --yworlds 8` |
@@ -83,4 +84,4 @@
 | 11/10/2026 | Avatar tutti uomini con capelli rossi ricci, Tito di colore (scelte del proprietario), versione 1.5.2; accuso: niente etichetta dopo il clic, pulsante compatto, 1.5.3; punti che partono insieme alla mossa, 1.5.4 |
 | 13/10/2026 | Online con server temporaneo su Codespaces e link di invito, versione 1.6.0 (M16); giocatori online e inviti con scelta "con/contro", versione 1.7.0 (M17); server fisso su Render preparato, versione 1.7.1 (M18) |
 | 13/10–15/10/2026 | CPU che tengono l'asso a tavola vuota (1.7.2); partite che sopravvivono a un riavvio del server e aggiornamento di sicurezza SignalR (1.8.0, M19); server Render attivo e nell'app (1.8.1) |
-| 17/10/2026 | Modalità Spincione, regole v1.5 (M20, versione 1.9.0) |
+| 17/10/2026 | Modalità Spincione, regole v1.5 (M20, versione 1.9.0); gemella, regole v1.6 (M21, versione 1.10.0) |

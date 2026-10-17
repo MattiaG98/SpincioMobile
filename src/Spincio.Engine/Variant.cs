@@ -34,7 +34,10 @@ public static class VariantRules
     /// <summary>Plays in a round: every card except the initial table is played once (36, or 76 for SP2).</summary>
     public static int PlaysPerRound(this GameVariant variant) => variant.CardCount() - MatchState.InitialTableCards;
 
-    /// <summary>SP3: a capture all of one suit is worth a point.</summary>
+    /// <summary>SP10: a card taking its twin scores this instead of the same-suit point; a sweep adds 1 (3 in all).</summary>
+    public const int TwinPoints = 2;
+
+    /// <summary>SP3 and SP10: a capture all of one suit is worth a point, a card taking its twin 2.</summary>
     public static bool HasSameSuitBonus(this GameVariant variant) => variant == GameVariant.Spincione;
 
     /// <summary>F7 applies to the Spincio only (SP9).</summary>

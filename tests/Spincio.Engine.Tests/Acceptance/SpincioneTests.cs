@@ -6,7 +6,7 @@ using static Spincio.Engine.Tests.Support.Cards;
 
 namespace Spincio.Engine.Tests.Acceptance;
 
-/// <summary>Spincione, the two-deck mode (SPEC §1.7, SP1–SP9).</summary>
+/// <summary>Spincione, the two-deck mode (SPEC §1.7, SP1–SP10).</summary>
 public class SpincioneTests
 {
     private static Scenario Spincione() => new() { Variant = GameVariant.Spincione, DealNumber = 2 };
@@ -58,7 +58,7 @@ public class SpincioneTests
     [InlineData("3D,4C", "7D", "3D,4C", 1)] // sweep only
     [InlineData("3S,5S,KB", "AS", "3S,5S,KB", 1)] // ace takes all, a club among them: sweep only
     [InlineData("3S,5S", "AS", "3S,5S", 2)] // ace takes all, all swords: sweep + same suit
-    [InlineData("5D,KC", "5D", "5D", 1)] // the twin card: same suit, no sweep
+    [InlineData("2D,3D,KC", "5D", "2D,3D", 1)] // same suit, no sweep
     public void AT_43_a_capture_all_of_one_suit_is_worth_a_point(string table, string played, string captured, int points)
     {
         var state = Spincione().Hand(0, played).Table(table).Build();
@@ -224,5 +224,43 @@ public class SpincioneTests
         Fingerprint(GameVariant.Spincio).ShouldBe("3e295c7038d636ff682b5d654b4ae0475a4347f3657dad12dac2db5b42d7e81c");
         Fingerprint(GameVariant.Spincione).ShouldBe(Fingerprint(GameVariant.Spincione));
         Fingerprint(GameVariant.Spincione).ShouldNotBe(Fingerprint(GameVariant.Spincio));
+    }
+
+    [Theory]
+    [InlineData("5D,KC", "5D", "5D", 2, true)] // the twin: 2, instead of the same-suit point
+    [InlineData("5D", "5D", "5D", 3, true)] // the twin empties the table: 2 + the sweep ("gemella con cappella")
+    [InlineData("5D,5C,KC", "5D", "5D", 2, true)] // two fives on the initial table: taking the twin is worth 2…
+    [InlineData("5D,5C,KC", "5D", "5C", 0, false)] // …taking the other five is worth nothing
+    [InlineData("AD,3C", "AD", "AD", 2, true)] // an ace takes only the ace on the table (P8): its twin
+    public void AT_51_a_card_taking_its_twin_is_worth_2_points_and_3_with_the_sweep(
+        string table, string played, string captured, int points, bool twin)
+    {
+        var state = Spincione().Hand(0, played).Table(table).Build();
+        var legal = SpincioEngine.LegalCommands(state, new Seat(0)).OfType<PlayCard>().Select(p => p.Capture?.ToString()).ToList();
+        legal.ShouldContain(Take(captured).ToString());
+
+        var step = state.Ok(new PlayCard(new Seat(0), C(played), Take(captured)));
+
+        var play = step.EventsOf<CardPlayed>().Single();
+        play.IsTwin.ShouldBe(twin);
+        play.IsSameSuit.ShouldBeFalse(); // the twin scores its own points, not the same-suit one
+        play.Points.ShouldBe(points);
+        step.State.Score.A.ShouldBe(points);
+        step.State.Ledger.Twins.A.ShouldBe(twin ? 2 : 0);
+        step.State.Ledger.SameSuit.A.ShouldBe(0);
+    }
+
+    [Fact]
+    public void AT_51_the_twin_counts_on_the_last_play_without_the_sweep()
+    {
+        var last = new Scenario { Variant = GameVariant.Spincione }.Hand(0, "5D").Table("5D").LastPlay(Scenario.LeftoverTarget.PileB).Build();
+
+        var step = last.Ok(new PlayCard(new Seat(0), C("5D"), Take("5D")));
+
+        var play = step.EventsOf<CardPlayed>().Single();
+        play.IsSweep.ShouldBeFalse();
+        play.IsTwin.ShouldBeTrue();
+        play.Points.ShouldBe(2);
+        step.EventsOf<RoundScored>().Single().Ledger.Twins.A.ShouldBe(2);
     }
 }

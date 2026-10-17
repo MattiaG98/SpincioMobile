@@ -41,11 +41,17 @@ public sealed record Declared(Seat Seat, DeclarationKind Kind, int Points) : Gam
 /// <summary>A card was played. Empty <paramref name="Captured"/> means a drop.</summary>
 public sealed record CardPlayed(Seat Seat, Card Card, ImmutableArray<Card> Captured, bool IsSweep) : GameEvent
 {
-    /// <summary>SP3 (Spincione): the played card and every captured card share a suit, worth 1 point.</summary>
+    /// <summary>
+    /// SP3 (Spincione): the played card and every captured card share a suit, worth 1 point. False for a
+    /// <see cref="IsTwin"/> capture, which scores its own points instead.
+    /// </summary>
     public bool IsSameSuit { get; init; }
 
-    /// <summary>Points the play scored live: the sweep and the same-suit capture.</summary>
-    public int Points => (IsSweep ? 1 : 0) + (IsSameSuit ? 1 : 0);
+    /// <summary>SP10 (Spincione): the played card took its twin, the same card from the other deck, worth 2 points.</summary>
+    public bool IsTwin { get; init; }
+
+    /// <summary>Points the play scored live: the sweep, and the twin or same-suit capture.</summary>
+    public int Points => (IsSweep ? 1 : 0) + (IsTwin ? VariantRules.TwinPoints : IsSameSuit ? 1 : 0);
 }
 
 /// <summary>P7: cards left on the table at the end of the round; <paramref name="Team"/> null = nobody.</summary>

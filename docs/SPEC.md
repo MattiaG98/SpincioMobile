@@ -1,4 +1,4 @@
-# Spincio — Specifica (Regolamento v1.5)
+# Spincio — Specifica (Regolamento v1.6)
 
 > **Fonte di verità.** Queste sono le regole di casa dello Spincio (variante dello Spazzino). In caso di conflitto con qualunque altra fonte, vale questo documento.
 > Ogni modifica alle regole richiede: aggiornamento di questo file, nuova versione del regolamento, test `AT-xx` corrispondenti.
@@ -7,6 +7,7 @@
 
 | Versione | Data | Modifica |
 |---|---|---|
+| v1.6 | 17/10/2026 | **Gemella** nello Spincione (SP10), dettata dal proprietario: la carta che prende la sua gemella vale **2 punti** al posto del punto dello stesso seme; se svuota la tavola si aggiunge lo spazzino (**3**, "gemella con cappella"); vale anche all'ultima giocata. AT-43 senza il caso della gemella, AT-51 nuovo. Lo Spincio non cambia. |
 | v1.5 | 17/10/2026 | **Nuova modalità Spincione** (§1.7), dettata dal proprietario: due mazzi, prima distribuzione da 4 carte, accusi in prima mano raddoppiati, accusi nuovi (**colore**, **scala**), punto in più per la **presa dello stesso seme**, settebello e rebello contati per copia, niente vittoria immediata con i denari. Il "bàgher" del backlog non esiste: il proprietario l'aveva chiamato così per errore. Lo Spincio non cambia. AT-41…AT-50. |
 | v1.1 | 24/09/2026 | Regolamento confermato (Fasi 0–3) |
 | v1.4 (terminologia) | 07/10/2026 | La scala di denari si chiama **spincio** (prima "napola"), su indicazione del proprietario. Nessuna regola cambiata. |
@@ -83,13 +84,14 @@ all'inizio della partita, contro la CPU e online.
 |---|---|
 | SP1 | **Due mazzi** piacentini interi: 80 carte, ogni carta c'è due volte. |
 | SP2 | **Prima distribuzione** di ogni smazzata: **4 carte a testa** e 4 scoperte in tavola. Poi **3 a testa** quando le mani sono vuote: 6 distribuzioni e **76 giocate** per smazzata. La ridistribuzione con 2 o più assi in tavola (S5) resta. |
-| SP3 | **Presa dello stesso seme:** se la carta giocata e **tutte** le carte prese hanno lo **stesso seme**, la squadra fa **1 punto in più**. Si somma allo spazzino e vale **anche all'ultima giocata** (dove lo spazzino non vale). Vale per ogni presa: per uguaglianza (anche la carta gemella), per somma e con l'asso pigliatutto. |
+| SP3 | **Presa dello stesso seme:** se la carta giocata e **tutte** le carte prese hanno lo **stesso seme**, la squadra fa **1 punto in più**. Si somma allo spazzino e vale **anche all'ultima giocata** (dove lo spazzino non vale). Vale per le prese per somma e con l'asso pigliatutto; la presa per uguaglianza dello stesso seme è sempre la carta gemella, che ha la sua regola (SP10). |
 | SP4 | **Accusi in prima mano raddoppiati:** i punti degli accusi dichiarati nella prima distribuzione (4 carte) valgono **il doppio**. |
 | SP5 | **Accusi con 4 carte** (prima distribuzione; i punti in tabella sono già raddoppiati): somma fino a **10** con carte tutte diverse o con una coppia = **4** · somma fino a 10 con **tre carte uguali** = **6** · **quattro carte uguali** = **14**, più 4 se la somma è fino a 10 (come nello Spincio 3-3-3 = 7 + 2). La doppia coppia non vale nulla in più. |
 | SP6 | **Accusi nuovi**, che si sommano a quelli dello Spincio: **colore** (tutte le carte in mano dello stesso seme) = **2**; **scala** (tutte le carte in mano in fila, senza ripetizioni) = **2**. La scala **gira**: dopo il re viene l'asso, quindi valgono anche fante-cavallo-re-asso e re-asso-2. In prima mano valgono il doppio (4). |
 | SP7 | Accusi con 3 carte (dalla seconda distribuzione): come lo Spincio (A1), più colore e scala (SP6), senza raddoppio. |
 | SP8 | **Fine smazzata:** carte (80), denari (20) e primiera (8 sette) come F1, F2, F5, cioè 1 punto a chi ne ha di più; in caso di pari, 0. **Settebello e rebello valgono 1 punto per ogni copia** presa (fino a 2 ciascuno). Lo spincio (F6) si conta come nello Spincio: le carte doppie non allungano la scala. |
 | SP9 | **Niente vittoria immediata con i denari** (F7 non vale nello Spincione), neanche prendendoli tutti. Si vince a 31 con lo spareggio come nello Spincio (E1, E2). |
+| SP10 | **Gemella** (dalla v1.6): se la carta giocata prende la sua **gemella** (la stessa carta dell'altro mazzo, es. `5D` prende `5D`), la presa vale **2 punti** al posto del punto dello stesso seme (SP3). Se la presa svuota la tavola si aggiunge lo spazzino: **3 punti**, scritta "**Gemella con cappella**"; altrimenti la scritta è "**Gemella**". Vale **anche all'ultima giocata** (2 punti: lo spazzino non vale, P6). Vale anche per l'asso che prende l'asso gemello (P8, eccezione). Con due carte uguali in tavola (P2) prendere la gemella o l'altra resta una scelta del giocatore. |
 
 **Mariana** (solo una scritta, nessun punto): quando un **fante** prende un **5** e un **3**, di qualunque seme, compare la scritta **MARIANA**, anche se in tavola restano altre carte. Se la presa svuota la tavola, MARIANA prende il posto della scritta "Spazzino!" e lo spazzino vale normalmente (P6).
 
@@ -254,7 +256,7 @@ Ogni test nel codice porta lo stesso ID (es. `AT_05_equal_value_forbids_sum`).
 ### Spincione (§1.7)
 - **AT-41** Nuova smazzata dello Spincione → ogni posto ha 4 carte, la tavola 4, il mazzo 60. Le 80 carte contengono ogni carta esattamente due volte.
 - **AT-42** Dopo la prima distribuzione ogni distribuzione dà 3 carte a testa; la smazzata finisce dopo 76 giocate (6 distribuzioni).
-- **AT-43** Presa dello stesso seme: tavola `[3D,4D]`, gioco `7D` (non ultima giocata) → +1 spazzino e +1 stesso seme; tavola `[3D,4C]`, gioco `7D` → nessun punto di seme; tavola `[3S,5S,KB]`, gioco `AS` → nessun punto di seme (`KB` è di bastoni); tavola `[3S,5S]`, gioco `AS` → +1 spazzino e +1 stesso seme; tavola `[5D,KC]`, gioco `5D` → prende la gemella, +1 stesso seme.
+- **AT-43** Presa dello stesso seme: tavola `[3D,4D]`, gioco `7D` (non ultima giocata) → +1 spazzino e +1 stesso seme; tavola `[3D,4C]`, gioco `7D` → nessun punto di seme; tavola `[3S,5S,KB]`, gioco `AS` → nessun punto di seme (`KB` è di bastoni); tavola `[3S,5S]`, gioco `AS` → +1 spazzino e +1 stesso seme; tavola `[2D,3D,KC]`, gioco `5D` → prende `2D,3D`, +1 stesso seme. (La gemella è in AT-51.)
 - **AT-44** All'ultima giocata, tavola `[3D,4D]`, gioco `7D` → lo spazzino non vale, il punto dello stesso seme sì. Nello Spincio la presa dello stesso seme non vale nulla.
 - **AT-45** Accusi in prima mano (4 carte, già raddoppiati): `AC,2S,5B,2D` → 4 · `2C,2S,2B,4D` → 6 · `3C,3S,3B,3D` → 14 · `2C,2S,2B,2D` → 18 · `AC,AS,2B,2D` → 4 · `5C,5S,NB,ND` → 0 · `7C,7S,7B,KD` → 0 · `5D,7D,ND,KD` → 4 (colore) · `JC,NS,KB,AD` → 4 (scala) · `KC,AS,2B,3D` → 4 (scala) · `AD,2C,3S,4B` → 8 (somma 10 + scala).
 - **AT-46** Accusi con 3 carte nello Spincione: `AD,2D,3D` → 6 (somma + colore + scala) · `NC,KS,AB` → 2 (scala) · `KC,AC,2C` → 4 (scala + colore) · `2C,2S,5B` → 3 · `3C,3S,3B` → 9 · `5D,5D,ND` → 2 (colore; la coppia vale solo con la somma).
@@ -262,6 +264,7 @@ Ogni test nel codice porta lo stesso ID (es. `AT_05_equal_value_forbids_sum`).
 - **AT-48** Nello Spincione una squadra con tutti i 20 denari non vince subito: la partita continua (lo spincio A…K vale 10).
 - **AT-49** Due carte gemelle in tavola: tavola `[5D,5D]`, gioco `5S` → una sola opzione `{5D}`; dopo la presa in tavola resta un `5D`.
 - **AT-50** La modalità fa parte della partita: stesso seed e stessi comandi danno la stessa partita, e lo Spincio con lo stesso seed resta identico a prima della v1.5.
+- **AT-51** Gemella (SP10): tavola `[5D,KC]`, gioco `5D` → 2 punti, nessun punto dello stesso seme · tavola `[5D]`, gioco `5D` (non ultima giocata) → 3 punti (gemella con cappella) · tavola `[5D,5C,KC]`, gioco `5D`: prendendo `5D` → 2 punti, prendendo `5C` → 0 · tavola `[AD,3C]`, gioco `AD` → prende solo `AD`, 2 punti · all'ultima giocata, tavola `[5D]`, gioco `5D` → 2 punti, niente spazzino; il riepilogo della smazzata conta 2 punti di gemelle.
 
 ### Informazioni nascoste
 - **AT-31** La `PlayerView` contiene: la propria mano, la tavola, il punteggio, gli accusi dichiarati (tipo e punti), il numero di carte in mano agli altri. **Non** contiene nessun mazzetto di carte prese.

@@ -32,6 +32,9 @@ public sealed record GreedyWeights
     /// <summary>Spincione: a capture all of one suit is a point (SP3), worth the same as a sweep.</summary>
     public double SameSuit { get; init; } = 10.0;
 
+    /// <summary>Spincione: taking the twin is 2 points (SP10) instead of the same-suit one.</summary>
+    public double Twin { get; init; } = 20.0;
+
     /// <summary>
     /// Cost of dropping an ace, which happens only on an empty table (with cards there it always captures, P8):
     /// kept, it can take the whole table later. Owner's remark (1.7.2): "non ha senso buttarlo se il tavolo è vuoto".
@@ -97,9 +100,16 @@ public sealed class GreedyBot(GreedyWeights? weights = null) : IBot
                 score += _w.Sweep;
             }
 
-            if (view.Variant.HasSameSuitBonus() && capture.Cards.All(c => c.Suit == play.Card.Suit))
+            if (view.Variant.HasSameSuitBonus())
             {
-                score += _w.SameSuit;
+                if (capture.Cards.Length == 1 && capture.Cards[0] == play.Card)
+                {
+                    score += _w.Twin; // SP10
+                }
+                else if (capture.Cards.All(c => c.Suit == play.Card.Suit))
+                {
+                    score += _w.SameSuit; // SP3
+                }
             }
         }
         else

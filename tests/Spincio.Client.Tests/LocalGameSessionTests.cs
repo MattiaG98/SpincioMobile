@@ -273,4 +273,19 @@ public class LocalGameSessionTests
         session.Variant.ShouldBe(GameVariant.Spincio);
         session.View.Hand.Length.ShouldBe(3);
     }
+
+    /// <summary>1.6 changed the Spincione's points (SP10): a 1.5 Spincione save is not resumed, a 1.5 Spincio one is.</summary>
+    [Theory]
+    [InlineData(GameVariant.Spincio, true)]
+    [InlineData(GameVariant.Spincione, false)]
+    public async Task A_save_from_the_1_5_rules_resumes_only_as_a_spincio(GameVariant variant, bool resumes)
+    {
+        var store = new InMemoryGameStore();
+        await store.SaveAsync(new SavedGame("1.5", 21, [], Variant: variant).ToJson());
+
+        var session = NewSession(store);
+
+        (await session.HasSavedGameAsync()).ShouldBe(resumes);
+        (await session.TryResumeAsync()).ShouldBe(resumes);
+    }
 }
