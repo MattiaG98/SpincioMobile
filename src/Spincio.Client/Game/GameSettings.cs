@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Microsoft.JSInterop;
 using Spincio.Bots;
+using Spincio.Engine;
 
 namespace Spincio.Client.Game;
 
@@ -12,8 +13,11 @@ public enum AnimationSpeed
     Off,
 }
 
-/// <summary>The player's options (menu "Opzioni"), kept in the browser's localStorage.</summary>
-public sealed record GameSettings(BotLevel Difficulty = BotLevel.Greedy, AnimationSpeed Animations = AnimationSpeed.Normal)
+/// <summary>The player's options (menu "Opzioni" and the mode on the main menu), kept in the browser's localStorage.</summary>
+public sealed record GameSettings(
+    BotLevel Difficulty = BotLevel.Greedy,
+    AnimationSpeed Animations = AnimationSpeed.Normal,
+    GameVariant Variant = GameVariant.Spincio)
 {
     /// <summary>Multiplier for the card animations (js/moves.js); 0 = none.</summary>
     public double AnimationFactor => Animations switch

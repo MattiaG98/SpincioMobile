@@ -21,6 +21,7 @@
 | Torneo L1 contro L0 | `dotnet run --project tools/Spincio.Simulator -c Release -- --x Greedy --y Random --matches 1000 --seed 1` |
 | Torneo L2 contro L1 | `dotnet run --project tools/Spincio.Simulator -c Release -- --x Pimc --y Greedy --matches 1000 --seed 5000 --worlds 16` |
 | Tempo per decisione | `dotnet run --project tools/Spincio.Simulator -c Release -- --timing Pimc --worlds 8` |
+| Spincione (ogni comando sopra) | aggiungere `--variant Spincione` |
 
 I lati si invertono a ogni partita; le partite girano in parallelo e il risultato non dipende dallo scheduling. Per tarare un parametro, usare un seed per la taratura e **un altro** per la conferma.
 
@@ -40,7 +41,7 @@ Configurazione del server in `src/Spincio.Server/appsettings.json`:
 - **Punti:** con il sito pubblicato su :8765, `node tools/browser-checks/points.mjs /tmp/out` gioca una smazzata e controlla che ogni "+N" arrivi prima che il punteggio cambi e che, chiuso il riepilogo, la barra mostri il punteggio della partita; salva uno screenshot per tipo (spazzino, accuso, fine smazzata).
 - **Tempo di decisione delle CPU nel browser:** con il sito pubblicato su :8765, `node tools/browser-checks/cpu-time.mjs` gioca a "Normale" e a "Difficile" con le animazioni spente e stampa il tempo di decisione per mossa (mediana, p90, massimo), tolta la pausa fissa di 450 ms.
 - **Aggiornamento dell'app installata:** `dotnet publish src/Spincio.Client -c Release -o /tmp/pubA`, poi `dotnet publish src/Spincio.Client -c Release -o /tmp/pubB -p:Version=9.9.9`, poi `node tools/browser-checks/update.mjs /tmp/pubA/wwwroot /tmp/pubB/wwwroot 9.9.9 /tmp/out`: installa A, pubblica B, controlla che compaia la barra "Aggiorna" e che dopo il tocco l'app mostri v9.9.9. Usa la porta 8766.
-- **Impaginazione:** con il sito pubblicato su :8765, `node tools/browser-checks/layout.mjs /tmp/out` gioca su tre schermi (375×667, 390×844, 430×932) e controlla a ogni mossa che la pagina non scorra, che la tavola non cambi misura e che le carte restino dentro; poi riempie la tavola con 8, 12 e 16 carte. Esce con codice 1 se qualcosa non va.
+- **Impaginazione:** con il sito pubblicato su :8765, `node tools/browser-checks/layout.mjs /tmp/out [spincione]` gioca su tre schermi (375×667, 390×844, 430×932) e controlla a ogni mossa che la pagina non scorra, che la tavola non cambi misura e che le carte restino dentro; poi riempie la tavola con 8, 12 e 16 carte (anche 20 con `spincione`, che gioca la modalità a due mazzi e controlla che il menu non scorra). Esce con codice 1 se qualcosa non va.
 - **Carte:** `node tools/card-slicer/slice.mjs assets-source/carte-piacentine-al-completo.jpg src/Spincio.Client/wwwroot/cards` ritaglia di nuovo le 40 carte (ADR 0011). La pagina `/mazzo` dell'app mostra tutto il mazzo per controllarlo.
 - Per fermare i processi usare l'ID del task o la porta, **non** `pkill -f` con un pattern che compare nel comando stesso.
 

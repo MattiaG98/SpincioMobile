@@ -1,15 +1,18 @@
 // Layout check on a published build: on several phone screens, plays a match against the CPU and checks after every
 // move that the page never scrolls, the table keeps its starting size and every table card stays inside it.
 // Also screenshots a card in flight, to see it shrink towards the table.
-// Usage: serve the published wwwroot on http://localhost:8765, then `node tools/browser-checks/layout.mjs <out-dir>`.
+// Usage: serve the published wwwroot on http://localhost:8765, then `node tools/browser-checks/layout.mjs <out-dir> [spincione]`.
+// With "spincione" it plays the two-deck mode (SPEC §1.7): 4 cards in the first hand, identical cards, fuller tables.
 // Needs Playwright (preinstalled in the cloud environment under /opt/node22/lib/node_modules).
 import { createRequire } from 'module';
 const require = createRequire('/opt/node22/lib/node_modules/');
 const { chromium } = require('playwright');
 const out = process.argv[2] ?? '.';
+const spincione = process.argv[3] === 'spincione';
 const screens = [{ name: 'se', width: 375, height: 667 }, { name: '14', width: 390, height: 844 }, { name: 'max', width: 430, height: 932 }];
 const browser = await chromium.launch();
 let failures = 0;
+const problems_menu = [];
 
 for (const screen of screens) {
   const page = await browser.newPage({ viewport: { width: screen.width, height: screen.height }, deviceScaleFactor: 2 });
@@ -17,6 +20,10 @@ for (const screen of screens) {
   page.on('pageerror', e => errors.push(e.message));
   await page.goto('http://localhost:8765/?seed=7');
   await page.waitForSelector('section.start');
+  if (spincione) await page.locator('.mode-choice button', { hasText: 'Spincione' }).click();
+  const menu = await page.evaluate(() => document.documentElement.scrollHeight - innerHeight + document.querySelector('.app').scrollHeight - document.querySelector('.app').clientHeight);
+  if (menu > 0) problems_menu.push(`${screen.name}: the main menu scrolls by ${menu}px`);
+  await page.screenshot({ path: `${out}/layout-${screen.name}-menu${spincione ? '-spincione' : ''}.png` });
   await page.getByText('Nuova partita').click();
   await page.waitForSelector('.hand .card');
   const start = await page.locator('.table').boundingBox();
@@ -55,7 +62,7 @@ for (const screen of screens) {
         await page.screenshot({ path: `${out}/layout-${screen.name}-flight.png` });
         flightShot = true;
       }
-      if (moves === 10) await page.screenshot({ path: `${out}/layout-${screen.name}.png` });
+      if (moves === 10) await page.screenshot({ path: `${out}/layout-${screen.name}${spincione ? '-spincione' : ''}.png` });
     } else {
       await page.waitForTimeout(150);
     }
@@ -64,7 +71,7 @@ for (const screen of screens) {
 
   // A crowded table (more cards than a match usually leaves there): copies of a table card, with the columns the app
   // would set for that count (Home.razor, TableFit). Every card must still fit the table.
-  for (const n of [8, 12, 16]) {
+  for (const n of spincione ? [8, 12, 16, 20] : [8, 12, 16]) {
     const fit = await page.evaluate(n => {
       const table = document.querySelector('.table');
       const sample = table.querySelector('.card') || document.querySelector('.hand .card');
@@ -90,4 +97,5 @@ for (const screen of screens) {
   await page.close();
 }
 await browser.close();
-process.exit(failures ? 1 : 0);
+if (problems_menu.length) console.log('MENU PROBLEMS:', problems_menu.join('; '));
+process.exit(failures || problems_menu.length ? 1 : 0);

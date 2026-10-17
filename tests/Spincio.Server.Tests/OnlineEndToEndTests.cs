@@ -167,4 +167,31 @@ public class OnlineEndToEndTests
         await Eventually(() => ada.IsStarted && bea.IsStarted, "both see the match");
         ada.Me.Team.ShouldNotBe(bea.Me.Team);
     }
+
+    /// <summary>SPEC §1.7: a Spincione room online: both see the mode and 4 cards in the first hand, and can play.</summary>
+    [Fact]
+    public async Task Two_friends_play_a_spincione_room()
+    {
+        await using var factory = new WebApplicationFactory<Program>()
+            .WithWebHostBuilder(b => b.UseSetting("Rooms:BotDelay", "00:00:00.020"));
+        var url = factory.Server.BaseAddress;
+        await using var ada = new RemoteGameSession(url, new InMemoryOnlineSeatStore(), factory.Server.CreateHandler);
+        await using var bea = new RemoteGameSession(url, new InMemoryOnlineSeatStore(), factory.Server.CreateHandler);
+
+        var created = await ada.CreateRoomAsync("Ada", Spincio.Engine.GameVariant.Spincione);
+        created.Ok.ShouldBeTrue();
+        (await bea.JoinRoomAsync(created.RoomCode!, "Bea")).Ok.ShouldBeTrue();
+        await Eventually(() => bea.Room?.Variant == Spincio.Engine.GameVariant.Spincione, "Bea sees a Spincione room");
+        (await ada.StartMatchAsync()).Ok.ShouldBeTrue();
+
+        await Eventually(() => ada.IsStarted && bea.IsStarted, "both see the match");
+        ada.View.Variant.ShouldBe(Spincio.Engine.GameVariant.Spincione);
+        ada.View.Hand.Length.ShouldBe(4); // nobody human has played yet: still the first hand of 4 (SP2)
+        bea.View.Hand.Length.ShouldBe(4);
+        ada.Footer.ShouldStartWith("Spincione · stanza");
+        await Eventually(() => ada.View.IsMyTurn || bea.View.IsMyTurn, "a human turn");
+        var player = ada.View.IsMyTurn ? ada : bea;
+        await player.PlayAsync(player.LegalCommands.OfType<Spincio.Engine.PlayCard>().First());
+        player.Error.ShouldBeNull();
+    }
 }

@@ -83,8 +83,74 @@ public static class GameText
         DeclarationKind.LowSumWithPair => "Mano fino a 9 con coppia",
         DeclarationKind.ThreeOfAKind => "Tris",
         DeclarationKind.ThreeOfAKind | DeclarationKind.LowSum => "Tris fino a 9",
-        _ => kind.ToString(),
+        _ => CombinedDeclarationName(kind),
     };
+
+    /// <summary>The Spincione's declarations add up (SP4–SP6): "Colore + Scala", "Quattro uguali + Mano fino a 10"…</summary>
+    private static string CombinedDeclarationName(DeclarationKind kind)
+    {
+        // A first-hand declaration (4 cards) has its low sum up to 10, and its points are doubled.
+        bool fourCards = kind.HasFlag(DeclarationKind.DoubledFirstHand);
+        var parts = new List<string>();
+        if (kind.HasFlag(DeclarationKind.FourOfAKind))
+        {
+            parts.Add("Quattro uguali");
+        }
+
+        if (kind.HasFlag(DeclarationKind.ThreeOfAKind))
+        {
+            parts.Add("Tris");
+        }
+
+        if (kind.HasFlag(DeclarationKind.LowSumWithThree))
+        {
+            parts.Add("Mano fino a 10 con tre uguali");
+        }
+
+        if (kind.HasFlag(DeclarationKind.LowSumWithPair))
+        {
+            parts.Add("Mano fino a 9 con coppia");
+        }
+
+        if (kind.HasFlag(DeclarationKind.LowSum))
+        {
+            parts.Add(fourCards ? "Mano fino a 10" : "Mano fino a 9");
+        }
+
+        if (kind.HasFlag(DeclarationKind.Colore))
+        {
+            parts.Add("Colore");
+        }
+
+        if (kind.HasFlag(DeclarationKind.Scala))
+        {
+            parts.Add("Scala");
+        }
+
+        string name = parts.Count > 0 ? string.Join(" + ", parts) : kind.ToString();
+        return fourCards ? name + " · prima mano ×2" : name;
+    }
+
+    /// <summary>The name of a game mode (SPEC §1.7).</summary>
+    public static string ModeName(GameVariant variant) => variant == GameVariant.Spincione ? "Spincione" : "Spincio";
+
+    /// <summary>
+    /// Cards with a key unique among them, for rendering lists: in the Spincione the same card can appear twice (SP1),
+    /// and the second one is keyed "7D#2".
+    /// </summary>
+    public static IReadOnlyList<(Card Card, string Key)> Keyed(IEnumerable<Card> cards)
+    {
+        ArgumentNullException.ThrowIfNull(cards);
+        var seen = new Dictionary<Card, int>();
+        var keyed = new List<(Card, string)>();
+        foreach (var card in cards)
+        {
+            int n = seen[card] = seen.GetValueOrDefault(card) + 1;
+            keyed.Add((card, n == 1 ? card.ToString() : $"{card}#{n}"));
+        }
+
+        return keyed;
+    }
 
     public static string WinReasonText(WinReason reason) => reason switch
     {
@@ -99,16 +165,20 @@ public static class GameText
     public static string? Banner(CardPlayed play)
     {
         ArgumentNullException.ThrowIfNull(play);
-        return play.IsMariana() ? "MARIANA" : play.IsSweep ? "Spazzino!" : null;
+        return play.IsMariana() ? "MARIANA" : play.IsSweep ? "Spazzino!" : play.IsSameSuit ? "Stesso seme!" : null;
     }
 
-    private static string Callout(CardPlayed play) => (play.IsMariana(), play.IsSweep) switch
+    private static string Callout(CardPlayed play)
     {
-        (true, true) => " — MARIANA! +1",
-        (true, false) => " — MARIANA!",
-        (false, true) => " — SPAZZINO!",
-        _ => "",
-    };
+        string callout = (play.IsMariana(), play.IsSweep) switch
+        {
+            (true, true) => " — MARIANA! +1",
+            (true, false) => " — MARIANA!",
+            (false, true) => " — SPAZZINO!",
+            _ => "",
+        };
+        return play.IsSameSuit ? callout + " — STESSO SEME! +1" : callout; // SP3, Spincione
+    }
 
     /// <summary>One feed line for an event the viewer may see, or null for events not worth a line.</summary>
     public static string? Describe(GameEvent gameEvent, Seat me, Func<Seat, string> seatName) => gameEvent switch

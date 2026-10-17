@@ -25,9 +25,18 @@
             {
                 <button type="button" class="btn btn-gold" @onclick="ResumeAsync">Riprendi la partita</button>
             }
+            @* SPEC §1.7: the mode of the next match, remembered with the options. *@
+            <div class="segmented mode-choice" role="radiogroup" aria-label="Modalità">
+                @foreach (var variant in new[] { GameVariant.Spincio, GameVariant.Spincione })
+                {
+                    bool on = _settings.Variant == variant;
+                    <button type="button" role="radio" aria-checked="@(on ? "true" : "false")" class="@(on ? "on" : "")"
+                            @onclick="() => SaveSettingsAsync(_settings with { Variant = variant })">@GameText.ModeName(variant)</button>
+                }
+            </div>
             <button type="button" class="btn @(_hasSave ? "btn-green" : "btn-gold")" @onclick="NewGameAsync">
                 Nuova partita
-                <small>CPU @(_settings.Difficulty == BotLevel.Pimc ? "difficile" : "normale")</small>
+                <small>@GameText.ModeName(_settings.Variant) · CPU @(_settings.Difficulty == BotLevel.Pimc ? "difficile" : "normale")</small>
             </button>
             <a class="btn btn-green btn-online" href="online">🌐 Gioca online con gli amici</a>
             <div class="menu-grid">
@@ -68,9 +77,9 @@ else
                 {
                     <span class="empty">Tavola vuota</span>
                 }
-                @foreach (var card in view.Table)
+                @foreach (var (card, key) in GameText.Keyed(view.Table))
                 {
-                    <CardView @key="card" Card="card" Highlighted="highlighted.Contains(card)" />
+                    <CardView @key="key" Card="card" Highlighted="highlighted.Contains(card)" />
                 }
             </div>
             @SeatAt(view, 1)
@@ -108,9 +117,9 @@ else
             </div>
 
             <div class="hand">
-                @foreach (var card in view.Hand)
+                @foreach (var (card, key) in GameText.Keyed(view.Hand))
                 {
-                    <CardView @key="card" Card="card" Playable="CanPlay(legal, card)" Highlighted="_choosing == card" OnClick="OnCardClickAsync" />
+                    <CardView @key="key" Card="card" Playable="CanPlay(legal, card)" Highlighted="_choosing == card" OnClick="OnCardClickAsync" />
                 }
             </div>
 
@@ -360,7 +369,7 @@ else
         SeedParameter = null; // "Nuova partita" after the end gets a fresh deal
         var local = Host.Local;
         _bannersAtStart = 0;
-        await local.NewGameAsync(seed, _settings.Difficulty);
+        await local.NewGameAsync(seed, _settings.Difficulty, _settings.Variant);
     }
 
     private async Task ResumeAsync()

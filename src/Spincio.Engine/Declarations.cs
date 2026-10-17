@@ -21,6 +21,9 @@ public enum DeclarationKind
 
     /// <summary>Spincione: the hand is a run of consecutive ranks, going round from the king to the ace (SP6).</summary>
     Scala = 64,
+
+    /// <summary>Spincione: declared in the first hand (4 cards), so the points are doubled (SP4).</summary>
+    DoubledFirstHand = 128,
 }
 
 public readonly record struct DeclarationValue(DeclarationKind Kind, int Points)
@@ -131,7 +134,13 @@ public static class Declarations
             points += ScalaPoints;
         }
 
-        return new DeclarationValue(kind, firstHand ? points * 2 : points);
+        if (firstHand && points > 0)
+        {
+            kind |= DeclarationKind.DoubledFirstHand;
+            points *= 2;
+        }
+
+        return new DeclarationValue(kind, points);
     }
 
     /// <summary>SP6: different ranks, consecutive, going round after the king (J-N-K-A, K-A-2 are runs).</summary>

@@ -3,6 +3,7 @@ using System.IO.Compression;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using Spincio.Engine;
 
 namespace Spincio.Server.Rooms;
 
@@ -10,7 +11,13 @@ namespace Spincio.Server.Rooms;
 /// Everything needed to rebuild a started room after the server restarts (ADR 0017): the seed and the commands
 /// (ADR 0003), the salt for the final reveal, and the seats with their secret tokens.
 /// </summary>
-public sealed record RoomCheckpoint(string Code, ulong Seed, string Salt, IReadOnlyList<CheckpointSeat> Seats, IReadOnlyList<string> Log);
+public sealed record RoomCheckpoint(
+    string Code,
+    ulong Seed,
+    string Salt,
+    IReadOnlyList<CheckpointSeat> Seats,
+    IReadOnlyList<string> Log,
+    GameVariant Variant = GameVariant.Spincio);
 
 public sealed record CheckpointSeat(string Name, string? Token, bool IsBot);
 

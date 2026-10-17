@@ -10,7 +10,7 @@
 @if (Lobby.Pending is { } invitation)
 {
     <div class="invite-banner" role="alert">
-        <p class="invite-text">📨 <strong>@invitation.FromName</strong> ti invita a una partita online</p>
+        <p class="invite-text">📨 <strong>@invitation.FromName</strong> ti invita a una partita online@(invitation.Variant == GameVariant.Spincione ? " di Spincione" : "")</p>
         @if (InOnlineGame)
         {
             <p class="invite-hint">Sei già in una partita online: per ora puoi solo rifiutare.</p>

@@ -153,4 +153,26 @@ public class CheckpointTests
         before.Notifier.Last("c-ada").Checkpoint.ShouldNotBeNullOrEmpty();
         (await new Instance(key: null).Rooms.RestoreAsync(ada.Token!, before.Notifier.Last("c-ada").Checkpoint!)).ShouldBeNull();
     }
+
+    /// <summary>SPEC §1.7: a Spincione room comes back as a Spincione, with its 80 cards.</summary>
+    [Fact]
+    public async Task A_spincione_match_comes_back_as_a_spincione()
+    {
+        var before = new Instance();
+        var room = before.Rooms.Create(GameVariant.Spincione);
+        var ada = await room.JoinAsync("Ada", "c-ada");
+        before.Rooms.Track(ada, room, "c-ada");
+        (await room.StartAsync(ada.Token!)).Ok.ShouldBeTrue();
+        await before.PlayMovesAsync(room, 6);
+        var last = before.Notifier.Last("c-ada");
+
+        var after = new Instance();
+        var restored = (await after.Rooms.RestoreAsync(ada.Token!, last.Checkpoint!)).ShouldNotBeNull();
+        await restored.RejoinAsync(ada.Token!, "c-ada-2");
+
+        restored.Variant.ShouldBe(GameVariant.Spincione);
+        after.Notifier.Rooms["c-ada-2"].Variant.ShouldBe(GameVariant.Spincione);
+        Json(after.Notifier.Last("c-ada-2").View).ShouldBe(Json(last.View));
+        restored.State!.AllCards().Count().ShouldBe(80);
+    }
 }

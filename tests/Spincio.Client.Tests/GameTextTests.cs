@@ -81,4 +81,40 @@ public class GameTextTests
 
         GameText.DeclarationsThisDeal(view, tito).ShouldHaveSingleItem().Points.ShouldBe(7);
     }
+
+    /// <summary>SPEC §1.7: the Spincione's declarations add up, and first-hand ones say they are doubled.</summary>
+    [Theory]
+    [InlineData("AD,2D,3D", 3, "Mano fino a 9 + Colore + Scala")]
+    [InlineData("NC,KS,AB", 3, "Scala")]
+    [InlineData("2C,2S,5B", 3, "Mano fino a 9 con coppia")]
+    [InlineData("3C,3S,3B,3D", 1, "Quattro uguali · prima mano ×2")]
+    [InlineData("2C,2S,2B,4D", 1, "Mano fino a 10 con tre uguali · prima mano ×2")]
+    [InlineData("AD,2C,3S,4B", 1, "Mano fino a 10 + Scala · prima mano ×2")]
+    public void Spincione_declarations_have_readable_names(string hand, int deal, string name)
+    {
+        var value = Declarations.Evaluate([.. hand.Split(',').Select(Card.Parse)], GameVariant.Spincione, deal);
+
+        GameText.DeclarationName(value.Kind).ShouldBe(name);
+    }
+
+    [Fact]
+    public void A_capture_all_of_one_suit_is_announced()
+    {
+        var tito = GameText.AtPosition(Me, 1);
+        var sameSuit = new CardPlayed(tito, Card.Parse("7D"), [Card.Parse("3D"), Card.Parse("4D")], IsSweep: false) { IsSameSuit = true };
+        var both = sameSuit with { IsSweep = true };
+
+        GameText.Banner(sameSuit).ShouldBe("Stesso seme!");
+        GameText.Banner(both).ShouldBe("Spazzino!");
+        GameText.Describe(sameSuit, Me, Name).ShouldEndWith(" — STESSO SEME! +1");
+        GameText.Describe(both, Me, Name).ShouldEndWith(" — SPAZZINO! — STESSO SEME! +1");
+        PointsGain.For(both, Me).ShouldNotBeNull().Points.ShouldBe(2);
+        PointsGain.For(sameSuit, Me).ShouldNotBeNull().Label.ShouldBe("Stesso seme!");
+    }
+
+    [Fact]
+    public void Identical_cards_get_distinct_keys()
+    {
+        GameText.Keyed([Card.Parse("7D"), Card.Parse("3C"), Card.Parse("7D")]).Select(k => k.Key).ShouldBe(["7D", "3C", "7D#2"]);
+    }
 }

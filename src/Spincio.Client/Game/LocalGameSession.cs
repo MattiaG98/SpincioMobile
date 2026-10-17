@@ -11,7 +11,10 @@ namespace Spincio.Client.Game;
 /// </summary>
 public sealed class LocalGameSession : IGameSession
 {
-    public const string RulesVersion = "1.4";
+    public const string RulesVersion = "1.5";
+
+    /// <summary>Saves of these rules versions still replay: 1.5 only added the Spincione, the Spincio is the same (AT-50).</summary>
+    private static readonly string[] ResumableVersions = ["1.4", RulesVersion];
     public const int FeedLength = 60;
     public static readonly Seat Human = new(0);
     /// <summary>CPU "thinking" pause; the card animation (about 0.4–1.3 s) comes on top of it.</summary>
@@ -61,6 +64,9 @@ public sealed class LocalGameSession : IGameSession
     /// <summary>Level of the three CPUs (partner included).</summary>
     public BotLevel Difficulty { get; private set; } = BotLevel.Greedy;
 
+    /// <summary>The game mode of the match (SPEC §1.7).</summary>
+    public GameVariant Variant { get; private set; }
+
     public PlayerView View => SpincioEngine.ViewFor(State, Human);
 
     /// <summary>Empty while the human's card is flying: the rest of the hand is not playable until it lands.</summary>
@@ -87,7 +93,8 @@ public sealed class LocalGameSession : IGameSession
 
     public string? BannerText { get; private set; }
 
-    public string Footer => $"Partita n. {Seed} · CPU {(Difficulty == BotLevel.Pimc ? "difficile" : "normale")} · regole v{RulesVersion}";
+    public string Footer =>
+        $"{GameText.ModeName(Variant)} · partita n. {Seed} · CPU {(Difficulty == BotLevel.Pimc ? "difficile" : "normale")} · regole v{RulesVersion}";
 
     public bool CanRestart => true;
 
@@ -99,10 +106,10 @@ public sealed class LocalGameSession : IGameSession
 
     private MatchState State => _state ?? throw new InvalidOperationException("No match in progress.");
 
-    public async Task NewGameAsync(ulong seed, BotLevel difficulty = BotLevel.Greedy)
+    public async Task NewGameAsync(ulong seed, BotLevel difficulty = BotLevel.Greedy, GameVariant variant = GameVariant.Spincio)
     {
-        Reset(seed, difficulty);
-        var start = SpincioEngine.NewMatch(seed);
+        Reset(seed, difficulty, variant);
+        var start = SpincioEngine.NewMatch(seed, variant: variant);
         Accept(start, command: null);
         await SaveAsync();
         RaiseLive(start);
@@ -110,21 +117,21 @@ public sealed class LocalGameSession : IGameSession
     }
 
     public async Task<bool> HasSavedGameAsync() =>
-        SavedGame.FromJson(await _store.LoadAsync()) is { } saved && saved.RulesVersion == RulesVersion;
+        SavedGame.FromJson(await _store.LoadAsync()) is { } saved && ResumableVersions.Contains(saved.RulesVersion);
 
     /// <summary>Restores the saved match by replaying its command log. False if there is none or it is unusable.</summary>
     public async Task<bool> TryResumeAsync()
     {
         var saved = SavedGame.FromJson(await _store.LoadAsync());
-        if (saved is null || saved.RulesVersion != RulesVersion)
+        if (saved is null || !ResumableVersions.Contains(saved.RulesVersion))
         {
             return false;
         }
 
         try
         {
-            Reset(saved.Seed, saved.Difficulty);
-            Accept(SpincioEngine.NewMatch(saved.Seed), command: null);
+            Reset(saved.Seed, saved.Difficulty, saved.Variant);
+            Accept(SpincioEngine.NewMatch(saved.Seed, variant: saved.Variant), command: null);
             foreach (var text in saved.Commands)
             {
                 var result = SpincioEngine.Apply(State, CommandCodec.Decode(text));
@@ -220,15 +227,16 @@ public sealed class LocalGameSession : IGameSession
         _ => new PimcBot(NormalPimc),
     };
 
-    private void Reset(ulong seed, BotLevel difficulty)
+    private void Reset(ulong seed, BotLevel difficulty, GameVariant variant)
     {
         _generation++;
         Seed = seed;
         Difficulty = difficulty;
+        Variant = variant;
         _bot = _botOverride ?? CpuFor(difficulty);
         _feed.Clear();
         _commands.Clear();
-        _memories = [.. Seat.All.Select(s => new BotMemory(s))];
+        _memories = [.. Seat.All.Select(s => new BotMemory(s, variant))];
         _rngs = [.. Seat.All.Select(s => new Pcg32(seed, 100UL + (ulong)s.Index))];
         PendingSummary = null;
         Result = null;
@@ -346,5 +354,5 @@ public sealed class LocalGameSession : IGameSession
 
     private void RaiseLive(Transition transition) => LiveEvents?.Invoke([.. transition.EventsFor(Human)]);
 
-    private Task SaveAsync() => _store.SaveAsync(new SavedGame(RulesVersion, Seed, [.. _commands], Difficulty).ToJson());
+    private Task SaveAsync() => _store.SaveAsync(new SavedGame(RulesVersion, Seed, [.. _commands], Difficulty, Variant).ToJson());
 }
