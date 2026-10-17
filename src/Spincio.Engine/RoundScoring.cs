@@ -29,7 +29,8 @@ public static class RoundScoring
     public static readonly Card Rebello = new(Rank.King, Suit.Coins);
     public static readonly Card Settebello = new(Rank.Seven, Suit.Coins);
 
-    public static RoundScore Score(IReadOnlyCollection<Card> pileA, IReadOnlyCollection<Card> pileB)
+    public static RoundScore Score(
+        IReadOnlyCollection<Card> pileA, IReadOnlyCollection<Card> pileB, GameVariant variant = GameVariant.Spincio)
     {
         ArgumentNullException.ThrowIfNull(pileA);
         ArgumentNullException.ThrowIfNull(pileB);
@@ -47,13 +48,14 @@ public static class RoundScoring
                 SpincioLength: spincio,
                 CardsPoint: cards > otherCards ? 1 : 0,
                 CoinsPoint: coins > otherCoins ? 1 : 0,
-                RebelloPoint: pile.Contains(Rebello) ? 1 : 0,
-                SettebelloPoint: pile.Contains(Settebello) ? 1 : 0,
+                RebelloPoint: pile.Count(c => c == Rebello), // one point per copy (SP8): 0 or 1 in the Spincio
+                SettebelloPoint: pile.Count(c => c == Settebello),
                 PrimieraPoint: sevens > otherSevens ? 1 : 0,
                 SpincioPoints: spincio);
 
         int coinsInDeck = Enum.GetValues<Rank>().Length;
-        Team? allCoins = coinsA == coinsInDeck ? Team.A : coinsB == coinsInDeck ? Team.B : null;
+        Team? allCoins = !variant.AllCoinsWins() ? null // SP9
+            : coinsA == coinsInDeck ? Team.A : coinsB == coinsInDeck ? Team.B : null;
 
         return new RoundScore(
             Tally(pileA, cardsA, cardsB, coinsA, coinsB, sevensA, sevensB, spincioA),
@@ -61,7 +63,10 @@ public static class RoundScoring
             allCoins);
     }
 
-    /// <summary>F6: length of the consecutive coins run starting from the ace, or 0 if shorter than 3.</summary>
+    /// <summary>
+    /// F6: length of the consecutive coins run starting from the ace, or 0 if shorter than 3. Copies of a card do not
+    /// make it longer (SP8).
+    /// </summary>
     public static int SpincioLength(IEnumerable<Card> pile)
     {
         var coinRanks = pile.Where(c => c.IsCoins).Select(c => c.Rank).ToHashSet();

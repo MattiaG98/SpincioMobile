@@ -6,15 +6,15 @@ namespace Spincio.Engine;
 public static partial class SpincioEngine
 {
     /// <summary>
-    /// Starts a match: random first dealer unless given (S3), then the first round is dealt.
-    /// Returns a <see cref="Transition"/> so the initial deal events are not lost.
+    /// Starts a match of <paramref name="variant"/>: random first dealer unless given (S3), then the first round is
+    /// dealt. Returns a <see cref="Transition"/> so the initial deal events are not lost.
     /// </summary>
-    public static Transition NewMatch(ulong seed, Seat? firstDealer = null)
+    public static Transition NewMatch(ulong seed, Seat? firstDealer = null, GameVariant variant = GameVariant.Spincio)
     {
         var rng = Pcg32.FromSeed(seed);
         var dealer = firstDealer ?? new Seat(rng.NextInt(Seat.Count));
         var events = ImmutableArray.CreateBuilder<GameEvent>();
-        var state = StartRound(rng, dealer, matchNumber: 0, roundNumber: 1, TeamScores.Zero, sequence: 0, events);
+        var state = StartRound(rng, variant, dealer, matchNumber: 0, roundNumber: 1, TeamScores.Zero, sequence: 0, events);
         return new Transition(state, events.ToImmutable());
     }
 
@@ -73,7 +73,7 @@ public static partial class SpincioEngine
             commands.Add(new Declare(seat));
         }
 
-        foreach (var card in hand)
+        foreach (var card in hand.Distinct()) // two identical cards in hand (Spincione, SP1) are the same moves
         {
             var options = Captures.Options(card, table);
             if (options.IsEmpty)
@@ -92,7 +92,7 @@ public static partial class SpincioEngine
     public static PlayerView ViewFor(MatchState state, Seat seat)
     {
         ArgumentNullException.ThrowIfNull(state);
-        return new PlayerView(
+        var view = new PlayerView(
             Seat: seat,
             Phase: state.Phase,
             MatchNumber: state.MatchNumber,
@@ -111,13 +111,14 @@ public static partial class SpincioEngine
                 ? DeclarableNow(state, seat)
                 : DeclarationValue.None,
             Winner: state.Winner);
+        return view with { Variant = state.Variant };
     }
 
     /// <summary>A3: only on your turn, before your first card of the deal, once per deal.</summary>
     private static DeclarationValue DeclarableNow(MatchState state, Seat seat) =>
         state.PlayedThisDeal[seat.Index] || state.HasDeclaredThisDeal(seat)
             ? DeclarationValue.None
-            : Declarations.Evaluate(state.HandOf(seat));
+            : Declarations.Evaluate(state.HandOf(seat), state.Variant, state.DealNumber);
 
     private static Result<Transition> ApplyDeclare(MatchState state, Declare command)
     {
@@ -132,7 +133,7 @@ public static partial class SpincioEngine
             return IllegalReason.AlreadyDeclared;
         }
 
-        var value = Declarations.Evaluate(state.HandOf(seat));
+        var value = Declarations.Evaluate(state.HandOf(seat), state.Variant, state.DealNumber);
         if (value.Points == 0)
         {
             return IllegalReason.NothingToDeclare;
@@ -175,7 +176,7 @@ public static partial class SpincioEngine
 
         var events = ImmutableArray.CreateBuilder<GameEvent>();
         int plays = state.PlaysInRound + 1;
-        bool isLastPlay = plays == MatchState.PlaysPerRound;
+        bool isLastPlay = plays == state.Variant.PlaysPerRound();
 
         var next = state with
         {
@@ -197,15 +198,21 @@ public static partial class SpincioEngine
             var table = state.Table.RemoveRange(captured);
             var team = seat.Team;
             bool isSweep = table.IsEmpty && !isLastPlay; // P6
+            bool sameSuit = state.Variant.HasSameSuitBonus() && captured.All(c => c.Suit == command.Card.Suit); // SP3
+            var played = new CardPlayed(seat, command.Card, captured, isSweep) { IsSameSuit = sameSuit };
             next = next with
             {
                 Table = table,
                 Piles = state.Piles.SetItem((int)team, state.PileOf(team).AddRange(captured).Add(command.Card)),
                 LastCapturingTeam = team,
-                Score = isSweep ? next.Score.Add(team, 1) : next.Score,
-                Ledger = isSweep ? next.Ledger with { Sweeps = next.Ledger.Sweeps.Add(team, 1) } : next.Ledger,
+                Score = next.Score.Add(team, played.Points),
+                Ledger = next.Ledger with
+                {
+                    Sweeps = next.Ledger.Sweeps.Add(team, isSweep ? 1 : 0),
+                    SameSuit = next.Ledger.SameSuit.Add(team, sameSuit ? 1 : 0),
+                },
             };
-            events.Add(new CardPlayed(seat, command.Card, captured, isSweep));
+            events.Add(played);
         }
 
         if (next.Hands.All(h => h.IsEmpty))
@@ -218,6 +225,7 @@ public static partial class SpincioEngine
 
     private static MatchState StartRound(
         Pcg32 rng,
+        GameVariant variant,
         Seat dealer,
         int matchNumber,
         int roundNumber,
@@ -225,13 +233,14 @@ public static partial class SpincioEngine
         int sequence,
         ImmutableArray<GameEvent>.Builder events)
     {
-        events.Add(new RoundStarted(matchNumber, roundNumber, dealer));
+        events.Add(new RoundStarted(matchNumber, roundNumber, dealer) { Variant = variant });
 
+        int handSize = variant.HandSize(dealNumber: 1);
         Card[] deck;
         while (true)
         {
-            deck = rng.Shuffle(Card.FullDeck);
-            var table = deck.AsSpan(Seat.Count * MatchState.CardsPerHand, MatchState.InitialTableCards).ToArray();
+            deck = rng.Shuffle(variant.Deck());
+            var table = deck.AsSpan(Seat.Count * handSize, MatchState.InitialTableCards).ToArray();
             if (table.Count(c => c.Rank == Rank.Ace) < 2)
             {
                 break;
@@ -244,8 +253,8 @@ public static partial class SpincioEngine
         int position = 0;
         foreach (var seat in DealOrder(dealer))
         {
-            hands[seat.Index] = [.. deck.AsSpan(position, MatchState.CardsPerHand)];
-            position += MatchState.CardsPerHand;
+            hands[seat.Index] = [.. deck.AsSpan(position, handSize)];
+            position += handSize;
         }
 
         ImmutableArray<Card> initialTable = [.. deck.AsSpan(position, MatchState.InitialTableCards)];
@@ -253,6 +262,7 @@ public static partial class SpincioEngine
 
         var state = new MatchState
         {
+            Variant = variant,
             Rng = rng,
             Phase = MatchPhase.AwaitingPlay,
             MatchNumber = matchNumber,
@@ -282,11 +292,12 @@ public static partial class SpincioEngine
     private static MatchState DealNext(MatchState state, ImmutableArray<GameEvent>.Builder events)
     {
         var hands = state.Hands.ToBuilder();
+        int handSize = state.Variant.HandSize(state.DealNumber + 1);
         int position = 0;
         foreach (var seat in DealOrder(state.Dealer))
         {
-            hands[seat.Index] = [.. state.Deck.AsSpan(position, MatchState.CardsPerHand)];
-            position += MatchState.CardsPerHand;
+            hands[seat.Index] = [.. state.Deck.AsSpan(position, handSize)];
+            position += handSize;
         }
 
         var next = state with
@@ -323,7 +334,7 @@ public static partial class SpincioEngine
             events.Add(new TableAwarded(state.LastCapturingTeam, leftover));
         }
 
-        var roundScore = RoundScoring.Score(state.PileOf(Team.A), state.PileOf(Team.B));
+        var roundScore = RoundScoring.Score(state.PileOf(Team.A), state.PileOf(Team.B), state.Variant);
         var score = state.Score.Add(roundScore.Totals);
         events.Add(new RoundScored(roundScore, state.Ledger, score));
 
@@ -337,11 +348,11 @@ public static partial class SpincioEngine
             case MatchOutcomeKind.Tiebreak:
                 events.Add(new TiebreakStarted(state.MatchNumber + 1));
                 return StartRound(
-                    state.Rng, state.Dealer.Next(), state.MatchNumber + 1, roundNumber: 1, TeamScores.Zero, state.Sequence, events);
+                    state.Rng, state.Variant, state.Dealer.Next(), state.MatchNumber + 1, roundNumber: 1, TeamScores.Zero, state.Sequence, events);
 
             default:
                 return StartRound(
-                    state.Rng, state.Dealer.Next(), state.MatchNumber, state.RoundNumber + 1, score, state.Sequence, events);
+                    state.Rng, state.Variant, state.Dealer.Next(), state.MatchNumber, state.RoundNumber + 1, score, state.Sequence, events);
         }
     }
 

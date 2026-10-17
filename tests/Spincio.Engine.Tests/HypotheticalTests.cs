@@ -12,10 +12,33 @@ public class HypotheticalTests
 
     /// <summary>With the true hidden cards, the hypothetical state plays out exactly like the real one.</summary>
     [Property(MaxTest = 40)]
-    public void With_the_true_guess_the_future_is_the_real_future(ulong seed)
+    public void With_the_true_guess_the_future_is_the_real_future(ulong seed) => TrueGuessReplaysTheRound(seed, GameVariant.Spincio);
+
+    /// <summary>The same with two decks, where a hypothetical state must hold every card twice (SP1).</summary>
+    [Property(MaxTest = 20)]
+    public void Spincione_with_the_true_guess_the_future_is_the_real_future(ulong seed) =>
+        TrueGuessReplaysTheRound(seed, GameVariant.Spincione);
+
+    [Fact]
+    public void Spincione_rejects_a_guess_with_a_card_three_times()
+    {
+        var state = SpincioEngine.NewMatch(3, variant: GameVariant.Spincione).State;
+        var view = SpincioEngine.ViewFor(state, state.ToPlay);
+        var other = (view.Seat.Index + 1) % 4;
+        var deckCard = state.Deck[0];
+        var third = TrueGuess(state) with
+        {
+            Hands = state.Hands.SetItem(other, state.Hands[other].SetItem(0, deckCard)),
+        };
+
+        Should.Throw<ArgumentException>(() => SpincioEngine.Hypothetical(view, third, 1));
+        SpincioEngine.Hypothetical(view, TrueGuess(state), 1).Variant.ShouldBe(GameVariant.Spincione);
+    }
+
+    private static void TrueGuessReplaysTheRound(ulong seed, GameVariant variant)
     {
         var chooser = new Pcg32(seed, 11);
-        var state = SpincioEngine.NewMatch(seed).State;
+        var state = SpincioEngine.NewMatch(seed, variant: variant).State;
         int stop = chooser.NextInt(30);
         for (int i = 0; i < stop; i++)
         {

@@ -45,7 +45,11 @@ public sealed record GameUpdate(int Sequence, PlayerView View, IReadOnlyList<Gam
 }
 
 /// <summary>End of match: everything needed to verify the commitment and replay the whole match.</summary>
-public sealed record MatchReveal(ulong Seed, string Salt, IReadOnlyList<string> Commands);
+public sealed record MatchReveal(ulong Seed, string Salt, IReadOnlyList<string> Commands)
+{
+    /// <summary>The game mode the match was played in (SPEC §1.7), needed to replay it.</summary>
+    public GameVariant Variant { get; init; }
+}
 
 /// <summary>Server → client calls.</summary>
 public interface IGameClient

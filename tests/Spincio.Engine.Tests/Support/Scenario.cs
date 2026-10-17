@@ -5,7 +5,7 @@ namespace Spincio.Engine.Tests.Support;
 
 /// <summary>
 /// Builds an arbitrary mid-round <see cref="MatchState"/>. Cards not placed explicitly go to
-/// <see cref="Leftovers"/> (the deck by default) so the 40 cards are always conserved.
+/// <see cref="Leftovers"/> (the deck by default) so the whole deck (40 cards, 80 in the Spincione) is always conserved.
 /// </summary>
 internal sealed class Scenario
 {
@@ -20,6 +20,8 @@ internal sealed class Scenario
         PileA,
         PileB,
     }
+
+    public GameVariant Variant { get; set; }
 
     public Seat ToPlay { get; set; } = new(0);
 
@@ -67,8 +69,8 @@ internal sealed class Scenario
     /// <summary>Last play of the round: deck empty, only <see cref="ToPlay"/> holds one card.</summary>
     public Scenario LastPlay(LeftoverTarget leftovers)
     {
-        PlaysInRound = MatchState.PlaysPerRound - 1;
-        DealNumber = 3;
+        PlaysInRound = Variant.PlaysPerRound() - 1;
+        DealNumber = Variant == GameVariant.Spincione ? 6 : 3;
         _deck = [];
         Leftovers = leftovers;
         return this;
@@ -77,12 +79,16 @@ internal sealed class Scenario
     public MatchState Build()
     {
         var placed = _hands.SelectMany(h => h).Concat(_table).Concat(_piles.SelectMany(p => p)).Concat(_deck ?? []).ToList();
-        if (placed.Count != placed.Distinct().Count())
+        var remaining = Variant.Deck().ToList();
+        foreach (var card in placed)
         {
-            throw new InvalidOperationException("A card was placed twice.");
+            if (!remaining.Remove(card))
+            {
+                throw new InvalidOperationException($"{card} was placed more often than the deck holds it.");
+            }
         }
 
-        var rest = Card.FullDeck.Except(placed).ToImmutableArray();
+        var rest = remaining.ToImmutableArray();
         var piles = _piles.ToArray();
         var deck = _deck ?? [];
         switch (Leftovers)
@@ -100,6 +106,7 @@ internal sealed class Scenario
 
         return new MatchState
         {
+            Variant = Variant,
             Rng = Pcg32.FromSeed(12345),
             Phase = MatchPhase.AwaitingPlay,
             MatchNumber = MatchNumber,

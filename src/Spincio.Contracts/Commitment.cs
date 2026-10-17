@@ -30,7 +30,7 @@ public static class Commitment
             return false;
         }
 
-        var state = SpincioEngine.NewMatch(reveal.Seed).State;
+        var state = SpincioEngine.NewMatch(reveal.Seed, variant: reveal.Variant).State;
         foreach (var text in reveal.Commands)
         {
             if (!CommandCodec.TryDecode(text, out var command))

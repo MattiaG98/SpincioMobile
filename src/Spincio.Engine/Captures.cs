@@ -49,7 +49,8 @@ public static class Captures
 
         int target = played.Value;
 
-        var equal = table.Where(t => t.Value == target).Order().Select(t => new CaptureOption([t])).ToImmutableArray();
+        // Two identical cards (Spincione, SP1) are one choice, not two.
+        var equal = table.Where(t => t.Value == target).Distinct().Order().Select(t => new CaptureOption([t])).ToImmutableArray();
         if (!equal.IsEmpty)
         {
             return equal;
@@ -67,6 +68,11 @@ public static class Captures
     {
         for (int i = start; i < sorted.Length; i++)
         {
+            if (i > start && sorted[i] == sorted[i - 1])
+            {
+                continue; // an identical card in the same position would repeat the same set (SP1)
+            }
+
             int next = sum + sorted[i].Value;
             if (next > target)
             {

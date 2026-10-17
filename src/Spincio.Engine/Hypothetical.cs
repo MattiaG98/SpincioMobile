@@ -23,7 +23,7 @@ public static partial class SpincioEngine
     /// The result agrees with everything the viewer knows (hand, table, hand sizes, deck size, score,
     /// declarations); only the hidden parts come from the guess. It never exposes the real state (ADR 0008).
     /// </summary>
-    /// <exception cref="ArgumentException">The guess contradicts the view or does not account for all 40 cards.</exception>
+    /// <exception cref="ArgumentException">The guess contradicts the view or does not account for the whole deck.</exception>
     public static MatchState Hypothetical(PlayerView view, HiddenGuess guess, ulong seed)
     {
         ArgumentNullException.ThrowIfNull(view);
@@ -58,13 +58,17 @@ public static partial class SpincioEngine
         }
 
         var all = guess.Hands.SelectMany(h => h).Concat(view.Table).Concat(guess.Deck).Concat(guess.Piles.SelectMany(p => p)).ToList();
-        if (all.Count != Card.FullDeck.Count || all.Distinct().Count() != Card.FullDeck.Count)
+        int copies = view.Variant.DeckCopies();
+        var counts = all.GroupBy(c => c).ToList();
+        if (all.Count != view.Variant.CardCount() || counts.Count != Card.FullDeck.Count || counts.Exists(g => g.Count() != copies))
         {
-            throw new ArgumentException("The guess must account for each of the 40 cards exactly once.", nameof(guess));
+            throw new ArgumentException($"The guess must account for each card exactly {copies} time(s).", nameof(guess));
         }
 
+        int dealtNow = view.Variant.HandSize(view.DealNumber);
         return new MatchState
         {
+            Variant = view.Variant,
             Rng = Pcg32.FromSeed(seed),
             Phase = MatchPhase.AwaitingPlay,
             MatchNumber = view.MatchNumber,
@@ -82,8 +86,8 @@ public static partial class SpincioEngine
             Score = view.Score,
             Ledger = RoundLedger.Empty,
 
-            // Every seat starts a deal with 3 cards, so fewer means it has already played in this deal.
-            PlayedThisDeal = [.. view.HandCounts.Select(n => n < MatchState.CardsPerHand)],
+            // Every seat starts a deal with the same number of cards, so fewer means it has already played in this deal.
+            PlayedThisDeal = [.. view.HandCounts.Select(n => n < dealtNow)],
             Declarations = view.Declarations,
             Winner = null,
             Sequence = 0,
