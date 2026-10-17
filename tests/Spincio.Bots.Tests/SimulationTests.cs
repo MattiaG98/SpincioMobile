@@ -33,6 +33,24 @@ public class SimulationTests
         MatchRunner.Play(seed, [l0, l1, l0, l1]).Commands.ShouldBeGreaterThan(0);
     }
 
+    /// <summary>Spincione (SPEC §1.7): L1 and L2 play whole two-deck matches legally, and L1 still beats random play.</summary>
+    [Property(MaxTest = 10)]
+    public void Spincione_bots_only_play_legal_commands_and_matches_end(ulong seed)
+    {
+        IBot l0 = new RandomBot(), l1 = new GreedyBot(), l2 = new PimcBot(PimcOptions.Default with { Worlds = 2 });
+
+        MatchRunner.Play(seed, [l1, l0, l2, l0], variant: GameVariant.Spincione).Commands.ShouldBeGreaterThan(0);
+        MatchRunner.Play(seed, [l2, l1, l2, l1], variant: GameVariant.Spincione).Commands.ShouldBeGreaterThan(0);
+    }
+
+    [Fact]
+    public void Spincione_L1_beats_L0()
+    {
+        var result = Tournament.Run(new GreedyBot(), new RandomBot(), matches: 200, seed: 2026, GameVariant.Spincione);
+
+        result.WinRateX.ShouldBeGreaterThanOrEqualTo(0.80, result.ToString());
+    }
+
     [Fact]
     public void Same_seed_same_bot_match()
     {

@@ -1,9 +1,10 @@
 using System.Diagnostics;
 using System.Globalization;
 using Spincio.Bots;
+using Spincio.Engine;
 using Spincio.Simulator;
 
-// Usage: Spincio.Simulator [--x Greedy] [--y Random] [--matches 1000] [--seed 1] [--worlds 16] [--yworlds N]
+// Usage: Spincio.Simulator [--x Greedy] [--y Random] [--matches 1000] [--seed 1] [--worlds 16] [--yworlds N] [--variant Spincione]
 //        Spincio.Simulator --timing Pimc [--worlds 16]   (average decision time)
 var options = args.Chunk(2).Where(p => p.Length == 2).ToDictionary(p => p[0].TrimStart('-'), p => p[1], StringComparer.OrdinalIgnoreCase);
 
@@ -13,10 +14,12 @@ var pimc = PimcOptions.Default with { Worlds = worlds };
 var pimcY = options.TryGetValue("yworlds", out var yWorlds) ? pimc with { Worlds = int.Parse(yWorlds, CultureInfo.InvariantCulture) } : pimc;
 ulong seed = ulong.Parse(options.GetValueOrDefault("seed", "1"), CultureInfo.InvariantCulture);
 
+var variant = Enum.Parse<GameVariant>(options.GetValueOrDefault("variant", nameof(GameVariant.Spincio)), ignoreCase: true);
+
 if (options.TryGetValue("timing", out var timed))
 {
     var bot = BotFactory.Create(Enum.Parse<BotLevel>(timed, ignoreCase: true), pimc);
-    var timing = DecisionTiming.Measure(bot, seed, matches: 3);
+    var timing = DecisionTiming.Measure(bot, seed, matches: 3, variant);
     Console.WriteLine(timing);
     return;
 }
@@ -26,8 +29,8 @@ var y = Enum.Parse<BotLevel>(options.GetValueOrDefault("y", nameof(BotLevel.Rand
 int matches = int.Parse(options.GetValueOrDefault("matches", "1000"), CultureInfo.InvariantCulture);
 
 var stopwatch = Stopwatch.StartNew();
-var result = Tournament.Run(BotFactory.Create(x, pimc), BotFactory.Create(y, pimcY), matches, seed);
+var result = Tournament.Run(BotFactory.Create(x, pimc), BotFactory.Create(y, pimcY), matches, seed, variant);
 stopwatch.Stop();
 
 Console.WriteLine(result);
-Console.WriteLine(string.Create(CultureInfo.InvariantCulture, $"seed {seed}, worlds {worlds}/{pimcY.Worlds}, {stopwatch.Elapsed.TotalSeconds:F1} s"));
+Console.WriteLine(string.Create(CultureInfo.InvariantCulture, $"{variant}, seed {seed}, worlds {worlds}/{pimcY.Worlds}, {stopwatch.Elapsed.TotalSeconds:F1} s"));

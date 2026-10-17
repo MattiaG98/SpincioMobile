@@ -58,4 +58,25 @@ public class BotMemoryTests
 
         memory.Seen.ShouldBeEmpty();
     }
+
+    /// <summary>Spincione (SP1): every card exists twice, and a card taken from the table is not counted again.</summary>
+    [Fact]
+    public void Counts_both_copies_in_the_spincione()
+    {
+        var memory = new BotMemory(new Seat(0));
+
+        memory.Observe(new RoundStarted(0, 1, new Seat(3)) { Variant = GameVariant.Spincione });
+        memory.Observe(new HandDealt(new Seat(0), Many("7D,7D,2C,3C")));
+        memory.Observe(new DealStarted(1, Many("5D,4C,6C,KB"), 60));
+        memory.Observe(new CardPlayed(new Seat(1), C("5S"), Many("5D"), IsSweep: false));
+
+        memory.Variant.ShouldBe(GameVariant.Spincione);
+        memory.Seen.Count.ShouldBe(9); // 4 in hand, 4 on the table, the 5S played; the 5D was already seen
+        memory.UnseenCount.ShouldBe(71);
+        memory.UnseenOfValue(7).ShouldBe(6);
+        memory.UnseenOfValue(5).ShouldBe(6);
+        memory.Unseen().Count(c => c == C("7D")).ShouldBe(0);
+        memory.Unseen().Count(c => c == C("5D")).ShouldBe(1);
+        memory.Unseen().Count().ShouldBe(71);
+    }
 }

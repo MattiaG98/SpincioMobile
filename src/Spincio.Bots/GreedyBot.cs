@@ -29,6 +29,9 @@ public sealed record GreedyWeights
     /// <summary>Fraction of a dropped card's value we consider given away.</summary>
     public double DropCost { get; init; } = 0.3;
 
+    /// <summary>Spincione: a capture all of one suit is a point (SP3), worth the same as a sweep.</summary>
+    public double SameSuit { get; init; } = 10.0;
+
     /// <summary>
     /// Cost of dropping an ace, which happens only on an empty table (with cards there it always captures, P8):
     /// kept, it can take the whole table later. Owner's remark (1.7.2): "non ha senso buttarlo se il tavolo è vuoto".
@@ -81,7 +84,7 @@ public sealed class GreedyBot(GreedyWeights? weights = null) : IBot
         ArgumentNullException.ThrowIfNull(view);
         ArgumentNullException.ThrowIfNull(memory);
 
-        bool lastPlay = view.PlaysInRound == MatchState.PlaysPerRound - 1;
+        bool lastPlay = view.PlaysInRound == view.Variant.PlaysPerRound() - 1;
         double score;
         ImmutableArray<Card> tableAfter;
 
@@ -92,6 +95,11 @@ public sealed class GreedyBot(GreedyWeights? weights = null) : IBot
             if (tableAfter.IsEmpty && !lastPlay)
             {
                 score += _w.Sweep;
+            }
+
+            if (view.Variant.HasSameSuitBonus() && capture.Cards.All(c => c.Suit == play.Card.Suit))
+            {
+                score += _w.SameSuit;
             }
         }
         else
