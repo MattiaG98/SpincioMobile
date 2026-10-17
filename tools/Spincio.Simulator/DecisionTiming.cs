@@ -14,14 +14,14 @@ public sealed record TimingResult(string Bot, int Decisions, double AverageMs, d
 /// <summary>Measures how long a bot takes per decision when it plays all four seats.</summary>
 public static class DecisionTiming
 {
-    public static TimingResult Measure(IBot bot, ulong seed, int matches)
+    public static TimingResult Measure(IBot bot, ulong seed, int matches, GameVariant variant = GameVariant.Spincio)
     {
         ArgumentNullException.ThrowIfNull(bot);
         var times = new List<double>();
         var timed = new TimedBot(bot, times);
         for (int i = 0; i < matches; i++)
         {
-            MatchRunner.Play(seed + (ulong)i, [timed, timed, timed, timed]);
+            MatchRunner.Play(seed + (ulong)i, [timed, timed, timed, timed], variant: variant);
         }
 
         return new TimingResult(bot.Name, times.Count, times.Average(), times.Max());

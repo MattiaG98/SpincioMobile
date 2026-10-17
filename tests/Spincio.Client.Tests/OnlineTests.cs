@@ -21,6 +21,7 @@ public class OnlineTests : BunitContext
         Services.AddSingleton<IOnlineSeatStore, InMemoryOnlineSeatStore>();
         Services.AddSingleton<OnlineService>();
         Services.AddSingleton<ProfileService>();
+        Services.AddSingleton<SettingsService>();
         Services.AddSingleton<ILobby>(_lobby);
         Services.AddSingleton(new GameHost(new LocalGameSession(new InMemoryGameStore(), delay: _ => Task.CompletedTask)));
     }
@@ -212,5 +213,19 @@ public class OnlineTests : BunitContext
 
         _lobby.Stops.ShouldBe(1);
         page.Find("input[inputmode='url']").ShouldNotBeNull();
+    }
+
+    /// <summary>SPEC §1.7: the mode of the room you create is chosen on the online page and remembered.</summary>
+    [Fact]
+    public void The_mode_of_the_room_is_chosen_on_the_online_page()
+    {
+        JSInterop.Setup<string?>("localStorage.getItem", "spincio.server").SetResult(Server);
+        var page = Render<Online>();
+        page.Find(".mode-choice [aria-checked='true']").TextContent.ShouldBe("Spincio");
+
+        page.FindAll(".mode-choice button").Single(b => b.TextContent == "Spincione").Click();
+
+        page.Find(".mode-choice [aria-checked='true']").TextContent.ShouldBe("Spincione");
+        Services.GetRequiredService<SettingsService>().Current.Variant.ShouldBe(Spincio.Engine.GameVariant.Spincione);
     }
 }

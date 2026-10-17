@@ -24,7 +24,7 @@ public sealed record TournamentResult(
 /// <summary>Bot X as one team against bot Y; sides alternate every match to cancel seat bias.</summary>
 public static class Tournament
 {
-    public static TournamentResult Run(IBot x, IBot y, int matches, ulong seed)
+    public static TournamentResult Run(IBot x, IBot y, int matches, ulong seed, GameVariant variant = GameVariant.Spincio)
     {
         ArgumentNullException.ThrowIfNull(x);
         ArgumentNullException.ThrowIfNull(y);
@@ -36,7 +36,7 @@ public static class Tournament
         {
             bool xIsTeamA = i % 2 == 0;
             IBot[] seats = xIsTeamA ? [x, y, x, y] : [y, x, y, x];
-            results[i] = MatchRunner.Play(seed + (ulong)i, seats);
+            results[i] = MatchRunner.Play(seed + (ulong)i, seats, variant: variant);
         });
 
         int winsX = 0, allCoins = 0, rounds = 0, tiebreaks = 0;

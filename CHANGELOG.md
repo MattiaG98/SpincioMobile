@@ -4,6 +4,21 @@ Versioni dell'app Spincio ([versionamento semantico](https://semver.org/lang/it/
 `Directory.Build.props` (`<Version>`) e si vede nel menu iniziale e nel menu di pausa. Le regole hanno una versione propria
 (`docs/SPEC.md`, "regole v1.4" nel menu di pausa).
 
+## 1.9.0 — 17/10/2026
+- **Nuova modalità Spincione**, con le regole dettate dal proprietario (regolamento v1.5, §1.7). Si sceglie nel menu
+  iniziale (**Spincio / Spincione**) e nella pagina Online per la stanza che crei; gli inviti dicono la modalità.
+  - Due mazzi: 80 carte, ogni carta c'è due volte.
+  - Prima mano da **4 carte**, poi 3: 6 distribuzioni per smazzata.
+  - Accusi nuovi **colore** e **scala** (la scala gira: fante-cavallo-re-asso, re-asso-2), 2 punti ciascuno, che si
+    sommano agli altri.
+  - Gli accusi della **prima mano valgono doppio**: somma fino a 10 = 4, con tre uguali = 6, quattro uguali = 14.
+  - **Presa dello stesso seme**: la carta giocata e tutte quelle prese dello stesso seme = +1 punto. Si somma allo
+    spazzino e vale anche all'ultima giocata.
+  - Settebello e rebello **1 punto per copia**; nessuna vittoria immediata con i denari.
+  - Contro la CPU e online; le partite salvate ricordano la modalità; la pagina Regole ha la sezione Spincione.
+- Lo Spincio resta identico: un test confronta 20 partite intere con quelle della 1.8.1. Le partite salvate con la
+  1.8.1 si riprendono.
+
 ## 1.8.1 — 15/10/2026
 - **L'online funziona subito, senza link** (ADR 0016): l'app usa il server fisso di Spincio su Render
   (`https://spincio-server.onrender.com`). Basta aprire "Gioca online con gli amici" e scrivere il proprio nome: chi ha

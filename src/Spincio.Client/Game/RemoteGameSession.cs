@@ -173,7 +173,7 @@ public sealed class RemoteGameSession : IGameSession, IAsyncDisposable
     {
         get
         {
-            var room = Room is null ? "Online" : $"Stanza {Room.Code}";
+            var room = Room is null ? "Online" : $"{GameText.ModeName(Room.Variant)} · stanza {Room.Code}";
             var fairness = Verified switch
             {
                 true => " · partita verificata ✓",
@@ -208,10 +208,13 @@ public sealed class RemoteGameSession : IGameSession, IAsyncDisposable
         };
     }
 
-    public async Task<JoinResult> CreateRoomAsync(string playerName)
+    public async Task<JoinResult> CreateRoomAsync(string playerName, GameVariant variant = GameVariant.Spincio)
     {
         await ConnectAsync();
-        return await AfterJoinAsync(await _hub.InvokeAsync<JoinResult>(nameof(IGameHub.CreateRoom), playerName));
+        var joined = variant == GameVariant.Spincio
+            ? await _hub.InvokeAsync<JoinResult>(nameof(IGameHub.CreateRoom), playerName) // any server version
+            : await _hub.InvokeAsync<JoinResult>(nameof(IGameHub.CreateRoomFor), playerName, variant);
+        return await AfterJoinAsync(joined);
     }
 
     public async Task<JoinResult> JoinRoomAsync(string roomCode, string playerName)

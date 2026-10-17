@@ -45,8 +45,10 @@ public sealed partial class GameRoom : IAsyncDisposable
         IRoomNotifier notifier,
         ILogger logger,
         Func<ulong>? newSeed = null,
-        CheckpointProtector? checkpoints = null)
+        CheckpointProtector? checkpoints = null,
+        GameVariant variant = GameVariant.Spincio)
     {
+        Variant = variant;
         Code = code;
         _options = options;
         _time = time;
@@ -60,6 +62,9 @@ public sealed partial class GameRoom : IAsyncDisposable
     }
 
     public string Code { get; }
+
+    /// <summary>The game mode of the room (SPEC §1.7).</summary>
+    public GameVariant Variant { get; private set; }
 
     /// <summary>SHA-256(seed ‖ salt), public from the start of the match.</summary>
     public string? Commitment { get; private set; }
@@ -92,7 +97,10 @@ public sealed partial class GameRoom : IAsyncDisposable
         int index = SeatOf(token);
         SeatSnapshot? snapshot = index < 0 || _state is not null
             ? null
-            : new SeatSnapshot(index, _seats[index].Name, [.. Enumerable.Range(0, 4).Where(i => _seats[i].Token is null && !_seats[i].IsBot)]);
+            : new SeatSnapshot(index, _seats[index].Name, [.. Enumerable.Range(0, 4).Where(i => _seats[i].Token is null && !_seats[i].IsBot)])
+            {
+                Variant = Variant,
+            };
         return Task.FromResult(snapshot);
     });
 
@@ -210,14 +218,14 @@ public sealed partial class GameRoom : IAsyncDisposable
         _seed = _newSeed();
         _salt = Convert.ToHexStringLower(RandomNumberGenerator.GetBytes(16));
         Commitment = Contracts.Commitment.Of(_seed, _salt);
-        _memories = [.. Seat.All.Select(s => new BotMemory(s))];
+        _memories = [.. Seat.All.Select(s => new BotMemory(s, Variant))];
         _rngs = [.. Seat.All.Select(s => new Pcg32(_seed, 100UL + (ulong)s.Index))];
         _log.Clear();
 
         // The commitment goes out before anyone sees a card (it must not depend on the deal); then the deal, then
         // the room again, now started.
         await BroadcastRoomAsync();
-        await AcceptAsync(SpincioEngine.NewMatch(_seed), command: null);
+        await AcceptAsync(SpincioEngine.NewMatch(_seed, variant: Variant), command: null);
         await BroadcastRoomAsync();
         return CommandResult.Success;
     }
@@ -403,17 +411,20 @@ public sealed partial class GameRoom : IAsyncDisposable
             Code,
             [.. _seats.Select((s, i) => new SeatInfo(i, s.Name, s.PlayedByCpu, s.IsBot || s.Connected))],
             _state is not null,
-            Commitment);
+            Commitment)
+        {
+            Variant = Variant,
+        };
         foreach (var connection in Connections())
         {
             await _notifier.RoomChanged(connection, info);
         }
     }
 
-    private MatchReveal Reveal() => new(_seed, _salt, [.. _log]);
+    private MatchReveal Reveal() => new(_seed, _salt, [.. _log]) { Variant = Variant };
 
     private RoomCheckpoint CheckpointOf() =>
-        new(Code, _seed, _salt, [.. _seats.Select(s => new CheckpointSeat(s.Name, s.Token, s.IsBot))], [.. _log]);
+        new(Code, _seed, _salt, [.. _seats.Select(s => new CheckpointSeat(s.Name, s.Token, s.IsBot))], [.. _log], Variant);
 
     private bool RestoreCore(RoomCheckpoint checkpoint)
     {
@@ -422,9 +433,9 @@ public sealed partial class GameRoom : IAsyncDisposable
             return false;
         }
 
-        var transition = SpincioEngine.NewMatch(checkpoint.Seed);
+        var transition = SpincioEngine.NewMatch(checkpoint.Seed, variant: checkpoint.Variant);
         var state = transition.State;
-        var memories = Seat.All.Select(s => new BotMemory(s)).ToArray();
+        var memories = Seat.All.Select(s => new BotMemory(s, checkpoint.Variant)).ToArray();
         Observe(memories, transition);
         foreach (string text in checkpoint.Log)
         {
@@ -446,6 +457,7 @@ public sealed partial class GameRoom : IAsyncDisposable
             slot.ConnectionId = null;
         }
 
+        Variant = checkpoint.Variant;
         _seed = checkpoint.Seed;
         _salt = checkpoint.Salt;
         Commitment = Contracts.Commitment.Of(_seed, _salt);
@@ -589,6 +601,8 @@ public sealed partial class GameRoom : IAsyncDisposable
 /// <summary>Who is inviting (seat and name) and which seats are still free, for an invitation (ADR 0015).</summary>
 public sealed record SeatSnapshot(int Seat, string Name, IReadOnlyList<int> FreeSeats)
 {
+    public GameVariant Variant { get; init; }
+
     public bool CanJoinWith => FreeSeats.Any(s => s != Seat && s % 2 == Seat % 2);
 
     public bool CanJoinAgainst => FreeSeats.Any(s => s % 2 != Seat % 2);

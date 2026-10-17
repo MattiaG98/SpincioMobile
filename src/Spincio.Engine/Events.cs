@@ -17,7 +17,11 @@ public abstract record GameEvent
     public virtual Audience Audience => Audience.All;
 }
 
-public sealed record RoundStarted(int MatchNumber, int RoundNumber, Seat Dealer) : GameEvent;
+public sealed record RoundStarted(int MatchNumber, int RoundNumber, Seat Dealer) : GameEvent
+{
+    /// <summary>The game mode, so that whoever follows the events knows which deck is in play (SPEC §1.7).</summary>
+    public GameVariant Variant { get; init; }
+}
 
 /// <summary>S5: the initial table had two or more aces; everything is reshuffled by the same dealer.</summary>
 public sealed record DeckReshuffled(ImmutableArray<Card> RejectedTable) : GameEvent;
@@ -35,7 +39,14 @@ public sealed record DealStarted(int DealNumber, ImmutableArray<Card> Table, int
 public sealed record Declared(Seat Seat, DeclarationKind Kind, int Points) : GameEvent;
 
 /// <summary>A card was played. Empty <paramref name="Captured"/> means a drop.</summary>
-public sealed record CardPlayed(Seat Seat, Card Card, ImmutableArray<Card> Captured, bool IsSweep) : GameEvent;
+public sealed record CardPlayed(Seat Seat, Card Card, ImmutableArray<Card> Captured, bool IsSweep) : GameEvent
+{
+    /// <summary>SP3 (Spincione): the played card and every captured card share a suit, worth 1 point.</summary>
+    public bool IsSameSuit { get; init; }
+
+    /// <summary>Points the play scored live: the sweep and the same-suit capture.</summary>
+    public int Points => (IsSweep ? 1 : 0) + (IsSameSuit ? 1 : 0);
+}
 
 /// <summary>P7: cards left on the table at the end of the round; <paramref name="Team"/> null = nobody.</summary>
 public sealed record TableAwarded(Team? Team, ImmutableArray<Card> Cards) : GameEvent;

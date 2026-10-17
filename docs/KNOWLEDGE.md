@@ -111,6 +111,25 @@ Tutte queste regole sono **verificate da test** in `tests/Spincio.Architecture.T
 - Chiave: Render `generateValue` (render.yaml); codespace `~/.spincio-checkpoint-key` (start-server.sh); senza chiave,
   una casuale valida finché il processo resta acceso.
 
+### Spincione (1.9.0, ADR 0018)
+- `GameVariant` (Engine, `Variant.cs`) fa parte della partita: `NewMatch(seed, dealer, variant)`; `MatchState.Variant`,
+  `PlayerView.Variant`, `RoundStarted.Variant`. `VariantRules` dà il mazzo (40 o 80 carte), le carte per mano (4 alla
+  prima distribuzione dello Spincione), le giocate per smazzata (36 / 76) e gli interruttori (stesso seme, denari).
+- Due carte identiche esistono davvero:
+  - le prese le deduplicano (`Captures`, anche le somme);
+  - le mosse legali usano `hand.Distinct()`;
+  - `Hypothetical` controlla le copie;
+  - `BotMemory` conta le copie e tiene la tavola, per non contare due volte una carta vista in tavola e poi presa;
+  - nell'interfaccia le chiavi sono `GameText.Keyed` (`7D`, `7D#2`) e `moves.js` sceglie elementi distinti.
+- Accusi dello Spincione: `Declarations.Evaluate(hand, variant, dealNumber)` generalizza A1 alla misura della mano
+  (tutte uguali = 7 più la somma bassa; tutte meno una uguali con somma bassa = 3; somma bassa = 2; soglia 9 con 3
+  carte e 10 con 4), più colore e scala (2). In prima mano raddoppia e aggiunge il flag `DoubledFirstHand`, che
+  l'interfaccia mostra come "· prima mano ×2".
+- Presa dello stesso seme: `CardPlayed.IsSameSuit`, `CardPlayed.Points` (spazzino + seme), `RoundLedger.SameSuit`.
+- Online: `CreateRoomFor(name, variant)` (`CreateRoom` = Spincio, per i server vecchi), `RoomInfo.Variant`,
+  `Invitation.Variant`, `MatchReveal.Variant` (serve a rigiocare per la verifica), `RoomCheckpoint.Variant`.
+- Salvataggi: `SavedGame.Variant` (manca = Spincio); `RulesVersion` 1.5, si riprendono anche quelli 1.4.
+
 ### Una mossa, online
 Client: `RemoteGameSession.PlayAsync` → hub `Play(token, expectedSequence, "P0:7D>3S+4B")` → `GameRoom` (coda seriale) valida token, sequenza e regole → `AcceptAsync` → a ogni posto `GameUpdate(sequence, ViewFor(seat), EventsFor(seat))` → timer: pausa CPU oppure timeout di turno (30 s) → a fine partita `MatchReveal(seed, salt, log)` e il client verifica con `Commitment.Verify`.
 
@@ -179,6 +198,8 @@ Mosse legali dalla vista → se c'è un accuso lo dichiara → per N mondi: dist
 | Test end-to-end del riavvio rosso una volta su sette, solo con tutta la suite (1.8.0) | Il test leggeva il codice da `session.Room` appena dopo `CreateRoomAsync`, ma `RoomChanged` è un messaggio a parte e può arrivare dopo la risposta | Nei test usare il `JoinResult` restituito (`RoomCode`, `Seat`, `Token`); lo stato che arriva per messaggio va aspettato con `Eventually` |
 | Compilazione bloccata da un giorno all'altro, senza modifiche al codice (NU1903, 15/10) | Il controllo dei pacchetti di NuGet trova una vulnerabilità nuova (SignalR 10.0.12), e gli avvisi sono errori | Aggiornare la versione in `Directory.Packages.props` (tutti i pacchetti ASP.NET alla stessa patch); un CI rosso su `main` senza modifiche fa sospettare questo |
 | Server pubblicato avviato da un'altra cartella: nessun client si collega | `appsettings.json` (con `AllowedOrigins`) si legge dalla cartella di lavoro, non da quella della DLL: senza, il CORS rifiuta tutti | Avviare `dotnet Spincio.Server.dll` dalla sua cartella (`restart.mjs` usa `cwd`); nell'immagine Docker `WORKDIR /app` lo garantisce |
+| Con due mazzi le mosse legali si ripetevano (1.9.0, trovato da un property test) | Due carte identiche in mano davano due volte le stesse mosse; due carte identiche in tavola davano due volte la stessa presa per somma | `hand.Distinct()` e, nelle somme, si salta una carta uguale alla precedente nella stessa posizione. Il property test controlla che le mosse legali siano tutte diverse |
+| Dubbio: "lo Spincio è cambiato?" dopo un refactoring del motore (1.9.0) | Le modifiche toccavano mazzo, distribuzione e punteggio di tutte le modalità | Impronta (SHA-256) di 20 partite intere registrata con il motore di prima (`git worktree` di `main`) e confrontata in un test (AT-50) |
 | Controllo nel browser che segnalava carte "rimaste in volo" | Lo script misurava durante l'animazione della mia carta, quando il resto della mano sembrava ancora giocabile | Mano disattivata durante il volo (anche un difetto per l'utente); i controlli aspettano una carta `playable` visibile e chiudono il riepilogo "Continua" |
 
 ## 6. Strategia di test

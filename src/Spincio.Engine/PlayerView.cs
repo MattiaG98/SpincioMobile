@@ -24,6 +24,9 @@ public sealed record PlayerView(
     DeclarationValue AvailableDeclaration,
     Team? Winner)
 {
+    /// <summary>The game mode (SPEC §1.7).</summary>
+    public GameVariant Variant { get; init; }
+
     public bool IsMyTurn => Phase == MatchPhase.AwaitingPlay && ToPlay == Seat;
 
     public bool CanDeclare => AvailableDeclaration.Points > 0;

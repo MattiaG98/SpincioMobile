@@ -84,13 +84,26 @@
                 <li><strong>Spincio</strong>: asso, 2 e 3 di denari in fila (e oltre: 4, 5 … fino al re). Vale quante carte è lunga: A-2-3 = 3 punti, A–5 = 5.</li>
             </ul>
             <div class="rule-cards">@Card("KD", "rebello")@Card("7D", "settebello")</div>
-            <p class="rule-highlight">Chi prende <strong>tutti i 10 denari</strong> vince subito la partita, qualunque sia il punteggio.</p>
+            <p class="rule-highlight">Chi prende <strong>tutti i 10 denari</strong> vince subito la partita, qualunque sia il punteggio (non nello Spincione).</p>
             <p>Le carte prese non si vedono, nemmeno le tue. Il punteggio invece è sempre visibile.</p>
         </section>
 
         <section>
             <h3>Fine partita</h3>
             <p>Si controlla a fine smazzata: vince chi arriva a <strong>31</strong>; se ci arrivano entrambe, chi ha di più. In caso di pareggio esatto da 31 in su si gioca uno <strong>spareggio</strong>: una nuova partita da 0–0.</p>
+        </section>
+
+        <section>
+            <h3>Spincione</h3>
+            <p>Si sceglie nel menu iniziale. Valgono le regole dello Spincio, con queste differenze:</p>
+            <ul>
+                <li><strong>Due mazzi</strong>: 80 carte, ogni carta c'è due volte.</li>
+                <li>Nella <strong>prima mano</strong> si hanno <strong>4 carte</strong>, poi sempre 3 (6 distribuzioni).</li>
+                <li>Accusi nuovi: <strong>colore</strong> (tutte le carte dello stesso seme) e <strong>scala</strong> (tutte in fila; gira dopo il re: fante-cavallo-re-asso, re-asso-2): <strong>2 punti</strong> ciascuno. Si sommano agli altri.</li>
+                <li>Gli accusi della <strong>prima mano valgono doppio</strong>: somma fino a 10 = 4, con tre carte uguali = 6, quattro carte uguali = 14; colore e scala 4.</li>
+                <li><strong>Presa dello stesso seme</strong>: se la carta giocata e tutte quelle prese hanno lo stesso seme, <strong>+1 punto</strong>. Si somma allo spazzino e vale anche all'ultima giocata.</li>
+                <li>Settebello e rebello valgono <strong>1 punto per copia</strong>. Non si vince subito prendendo tutti i denari.</li>
+            </ul>
         </section>
 
         <button type="button" class="btn btn-gold" @onclick="OnClose">Ho capito</button>

@@ -51,5 +51,17 @@ Per eseguirli: `dotnet test Spincio.slnx --filter "FullyQualifiedName~AT_"`.
 | AT-39 | `AT_39_ace_taking_the_only_ace_on_the_table_is_a_sweep` | `AceTests.cs` |
 | AT-40 | `AT_40_mariana_is_a_jack_taking_a_five_and_a_three` | `CalloutTests.cs` |
 | AT-40 | `AT_40_mariana_scores_nothing_and_a_mariana_sweep_is_still_one_point` | `CalloutTests.cs` |
+| AT-41 | `AT_41_a_round_starts_with_4_cards_each_4_on_the_table_and_60_in_the_deck` | `SpincioneTests.cs` |
+| AT-42 | `AT_42_later_deals_give_3_cards_and_a_round_has_6_deals_and_76_plays` | `SpincioneTests.cs` |
+| AT-43 | `AT_43_a_capture_all_of_one_suit_is_worth_a_point` | `SpincioneTests.cs` |
+| AT-44 | `AT_44_the_same_suit_point_counts_on_the_last_play_and_only_in_the_spincione` | `SpincioneTests.cs` |
+| AT-45 | `AT_45_first_hand_declarations_with_4_cards_are_doubled` | `SpincioneTests.cs` |
+| AT-46 | `AT_46_later_declarations_are_the_spincio_ones_plus_colore_and_scala` | `SpincioneTests.cs` |
+| AT-46 | `AT_46_a_first_hand_declaration_is_made_and_scored_doubled` | `SpincioneTests.cs` |
+| AT-47 | `AT_47_settebello_and_rebello_count_once_per_copy_and_even_splits_score_nothing` | `SpincioneTests.cs` |
+| AT-48 | `AT_48_all_the_coins_do_not_win_at_once_in_the_spincione` | `SpincioneTests.cs` |
+| AT-49 | `AT_49_two_identical_cards_on_the_table_are_one_choice` | `SpincioneTests.cs` |
+| AT-49 | `AT_49_identical_cards_do_not_repeat_sum_captures` | `SpincioneTests.cs` |
+| AT-50 | `AT_50_the_variant_is_part_of_the_match_and_the_spincio_did_not_change` | `SpincioneTests.cs` |
 
-Test aggiuntivi sui casi limite: `C1_…`, `C6_…`, `F7_all_coins_also_wins_a_tiebreak_match`. Invarianti property-based in `PropertyTests.cs`.
+Test aggiuntivi sui casi limite: `C1_…`, `C6_…`, `F7_all_coins_also_wins_a_tiebreak_match`. Invarianti property-based in `PropertyTests.cs`, anche per lo Spincione (80 carte conservate, determinismo, mosse legali, 6 distribuzioni e 76 giocate).

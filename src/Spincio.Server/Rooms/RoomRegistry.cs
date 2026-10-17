@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using System.Security.Cryptography;
 using Microsoft.Extensions.Options;
 using Spincio.Contracts;
+using Spincio.Engine;
 
 namespace Spincio.Server.Rooms;
 
@@ -30,13 +31,13 @@ public sealed class RoomRegistry(
     /// <summary>Rooms with someone connected, and how many people are connected.</summary>
     public (int Rooms, int Players) Activity() => (_byConnection.Values.Distinct().Count(), _byConnection.Count);
 
-    public GameRoom Create()
+    public GameRoom Create(GameVariant variant = GameVariant.Spincio)
     {
         Purge();
         while (true)
         {
             string code = RandomNumberGenerator.GetString(CodeAlphabet, CodeLength);
-            var room = NewRoom(code);
+            var room = NewRoom(code, variant);
             if (_rooms.TryAdd(code, room))
             {
                 return room;
@@ -64,7 +65,7 @@ public sealed class RoomRegistry(
             return null;
         }
 
-        var room = NewRoom(checkpoint.Code);
+        var room = NewRoom(checkpoint.Code, checkpoint.Variant);
         var restoring = room.RestoreAsync(checkpoint); // queued before anyone can reach the room
         if (!_rooms.TryAdd(checkpoint.Code, room))
         {
@@ -115,8 +116,8 @@ public sealed class RoomRegistry(
         }
     }
 
-    private GameRoom NewRoom(string code) =>
-        new(code, options.Value, time, notifier, loggers.CreateLogger<GameRoom>(), SeedSource, _checkpoints);
+    private GameRoom NewRoom(string code, GameVariant variant) =>
+        new(code, options.Value, time, notifier, loggers.CreateLogger<GameRoom>(), SeedSource, _checkpoints, variant);
 
     private void Purge()
     {

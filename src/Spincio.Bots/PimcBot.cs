@@ -120,7 +120,8 @@ public sealed class PimcBot(PimcOptions? options = null, GreedyBot? rolloutPolic
         for (int attempt = 0; attempt < Math.Max(1, _options.SamplingAttempts); attempt++)
         {
             guess = Deal(view, memory, rng.Shuffle(unseen));
-            if (declared.TrueForAll(d => Consistent(d, guess, memory)) && silent.TrueForAll(s => NothingToDeclare(s, guess, memory)))
+            if (declared.TrueForAll(d => Consistent(d, guess, memory, view.Variant))
+                && silent.TrueForAll(s => NothingToDeclare(s, guess, memory, view.Variant, view.DealNumber)))
             {
                 return guess;
             }
@@ -129,13 +130,13 @@ public sealed class PimcBot(PimcOptions? options = null, GreedyBot? rolloutPolic
         return guess!; // best effort: an unconstrained world
     }
 
-    private static bool NothingToDeclare(Seat seat, HiddenGuess guess, BotMemory memory) =>
-        Declarations.Evaluate(memory.PlayedThisDeal(seat).AddRange(guess.Hands[seat.Index])).Points == 0;
+    private static bool NothingToDeclare(Seat seat, HiddenGuess guess, BotMemory memory, GameVariant variant, int dealNumber) =>
+        Declarations.Evaluate(memory.PlayedThisDeal(seat).AddRange(guess.Hands[seat.Index]), variant, dealNumber).Points == 0;
 
-    private static bool Consistent(DeclarationRecord declaration, HiddenGuess guess, BotMemory memory)
+    private static bool Consistent(DeclarationRecord declaration, HiddenGuess guess, BotMemory memory, GameVariant variant)
     {
         var dealtHand = memory.PlayedThisDeal(declaration.Seat).AddRange(guess.Hands[declaration.Seat.Index]);
-        var value = Declarations.Evaluate(dealtHand);
+        var value = Declarations.Evaluate(dealtHand, variant, declaration.DealNumber);
         return value.Kind == declaration.Kind && value.Points == declaration.Points;
     }
 
@@ -212,9 +213,15 @@ public sealed class PimcBot(PimcOptions? options = null, GreedyBot? rolloutPolic
     /// </summary>
     private static BotMemory RolloutMemory(Seat seat, MatchState world, BotMemory real)
     {
-        var memory = new BotMemory(seat);
-        var ownHand = world.HandOf(real.Seat);
-        var publicCards = real.Seen.Where(c => !ownHand.Contains(c)); // everything seen except our private hand
+        var memory = new BotMemory(seat, real.Variant);
+
+        // Everything seen except our private hand (one copy removed per card in hand: there may be two, SP1).
+        var publicCards = real.Seen.ToList();
+        foreach (var card in world.HandOf(real.Seat))
+        {
+            publicCards.Remove(card);
+        }
+
         memory.Observe(new HandDealt(seat, [.. world.HandOf(seat)]));
         memory.Observe(new DealStarted(1, [.. publicCards], world.Deck.Length));
         return memory;

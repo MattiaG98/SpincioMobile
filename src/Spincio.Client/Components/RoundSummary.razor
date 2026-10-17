@@ -23,6 +23,10 @@
                 <tr><td>Spincio</td>@Points(us.SpincioPoints)@Points(them.SpincioPoints)</tr>
                 <tr class="total"><td>Punti di fine smazzata</td><td>@us.Total</td><td>@them.Total</td></tr>
                 <tr class="live"><td>Spazzini (già contati)</td><td>@Scored.Ledger.Sweeps.For(Us)</td><td>@Scored.Ledger.Sweeps.For(themTeam)</td></tr>
+                @if (Scored.Ledger.SameSuit != TeamScores.Zero)
+                {
+                    <tr class="live"><td>Prese dello stesso seme (già contate)</td><td>@Scored.Ledger.SameSuit.For(Us)</td><td>@Scored.Ledger.SameSuit.For(themTeam)</td></tr>
+                }
                 <tr class="live"><td>Accusi (già contati)</td><td>@Scored.Ledger.Declarations.For(Us)</td><td>@Scored.Ledger.Declarations.For(themTeam)</td></tr>
                 <tr class="total"><td>Punteggio partita</td><td>@Scored.MatchScore.For(Us)</td><td>@Scored.MatchScore.For(themTeam)</td></tr>
             </tbody>

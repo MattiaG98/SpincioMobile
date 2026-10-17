@@ -8,10 +8,13 @@ public enum MatchPhase
     MatchOver,
 }
 
-/// <summary>Points scored live during the current round (sweeps P6, declarations A1).</summary>
+/// <summary>Points scored live during the current round (sweeps P6, declarations A1, same-suit captures SP3).</summary>
 public sealed record RoundLedger(TeamScores Sweeps, TeamScores Declarations)
 {
     public static RoundLedger Empty { get; } = new(TeamScores.Zero, TeamScores.Zero);
+
+    /// <summary>SP3, Spincione only: captures all of one suit.</summary>
+    public TeamScores SameSuit { get; init; }
 }
 
 /// <summary>
@@ -20,9 +23,16 @@ public sealed record RoundLedger(TeamScores Sweeps, TeamScores Declarations)
 /// </summary>
 public sealed record MatchState
 {
+    /// <summary>Spincio; the Spincione has more (<see cref="VariantRules.PlaysPerRound"/>).</summary>
     public const int PlaysPerRound = 36;
+
+    /// <summary>Cards a hand from the second deal on (the Spincione's first deal has 4, SP2).</summary>
     public const int CardsPerHand = 3;
+
     public const int InitialTableCards = 4;
+
+    /// <summary>The game mode (SPEC §1.7). Part of the match from its start.</summary>
+    public GameVariant Variant { get; init; }
 
     public required Pcg32 Rng { get; init; }
 
@@ -38,10 +48,10 @@ public sealed record MatchState
 
     public required Seat ToPlay { get; init; }
 
-    /// <summary>1..3 within the round (S4).</summary>
+    /// <summary>1..3 within the round (S4); 1..6 in the Spincione (SP2).</summary>
     public required int DealNumber { get; init; }
 
-    /// <summary>Plays made in the current round, 0..36.</summary>
+    /// <summary>Plays made in the current round, 0..36 (0..76 in the Spincione).</summary>
     public required int PlaysInRound { get; init; }
 
     /// <summary>Indexed by seat.</summary>
@@ -81,7 +91,7 @@ public sealed record MatchState
     public bool HasDeclaredThisDeal(Seat seat) =>
         Declarations.Any(d => d.Seat == seat && d.DealNumber == DealNumber);
 
-    /// <summary>Every card the state holds, wherever it is. Always the 40 cards of the deck.</summary>
+    /// <summary>Every card the state holds, wherever it is. Always the whole deck of the variant (40 or 80 cards).</summary>
     public IEnumerable<Card> AllCards() =>
         Hands.SelectMany(h => h).Concat(Table).Concat(Deck).Concat(Piles.SelectMany(p => p)).Concat(Unclaimed);
 }

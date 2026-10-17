@@ -29,7 +29,11 @@ public sealed record SeatInfo(int Seat, string Name, bool IsBot, bool Connected)
 /// Room state visible to everyone. <see cref="Commitment"/> is SHA-256(seed ‖ salt), published when the match
 /// starts; the seed and salt are revealed at the end so anyone can check the deal was not rigged (ADR 0004).
 /// </summary>
-public sealed record RoomInfo(string Code, IReadOnlyList<SeatInfo> Seats, bool Started, string? Commitment);
+public sealed record RoomInfo(string Code, IReadOnlyList<SeatInfo> Seats, bool Started, string? Commitment)
+{
+    /// <summary>The game mode of the room, chosen by who created it (SPEC §1.7).</summary>
+    public GameVariant Variant { get; init; }
+}
 
 /// <summary>
 /// What one seat receives after every accepted command: its own view and the events addressed to it.
@@ -45,7 +49,11 @@ public sealed record GameUpdate(int Sequence, PlayerView View, IReadOnlyList<Gam
 }
 
 /// <summary>End of match: everything needed to verify the commitment and replay the whole match.</summary>
-public sealed record MatchReveal(ulong Seed, string Salt, IReadOnlyList<string> Commands);
+public sealed record MatchReveal(ulong Seed, string Salt, IReadOnlyList<string> Commands)
+{
+    /// <summary>The game mode the match was played in (SPEC §1.7), needed to replay it.</summary>
+    public GameVariant Variant { get; init; }
+}
 
 /// <summary>Server → client calls.</summary>
 public interface IGameClient
@@ -61,6 +69,9 @@ public interface IGameClient
 public interface IGameHub
 {
     Task<JoinResult> CreateRoom(string playerName);
+
+    /// <summary>Creates a room for a game mode (SPEC §1.7); <see cref="CreateRoom"/> is a Spincio room.</summary>
+    Task<JoinResult> CreateRoomFor(string playerName, GameVariant variant);
 
     Task<JoinResult> JoinRoom(string roomCode, string playerName);
 
@@ -94,7 +105,11 @@ public sealed record OnlinePlayer(string Id, string Name);
 /// on the inviter's team) or against (<see cref="CanJoinAgainst"/>).
 /// </summary>
 public sealed record Invitation(
-    string Id, string FromId, string FromName, string RoomCode, int InviterSeat, bool CanJoinWith, bool CanJoinAgainst);
+    string Id, string FromId, string FromName, string RoomCode, int InviterSeat, bool CanJoinWith, bool CanJoinAgainst)
+{
+    /// <summary>The game mode of the room (SPEC §1.7).</summary>
+    public GameVariant Variant { get; init; }
+}
 
 /// <summary>Lobby, server → client calls.</summary>
 public interface ILobbyClient

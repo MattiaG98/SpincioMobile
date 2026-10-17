@@ -241,4 +241,36 @@ public class LocalGameSessionTests
         session.BannerCount.ShouldBe(banners.Count);
         session.BannerText.ShouldBe(banners[^1]);
     }
+
+    /// <summary>SPEC §1.7: a Spincione match is saved with its mode and resumes as a Spincione.</summary>
+    [Fact]
+    public async Task A_spincione_match_is_saved_and_resumed_as_a_spincione()
+    {
+        var store = new InMemoryGameStore();
+        var first = NewSession(store);
+        await first.NewGameAsync(seed: 9, variant: GameVariant.Spincione);
+        first.View.Hand.Length.ShouldBe(4);
+        store.Json.ShouldNotBeNull().ShouldContain("\"Variant\":1");
+
+        var second = NewSession(store);
+        (await second.TryResumeAsync()).ShouldBeTrue();
+
+        second.Variant.ShouldBe(GameVariant.Spincione);
+        JsonSerializer.Serialize(second.View).ShouldBe(JsonSerializer.Serialize(first.View));
+    }
+
+    /// <summary>1.5 only added the Spincione: a match saved with the 1.4 rules is a Spincio and still resumes.</summary>
+    [Fact]
+    public async Task A_save_from_the_1_4_rules_resumes_as_a_spincio()
+    {
+        var store = new InMemoryGameStore();
+        await store.SaveAsync("""{"RulesVersion":"1.4","Seed":21,"Commands":[],"Difficulty":0}""");
+
+        var session = NewSession(store);
+
+        (await session.HasSavedGameAsync()).ShouldBeTrue();
+        (await session.TryResumeAsync()).ShouldBeTrue();
+        session.Variant.ShouldBe(GameVariant.Spincio);
+        session.View.Hand.Length.ShouldBe(3);
+    }
 }

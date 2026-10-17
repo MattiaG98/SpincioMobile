@@ -168,7 +168,10 @@ public sealed class LobbyRegistry(RoomRegistry rooms, ILobbyNotifier notifier) :
 
             invitation = new Invitation(
                 Convert.ToHexStringLower(RandomNumberGenerator.GetBytes(8)), fromId, from.Name, room.Code, seat.Seat,
-                seat.CanJoinWith, seat.CanJoinAgainst);
+                seat.CanJoinWith, seat.CanJoinAgainst)
+            {
+                Variant = seat.Variant,
+            };
             _invitations[invitation.Id] = new Pending(invitation, targetId!);
             targets = [.. target.Connections];
         }

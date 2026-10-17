@@ -111,7 +111,11 @@
             played.animate([{ opacity: 0.4 }, { opacity: 1 }], { duration: t(FLY / 2), fill: 'forwards' });
         }
 
-        const targets = captured.map(c => table.querySelector(`[data-card="${c}"]`)).filter(Boolean);
+        // One element per captured card: in the Spincione two identical cards can be taken together (SP1).
+        const used = new Set();
+        const targets = captured
+            .map(c => [...table.querySelectorAll(`[data-card="${c}"]`)].find(el => !used.has(el) && used.add(el)))
+            .filter(Boolean);
         if (targets.length === 0) {
             const slot = dropSlot(table);
             await moveTo(played, slot.x, slot.y, slot.size, t(FLY));

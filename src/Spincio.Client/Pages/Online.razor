@@ -5,6 +5,7 @@
 @inject OnlineService OnlineGames
 @inject ILobby Lobby
 @inject ProfileService Profiles
+@inject SettingsService Settings
 @inject GameHost Host
 @inject NavigationManager Navigation
 @inject IJSRuntime JS
@@ -31,7 +32,7 @@
     {
         @if (Room is { } room)
         {
-            <p class="room-line">Stanza <strong class="room-code">@room.Code</strong></p>
+            <p class="room-line">Stanza <strong class="room-code">@room.Code</strong> · @GameText.ModeName(room.Variant)</p>
             <ol class="seats">
                 @foreach (var seat in room.Seats)
                 {
@@ -50,6 +51,19 @@
                 Il tuo nome
                 <input @bind="_name" @bind:event="oninput" @onchange="SaveNameAsync" maxlength="16" placeholder="Nome" autocomplete="nickname" />
             </label>
+        }
+
+        @if (Room is null)
+        {
+            @* SPEC §1.7: the mode of the room you create or invite to, the same setting as on the main menu. *@
+            <div class="segmented mode-choice" role="radiogroup" aria-label="Modalità della stanza">
+                @foreach (var variant in new[] { GameVariant.Spincio, GameVariant.Spincione })
+                {
+                    bool on = _variant == variant;
+                    <button type="button" role="radio" aria-checked="@(on ? "true" : "false")" class="@(on ? "on" : "")"
+                            @onclick="() => ChooseVariantAsync(variant)">@GameText.ModeName(variant)</button>
+                }
+            </div>
         }
 
         <h2 class="online-title">Giocatori online</h2>
@@ -138,6 +152,7 @@
     private string? _inviteNote;
     private bool _subscribed;
     private PlayerProfile? _profile;
+    private GameVariant _variant;
 
     private string InviteLink => Room is null || OnlineGames.ServerUrl is null
         ? ""
@@ -166,6 +181,7 @@
 
     protected override async Task OnInitializedAsync()
     {
+        _variant = (await Settings.LoadAsync()).Variant;
         await OnlineGames.LoadAsync();
         if (!string.IsNullOrWhiteSpace(ServerParameter))
         {
@@ -192,6 +208,12 @@
         }
     }
 
+    private async Task ChooseVariantAsync(GameVariant variant)
+    {
+        _variant = variant;
+        await Settings.SaveAsync(Settings.Current with { Variant = variant });
+    }
+
     private async Task SaveNameAsync()
     {
         if (string.IsNullOrWhiteSpace(_name) || _name.Trim() == _profile?.Name)
@@ -211,7 +233,7 @@
             if (Room is null)
             {
                 await SaveNameAsync();
-                if (!(await Session.CreateRoomAsync(_name)).Ok)
+                if (!(await Session.CreateRoomAsync(_name, _variant)).Ok)
                 {
                     return;
                 }
@@ -297,7 +319,7 @@
     private async Task CreateAsync()
     {
         await SaveNameAsync();
-        await Busy(() => Session.CreateRoomAsync(_name));
+        await Busy(() => Session.CreateRoomAsync(_name, _variant));
     }
 
     private async Task JoinAsync()

@@ -4,6 +4,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Spincio.Client.Game;
 using Spincio.Client.Pages;
+using Spincio.Engine;
 
 namespace Spincio.Client.Tests;
 
@@ -20,6 +21,30 @@ public class HomePageTests : BunitContext
         Services.AddSingleton<SettingsService>();
         Services.AddSingleton<StatsService>();
         JSInterop.Mode = JSRuntimeMode.Loose; // card animations call into JS (js/moves.js)
+    }
+
+    /// <summary>The "Nuova partita" button (the mode choice comes before it).</summary>
+    private static void StartNewGame(IRenderedComponent<Home> page) =>
+        page.FindAll("section.start button").First(b => b.TextContent.Contains("Nuova partita", StringComparison.Ordinal)).Click();
+
+    /// <summary>SPEC §1.7: the mode is chosen on the main menu, remembered, and the Spincione deals 4 cards first.</summary>
+    [Fact]
+    public void The_spincione_is_chosen_on_the_main_menu_and_deals_four_cards_first()
+    {
+        var page = Render<Home>();
+        page.Find(".mode-choice [aria-checked='true']").TextContent.ShouldBe("Spincio");
+
+        page.FindAll(".mode-choice button").Single(b => b.TextContent == "Spincione").Click();
+
+        page.Find(".mode-choice [aria-checked='true']").TextContent.ShouldBe("Spincione");
+        page.Find("section.start").TextContent.ShouldContain("Spincione · CPU normale");
+        JSInterop.Invocations["localStorage.setItem"].ShouldContain(i => i.Arguments[1]!.ToString()!.Contains("\"Variant\":1"));
+
+        StartNewGame(page);
+
+        page.WaitForAssertion(() => page.FindAll(".hand .card").Count.ShouldBe(4));
+        _session.Variant.ShouldBe(GameVariant.Spincione);
+        _session.Footer.ShouldStartWith("Spincione · partita n.");
     }
 
     /// <summary>ADR 0014: the server can come from an invite link, so online play is always on offer.</summary>
@@ -44,7 +69,7 @@ public class HomePageTests : BunitContext
     {
         var page = Render<Home>();
 
-        page.Find("section.start button").Click();
+        StartNewGame(page);
 
         page.WaitForAssertion(() => page.FindAll(".hand .card").Count.ShouldBe(3));
         page.Find(".scorebar").TextContent.ShouldContain("Noi");
@@ -55,7 +80,7 @@ public class HomePageTests : BunitContext
     public void Clicking_a_playable_card_plays_it_or_asks_which_capture()
     {
         var page = Render<Home>();
-        page.Find("section.start button").Click();
+        StartNewGame(page);
         page.WaitForAssertion(() => page.FindAll(".hand .card.playable").Count.ShouldBeGreaterThan(0));
 
         page.FindAll(".hand .card.playable")[0].Click();
@@ -68,7 +93,7 @@ public class HomePageTests : BunitContext
     public void CPU_players_have_human_names()
     {
         var page = Render<Home>();
-        page.Find("section.start button").Click();
+        StartNewGame(page);
 
         page.WaitForAssertion(() => page.FindAll(".hand .card").Count.ShouldBe(3));
         var board = page.Find(".board").TextContent;
@@ -81,7 +106,7 @@ public class HomePageTests : BunitContext
     public void Move_history_is_collapsed_and_shows_only_the_latest_line()
     {
         var page = Render<Home>();
-        page.Find("section.start button").Click();
+        StartNewGame(page);
         page.WaitForAssertion(() => _session.Feed.Count.ShouldBeGreaterThan(0));
 
         var feed = page.Find("details.feed");
@@ -94,7 +119,7 @@ public class HomePageTests : BunitContext
     public void Leaving_needs_the_menu_and_a_confirmation()
     {
         var page = Render<Home>();
-        page.Find("section.start button").Click();
+        StartNewGame(page);
         page.WaitForAssertion(() => page.FindAll(".hand .card").Count.ShouldBe(3));
 
         page.FindAll("button").Where(b => b.TextContent.Contains("Abbandona", StringComparison.Ordinal)).ShouldBeEmpty();
@@ -141,8 +166,8 @@ public class HomePageTests : BunitContext
     {
         var page = Render<Home>();
 
-        AppInfo.Version.ShouldBe("1.8.1");
-        page.Find("section.start .app-version").TextContent.ShouldBe("v1.8.1");
+        AppInfo.Version.ShouldBe("1.9.0");
+        page.Find("section.start .app-version").TextContent.ShouldBe("v1.9.0");
     }
 
     /// <summary>Seed 3: the CPUs empty the table before my first turn; seed 7: there are cards on it.</summary>
@@ -153,7 +178,7 @@ public class HomePageTests : BunitContext
     {
         Services.GetRequiredService<NavigationManager>().NavigateTo($"/?seed={seed}");
         var page = Render<Home>();
-        page.Find("section.start button").Click();
+        StartNewGame(page);
         page.WaitForAssertion(() => page.FindAll(".hand .card").Count.ShouldBe(3));
 
         int count = page.FindAll(".table .card").Count;
@@ -167,7 +192,7 @@ public class HomePageTests : BunitContext
     public void End_of_round_points_reach_the_score_bar_when_the_summary_closes()
     {
         var page = Render<Home>();
-        page.Find("section.start button").Click();
+        StartNewGame(page);
         for (int i = 0; i < 100 && _session.PendingSummary is null; i++)
         {
             page.WaitForAssertion(() => page.FindAll(".hand .card.playable").Count.ShouldBeGreaterThan(0));
@@ -209,7 +234,7 @@ public class HomePageTests : BunitContext
         page.Find(".stats").TextContent.ShouldContain("Gioca una partita");
         page.Find(".stats .btn-gold").Click();
 
-        page.Find("section.start button").Click(); // new match
+        StartNewGame(page); // new match
         page.WaitForAssertion(() => page.FindAll(".hand .card").Count.ShouldBe(3));
         page.Find(".icon-btn").Click();
         page.FindAll(".overlay .btn").Single(b => b.TextContent.Contains("Abbandona", StringComparison.Ordinal)).Click();
@@ -239,7 +264,7 @@ public class HomePageTests : BunitContext
     public void Seats_show_each_cpu_avatar_with_a_team_ring()
     {
         var page = Render<Home>();
-        page.Find("section.start button").Click();
+        StartNewGame(page);
         page.WaitForAssertion(() => page.FindAll(".hand .card").Count.ShouldBe(3));
 
         string Avatar(int position) => page.Find($".seat-{position} img.avatar").GetAttribute("src")!;
@@ -257,7 +282,7 @@ public class HomePageTests : BunitContext
     {
         Services.GetRequiredService<NavigationManager>().NavigateTo("/?seed=4");
         var page = Render<Home>();
-        page.Find("section.start button").Click();
+        StartNewGame(page);
         page.WaitForAssertion(() => page.FindAll(".hand .card").Count.ShouldBe(3));
         page.FindAll(".declare").Count.ShouldBe(1, "the deal for this seed changed: pick another seed");
         page.Find(".declare").TextContent.ShouldContain("Accusa +3");

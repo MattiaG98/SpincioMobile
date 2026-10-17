@@ -20,10 +20,11 @@ internal static class Playout
     /// Plays a whole match choosing uniformly among legal commands with its own PCG32 stream.
     /// Calls <paramref name="onStep"/> after the start and after every accepted command.
     /// </summary>
-    public static IReadOnlyList<Transition> RandomMatch(ulong seed, Action<Transition>? onStep = null, Seat? firstDealer = null)
+    public static IReadOnlyList<Transition> RandomMatch(
+        ulong seed, Action<Transition>? onStep = null, Seat? firstDealer = null, GameVariant variant = GameVariant.Spincio)
     {
         var chooser = new Pcg32(seed, 7);
-        var start = SpincioEngine.NewMatch(seed, firstDealer);
+        var start = SpincioEngine.NewMatch(seed, firstDealer, variant);
         var steps = new List<Transition> { start };
         onStep?.Invoke(start);
 

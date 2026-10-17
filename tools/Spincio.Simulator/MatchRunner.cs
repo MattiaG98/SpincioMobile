@@ -15,7 +15,7 @@ public static class MatchRunner
     public const int MaxCommands = 50_000;
 
     /// <param name="bots">One bot per seat, indexed by seat.</param>
-    public static MatchResult Play(ulong seed, IReadOnlyList<IBot> bots, Seat? firstDealer = null)
+    public static MatchResult Play(ulong seed, IReadOnlyList<IBot> bots, Seat? firstDealer = null, GameVariant variant = GameVariant.Spincio)
     {
         ArgumentNullException.ThrowIfNull(bots);
         if (bots.Count != Seat.Count)
@@ -23,10 +23,10 @@ public static class MatchRunner
             throw new ArgumentException($"Expected {Seat.Count} bots.", nameof(bots));
         }
 
-        var memories = Seat.All.Select(s => new BotMemory(s)).ToArray();
+        var memories = Seat.All.Select(s => new BotMemory(s, variant)).ToArray();
         var rngs = Seat.All.Select(s => new Pcg32(seed, 100UL + (ulong)s.Index)).ToArray();
 
-        var transition = SpincioEngine.NewMatch(seed, firstDealer);
+        var transition = SpincioEngine.NewMatch(seed, firstDealer, variant);
         Observe(transition, memories);
         int rounds = 1, tiebreaks = 0, commands = 0;
 

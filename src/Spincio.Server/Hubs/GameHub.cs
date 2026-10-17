@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.SignalR;
 using Spincio.Contracts;
+using Spincio.Engine;
 using Spincio.Server.Rooms;
 
 namespace Spincio.Server.Hubs;
@@ -7,9 +8,16 @@ namespace Spincio.Server.Hubs;
 /// <summary>SignalR entry point. Stateless: every call is routed to the room that owns the token or code.</summary>
 public sealed class GameHub(RoomRegistry rooms) : Hub<IGameClient>, IGameHub
 {
-    public async Task<JoinResult> CreateRoom(string playerName)
+    public Task<JoinResult> CreateRoom(string playerName) => CreateRoomFor(playerName, GameVariant.Spincio);
+
+    public async Task<JoinResult> CreateRoomFor(string playerName, GameVariant variant)
     {
-        var room = rooms.Create();
+        if (!Enum.IsDefined(variant))
+        {
+            return JoinResult.Fail("Modalità sconosciuta.");
+        }
+
+        var room = rooms.Create(variant);
         var result = await room.JoinAsync(playerName, Context.ConnectionId);
         rooms.Track(result, room, Context.ConnectionId);
         return result;
