@@ -197,7 +197,7 @@ public static partial class SpincioEngine
             var captured = command.Capture.Cards;
             var table = state.Table.RemoveRange(captured);
             var team = seat.Team;
-            bool isSweep = table.IsEmpty && !isLastPlay; // P6
+            bool isSweep = table.IsEmpty && (!isLastPlay || command.Card.Rank == Rank.Ace); // P6, P8: the ace sweeps on the last play too
             bool twin = state.Variant.HasSameSuitBonus() && captured.Length == 1 && captured[0] == command.Card; // SP10
             bool sameSuit = !twin && state.Variant.HasSameSuitBonus() && captured.All(c => c.Suit == command.Card.Suit); // SP3
             var played = new CardPlayed(seat, command.Card, captured, isSweep) { IsSameSuit = sameSuit, IsTwin = twin };

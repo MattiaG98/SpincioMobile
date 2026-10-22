@@ -131,8 +131,11 @@ Tutte queste regole sono **verificate da test** in `tests/Spincio.Architecture.T
   ciascuna). Scritte: `GameText.Banner` "Gemella" / "Gemella con cappella".
 - Online: `CreateRoomFor(name, variant)` (`CreateRoom` = Spincio, per i server vecchi), `RoomInfo.Variant`,
   `Invitation.Variant`, `MatchReveal.Variant` (serve a rigiocare per la verifica), `RoomCheckpoint.Variant`.
-- Salvataggi: `SavedGame.Variant` (manca = Spincio); `RulesVersion` 1.6. Lo Spincio si riprende anche dalle regole
-  1.4 e 1.5; lo Spincione solo con le regole attuali (`LocalGameSession.IsResumable`), perché la 1.6 ne ha cambiato i punti.
+- Salvataggi: `SavedGame.Variant` (manca = Spincio); `RulesVersion` 1.7. Si riprendono solo con le stesse regole
+  (`LocalGameSession.IsResumable`): la 1.6 ha cambiato i punti dello Spincione, la 1.7 quelli di entrambe le modalità.
+- Asso all'ultima giocata (1.11.0, regole v1.7): `isSweep = tavola vuota && (non ultima giocata || asso)`; anche
+  `GreedyBot.Evaluate` conta lo spazzino dell'asso all'ultima giocata. AT-50 ha la nuova impronta dello Spincio: con la
+  regola spenta nello Spincio torna quella della 1.8.1, quindi la differenza viene solo da qui.
 
 ### Una mossa, online
 Client: `RemoteGameSession.PlayAsync` → hub `Play(token, expectedSequence, "P0:7D>3S+4B")` → `GameRoom` (coda seriale) valida token, sequenza e regole → `AcceptAsync` → a ogni posto `GameUpdate(sequence, ViewFor(seat), EventsFor(seat))` → timer: pausa CPU oppure timeout di turno (30 s) → a fine partita `MatchReveal(seed, salt, log)` e il client verifica con `Commitment.Verify`.

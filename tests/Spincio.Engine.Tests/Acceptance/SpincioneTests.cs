@@ -220,8 +220,9 @@ public class SpincioneTests
             return Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(text.ToString())));
         }
 
-        // Measured with the engine of 1.8.1, before the Spincione existed: the Spincio is bit-for-bit the same.
-        Fingerprint(GameVariant.Spincio).ShouldBe("3e295c7038d636ff682b5d654b4ae0475a4347f3657dad12dac2db5b42d7e81c");
+        // Rules v1.7 (the ace sweeps on the last play, AT-52). Before it, 3e295c7…7e81c, measured with the engine of 1.8.1
+        // before the Spincione existed; turning the v1.7 rule off for the Spincio gives that value back.
+        Fingerprint(GameVariant.Spincio).ShouldBe("0ecafd223e2578d559175e7d6cf70ae61976a502d8fb9b0cca91b87b529a58d1");
         Fingerprint(GameVariant.Spincione).ShouldBe(Fingerprint(GameVariant.Spincione));
         Fingerprint(GameVariant.Spincione).ShouldNotBe(Fingerprint(GameVariant.Spincio));
     }

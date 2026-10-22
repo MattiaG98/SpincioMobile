@@ -11,13 +11,8 @@ namespace Spincio.Client.Game;
 /// </summary>
 public sealed class LocalGameSession : IGameSession
 {
-    public const string RulesVersion = "1.6";
-
-    /// <summary>
-    /// Spincio saves of these rules versions still replay: 1.5 added the Spincione and 1.6 the gemella (SP10), the Spincio
-    /// is the same (AT-50). A Spincione save resumes only with the current rules: its points changed in 1.6.
-    /// </summary>
-    private static readonly string[] SpincioResumableVersions = ["1.4", "1.5", RulesVersion];
+    /// <summary>Saves resume only with the same rules: 1.7 changed the points of both modes (the ace sweeps on the last play).</summary>
+    public const string RulesVersion = "1.7";
     public const int FeedLength = 60;
     public static readonly Seat Human = new(0);
     /// <summary>CPU "thinking" pause; the card animation (about 0.4–1.3 s) comes on top of it.</summary>
@@ -121,9 +116,7 @@ public sealed class LocalGameSession : IGameSession
 
     public async Task<bool> HasSavedGameAsync() => SavedGame.FromJson(await _store.LoadAsync()) is { } saved && IsResumable(saved);
 
-    private static bool IsResumable(SavedGame saved) => saved.Variant == GameVariant.Spincio
-        ? SpincioResumableVersions.Contains(saved.RulesVersion)
-        : saved.RulesVersion == RulesVersion;
+    private static bool IsResumable(SavedGame saved) => saved.RulesVersion == RulesVersion;
 
     /// <summary>Restores the saved match by replaying its command log. False if there is none or it is unusable.</summary>
     public async Task<bool> TryResumeAsync()

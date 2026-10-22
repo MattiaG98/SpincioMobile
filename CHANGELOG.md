@@ -2,7 +2,15 @@
 
 Versioni dell'app Spincio ([versionamento semantico](https://semver.org/lang/it/), ADR 0012). La versione è in
 `Directory.Build.props` (`<Version>`) e si vede nel menu iniziale e nel menu di pausa. Le regole hanno una versione propria
-(`docs/SPEC.md`, "regole v1.6" nel menu di pausa).
+(`docs/SPEC.md`, "regole v1.7" nel menu di pausa).
+
+## 1.11.0 — 22/10/2026
+- **L'asso fa spazzino anche all'ultima giocata** (regolamento v1.7), nello Spincio e nello Spincione, su indicazione
+  del proprietario: sia quando prende tutta la tavola sia quando prende l'unico asso in tavola. Le altre carte
+  all'ultima giocata restano senza spazzino. Nello Spincione l'asso che prende l'asso gemello all'ultima giocata fa
+  "Gemella con cappella" (3 punti).
+- La CPU conta lo spazzino dell'asso all'ultima giocata; la pagina Regole è aggiornata.
+- Le partite salvate con le regole precedenti non si riprendono, perché i punti sono cambiati.
 
 ## 1.10.0 — 17/10/2026
 - **Gemella** nello Spincione (regolamento v1.6, SP10), dettata dal proprietario: se la carta giocata prende la sua

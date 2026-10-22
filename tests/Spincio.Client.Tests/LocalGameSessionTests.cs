@@ -179,11 +179,14 @@ public class LocalGameSessionTests
         JsonSerializer.Serialize(second.View).ShouldBe(JsonSerializer.Serialize(first.View));
     }
 
+    /// <summary>The start of a save of the current rules, up to its command list.</summary>
+    private const string CurrentSave = "{\"RulesVersion\":\"" + LocalGameSession.RulesVersion + "\",\"Seed\":21,\"Commands\":";
+
     [Fact]
     public async Task Saves_from_before_difficulty_existed_resume_at_normal_level()
     {
         var store = new InMemoryGameStore();
-        await store.SaveAsync("""{"RulesVersion":"1.4","Seed":21,"Commands":[]}""");
+        await store.SaveAsync(CurrentSave + "[]}");
 
         var session = NewSession(store);
 
@@ -205,10 +208,10 @@ public class LocalGameSessionTests
 
     [Theory]
     [InlineData("not json")]
-    [InlineData("""{"RulesVersion":"1.4","Seed":21,"Commands":["X9"]}""")]
-    [InlineData("""{"RulesVersion":"1.4","Seed":21,"Commands":["P0:KD"]}""")]
-    [InlineData("""{"RulesVersion":"1.4","Seed":21,"Commands":["P0:ZZ"]}""")]
-    [InlineData("""{"RulesVersion":"1.4","Seed":21,"Commands":[""]}""")]
+    [InlineData(CurrentSave + """["X9"]}""")]
+    [InlineData(CurrentSave + """["P0:KD"]}""")]
+    [InlineData(CurrentSave + """["P0:ZZ"]}""")]
+    [InlineData(CurrentSave + """[""]}""")]
     public async Task Corrupt_or_illegal_save_is_not_resumed(string json)
     {
         var store = new InMemoryGameStore();
@@ -259,33 +262,19 @@ public class LocalGameSessionTests
         JsonSerializer.Serialize(second.View).ShouldBe(JsonSerializer.Serialize(first.View));
     }
 
-    /// <summary>1.5 only added the Spincione: a match saved with the 1.4 rules is a Spincio and still resumes.</summary>
-    [Fact]
-    public async Task A_save_from_the_1_4_rules_resumes_as_a_spincio()
-    {
-        var store = new InMemoryGameStore();
-        await store.SaveAsync("""{"RulesVersion":"1.4","Seed":21,"Commands":[],"Difficulty":0}""");
-
-        var session = NewSession(store);
-
-        (await session.HasSavedGameAsync()).ShouldBeTrue();
-        (await session.TryResumeAsync()).ShouldBeTrue();
-        session.Variant.ShouldBe(GameVariant.Spincio);
-        session.View.Hand.Length.ShouldBe(3);
-    }
-
-    /// <summary>1.6 changed the Spincione's points (SP10): a 1.5 Spincione save is not resumed, a 1.5 Spincio one is.</summary>
+    /// <summary>1.7 changed the points of both modes (the ace sweeps on the last play): older saves are not resumed.</summary>
     [Theory]
-    [InlineData(GameVariant.Spincio, true)]
-    [InlineData(GameVariant.Spincione, false)]
-    public async Task A_save_from_the_1_5_rules_resumes_only_as_a_spincio(GameVariant variant, bool resumes)
+    [InlineData("1.4", GameVariant.Spincio)]
+    [InlineData("1.6", GameVariant.Spincio)]
+    [InlineData("1.6", GameVariant.Spincione)]
+    public async Task A_save_from_older_rules_is_not_resumed(string rules, GameVariant variant)
     {
         var store = new InMemoryGameStore();
-        await store.SaveAsync(new SavedGame("1.5", 21, [], Variant: variant).ToJson());
+        await store.SaveAsync(new SavedGame(rules, 21, [], Variant: variant).ToJson());
 
         var session = NewSession(store);
 
-        (await session.HasSavedGameAsync()).ShouldBe(resumes);
-        (await session.TryResumeAsync()).ShouldBe(resumes);
+        (await session.HasSavedGameAsync()).ShouldBeFalse();
+        (await session.TryResumeAsync()).ShouldBeFalse();
     }
 }

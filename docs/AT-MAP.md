@@ -46,7 +46,7 @@ Per eseguirli: `dotnet test Spincio.slnx --filter "FullyQualifiedName~AT_"`.
 | AT-34 | `AT_34_ace_on_a_table_with_an_ace_takes_only_that_ace` | `AceTests.cs` |
 | AT-35 | `AT_35_ace_capture_is_a_sweep_worth_one_point` | `AceTests.cs` |
 | AT-36 | `AT_36_ace_on_empty_table_is_just_dropped` | `AceTests.cs` |
-| AT-37 | `AT_37_ace_on_the_last_play_takes_the_table_without_sweep` | `AceTests.cs` |
+| AT-37 | `AT_37_ace_on_the_last_play_takes_the_table_and_sweeps` | `AceTests.cs` |
 | AT-38 | `AT_38_ace_must_take_the_whole_table_or_the_ace_on_it` | `AceTests.cs` |
 | AT-39 | `AT_39_ace_taking_the_only_ace_on_the_table_is_a_sweep` | `AceTests.cs` |
 | AT-40 | `AT_40_mariana_is_a_jack_taking_a_five_and_a_three` | `CalloutTests.cs` |
@@ -65,5 +65,6 @@ Per eseguirli: `dotnet test Spincio.slnx --filter "FullyQualifiedName~AT_"`.
 | AT-50 | `AT_50_the_variant_is_part_of_the_match_and_the_spincio_did_not_change` | `SpincioneTests.cs` |
 | AT-51 | `AT_51_a_card_taking_its_twin_is_worth_2_points_and_3_with_the_sweep` | `SpincioneTests.cs` |
 | AT-51 | `AT_51_the_twin_counts_on_the_last_play_without_the_sweep` | `SpincioneTests.cs` |
+| AT-52 | `AT_52_on_the_last_play_an_ace_emptying_the_table_sweeps_in_both_modes` | `AceTests.cs` |
 
 Test aggiuntivi sui casi limite: `C1_…`, `C6_…`, `F7_all_coins_also_wins_a_tiebreak_match`. Invarianti property-based in `PropertyTests.cs`, anche per lo Spincione (80 carte conservate, determinismo, mosse legali, 6 distribuzioni e 76 giocate).
