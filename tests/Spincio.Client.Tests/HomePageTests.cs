@@ -33,10 +33,12 @@ public class HomePageTests : BunitContext
     {
         var page = Render<Home>();
         page.Find(".mode-choice [aria-checked='true']").TextContent.ShouldBe("Spincio");
+        page.Find(".tagline").TextContent.ShouldEndWith("si vince a 31");
 
         page.FindAll(".mode-choice button").Single(b => b.TextContent == "Spincione").Click();
 
         page.Find(".mode-choice [aria-checked='true']").TextContent.ShouldBe("Spincione");
+        page.Find(".tagline").TextContent.ShouldBe("2 contro 2 · due mazzi piacentini · si vince a 101"); // SP11
         page.Find("section.start").TextContent.ShouldContain("Spincione · CPU normale");
         JSInterop.Invocations["localStorage.setItem"].ShouldContain(i => i.Arguments[1]!.ToString()!.Contains("\"Variant\":1"));
 
@@ -166,8 +168,8 @@ public class HomePageTests : BunitContext
     {
         var page = Render<Home>();
 
-        AppInfo.Version.ShouldBe("1.10.0");
-        page.Find("section.start .app-version").TextContent.ShouldBe("v1.10.0");
+        AppInfo.Version.ShouldBe("1.11.0");
+        page.Find("section.start .app-version").TextContent.ShouldBe("v1.11.0");
     }
 
     /// <summary>Seed 3: the CPUs empty the table before my first turn; seed 7: there are cards on it.</summary>

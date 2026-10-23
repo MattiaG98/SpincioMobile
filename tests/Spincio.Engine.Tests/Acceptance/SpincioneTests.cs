@@ -6,7 +6,7 @@ using static Spincio.Engine.Tests.Support.Cards;
 
 namespace Spincio.Engine.Tests.Acceptance;
 
-/// <summary>Spincione, the two-deck mode (SPEC §1.7, SP1–SP10).</summary>
+/// <summary>Spincione, the two-deck mode (SPEC §1.7, SP1–SP11).</summary>
 public class SpincioneTests
 {
     private static Scenario Spincione() => new() { Variant = GameVariant.Spincione, DealNumber = 2 };
@@ -220,10 +220,62 @@ public class SpincioneTests
             return Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(text.ToString())));
         }
 
-        // Measured with the engine of 1.8.1, before the Spincione existed: the Spincio is bit-for-bit the same.
-        Fingerprint(GameVariant.Spincio).ShouldBe("3e295c7038d636ff682b5d654b4ae0475a4347f3657dad12dac2db5b42d7e81c");
+        // Rules v1.7 (the ace sweeps on the last play, AT-52). Before it, 3e295c7…7e81c, measured with the engine of 1.8.1
+        // before the Spincione existed; turning the v1.7 rule off for the Spincio gives that value back.
+        Fingerprint(GameVariant.Spincio).ShouldBe("0ecafd223e2578d559175e7d6cf70ae61976a502d8fb9b0cca91b87b529a58d1");
         Fingerprint(GameVariant.Spincione).ShouldBe(Fingerprint(GameVariant.Spincione));
         Fingerprint(GameVariant.Spincione).ShouldNotBe(Fingerprint(GameVariant.Spincio));
+    }
+
+    [Fact]
+    public void AT_53_the_spincione_is_won_at_101_and_its_tiebreaks_at_31()
+    {
+        GameVariant.Spincione.TargetScore(matchNumber: 0).ShouldBe(101);
+        GameVariant.Spincione.TargetScore(matchNumber: 1).ShouldBe(31);
+        GameVariant.Spincio.TargetScore(matchNumber: 0).ShouldBe(31);
+
+        MatchRules.Evaluate(new TeamScores(100, 90), null, 101).Kind.ShouldBe(MatchOutcomeKind.Continue);
+        MatchRules.Evaluate(new TeamScores(101, 90), null, 101).ShouldBe(new MatchOutcome(MatchOutcomeKind.Win, Team.A, WinReason.Score));
+        MatchRules.Evaluate(new TeamScores(103, 104), null, 101).ShouldBe(new MatchOutcome(MatchOutcomeKind.Win, Team.B, WinReason.Score));
+        MatchRules.Evaluate(new TeamScores(101, 101), null, 101).Kind.ShouldBe(MatchOutcomeKind.Tiebreak);
+    }
+
+    /// <summary>At 50–20 the Spincione goes on to another round; in a tiebreak the same score already wins (E1).</summary>
+    [Theory]
+    [InlineData(0, false)]
+    [InlineData(1, true)]
+    public void AT_53_the_match_ends_at_the_target_of_its_mode_and_match(int matchNumber, bool ends)
+    {
+        var state = new Scenario { Variant = GameVariant.Spincione, Score = new TeamScores(50, 20), MatchNumber = matchNumber }
+            .LastPlay(Scenario.LeftoverTarget.PileB)
+            .Hand(0, "KC")
+            .Build();
+
+        var step = state.Ok(new PlayCard(new Seat(0), C("KC")));
+
+        step.EventsOf<RoundScored>().ShouldHaveSingleItem().MatchScore.B.ShouldBeLessThan(50);
+        step.EventsOf<MatchEnded>().Any().ShouldBe(ends);
+        if (ends)
+        {
+            step.State.Winner.ShouldBe(Team.A);
+        }
+        else
+        {
+            step.State.RoundNumber.ShouldBe(2);
+            step.State.Phase.ShouldBe(MatchPhase.AwaitingPlay);
+        }
+    }
+
+    [Fact]
+    public void AT_53_whole_spincione_matches_end_at_101()
+    {
+        for (ulong seed = 1; seed <= 10; seed++)
+        {
+            var events = Playout.RandomMatch(seed, variant: GameVariant.Spincione).SelectMany(s => s.Events).ToList();
+            var ended = events.OfType<MatchEnded>().Single();
+            bool tiebreak = events.OfType<TiebreakStarted>().Any();
+            Math.Max(ended.FinalScore.A, ended.FinalScore.B).ShouldBeGreaterThanOrEqualTo(tiebreak ? 31 : 101);
+        }
     }
 
     [Theory]

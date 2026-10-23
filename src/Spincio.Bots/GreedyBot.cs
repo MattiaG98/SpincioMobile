@@ -95,7 +95,7 @@ public sealed class GreedyBot(GreedyWeights? weights = null) : IBot
         {
             tableAfter = view.Table.RemoveRange(capture.Cards);
             score = CardValue(play.Card) + capture.Cards.Sum(CardValue);
-            if (tableAfter.IsEmpty && !lastPlay)
+            if (tableAfter.IsEmpty && (!lastPlay || play.Card.Rank == Rank.Ace)) // P6: on the last play only the ace sweeps
             {
                 score += _w.Sweep;
             }

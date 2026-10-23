@@ -175,4 +175,25 @@ public class CheckpointTests
         Json(after.Notifier.Last("c-ada-2").View).ShouldBe(Json(last.View));
         restored.State!.AllCards().Count().ShouldBe(80);
     }
+
+    /// <summary>SP11: a Spincione match goes to 101, several times longer; its restore point still fits a message.</summary>
+    [Fact]
+    public void A_whole_spincione_match_to_101_still_fits_a_message()
+    {
+        var state = SpincioEngine.NewMatch(seed: 3, variant: GameVariant.Spincione).State;
+        var log = new List<string>();
+        while (state.Phase == MatchPhase.AwaitingPlay)
+        {
+            var command = SpincioEngine.LegalCommands(state, state.ToPlay)[^1];
+            log.Add(CommandCodec.Encode(command));
+            state = SpincioEngine.Apply(state, command).Value.State;
+        }
+
+        var seats = Enumerable.Range(0, 4).Select(i => new CheckpointSeat($"Giocatore {i}", new string('t', 32), IsBot: false)).ToList();
+        string sealedText = new CheckpointProtector(Key).Protect(
+            new RoomCheckpoint("ABCD", 3, new string('s', 32), seats, log, GameVariant.Spincione));
+
+        Math.Max(state.Score.A, state.Score.B).ShouldBeGreaterThanOrEqualTo(101);
+        sealedText.Length.ShouldBeLessThan(16_000); // a SignalR message is 32 KB with the view and the events
+    }
 }

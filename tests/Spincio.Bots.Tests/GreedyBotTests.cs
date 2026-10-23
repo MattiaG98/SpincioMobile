@@ -110,6 +110,22 @@ public class GreedyBotTests
         GreedyBot.SweepValue(Many(table)).ShouldBe(expected);
     }
 
+    /// <summary>SPEC v1.7: on the last play an ace emptying the table still sweeps, any other card does not.</summary>
+    [Fact]
+    public void Counts_the_ace_sweep_on_the_last_play()
+    {
+        var bot = new GreedyBot();
+        var memory = Views.Memory("AD,7D,3S,4B");
+        var earlier = Views.For("AD,7D", "3S,4B", playsInRound: 30, handCounts: [2, 2, 2, 2]);
+        var last = Views.For("AD", "3S,4B", playsInRound: MatchState.PlaysPerRound - 1, handCounts: [1, 0, 0, 0]);
+        var ace = new PlayCard(new Seat(0), C("AD"), Take("3S,4B"));
+        var seven = new PlayCard(new Seat(0), C("7D"), Take("3S,4B"));
+
+        bot.Evaluate(ace, last, memory).ShouldBe(bot.Evaluate(ace, earlier, memory), tolerance: 1e-9);
+        (bot.Evaluate(seven, earlier, memory) - bot.Evaluate(seven, last with { Hand = Many("7D") }, memory))
+            .ShouldBe(new GreedyWeights().Sweep, tolerance: 1e-9);
+    }
+
     /// <summary>Spincione (SP10): of two fives on the table, the twin of the played one is worth 2 points more.</summary>
     [Fact]
     public void Prefers_taking_the_twin_in_the_spincione()

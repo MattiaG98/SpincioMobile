@@ -4,7 +4,10 @@ using static Spincio.Engine.Tests.Support.Cards;
 
 namespace Spincio.Engine.Tests.Acceptance;
 
-/// <summary>P8 (SPEC v1.4): the ace takes the whole table ("asso pigliatutto"), unless an ace is already on it.</summary>
+/// <summary>
+/// P8 (SPEC v1.4): the ace takes the whole table ("asso pigliatutto"), unless an ace is already on it; since v1.7 an ace
+/// that empties the table sweeps on the last play too.
+/// </summary>
 public class AceTests
 {
     private static string[] OptionsOf(string played, string table) =>
@@ -59,15 +62,34 @@ public class AceTests
         step.State.Score.ShouldBe(TeamScores.Zero);
     }
 
+    /// <summary>SPEC v1.7: on the last play only the ace still sweeps (P6, P8); any other card does not (AT-14).</summary>
     [Fact]
-    public void AT_37_ace_on_the_last_play_takes_the_table_without_sweep()
+    public void AT_37_ace_on_the_last_play_takes_the_table_and_sweeps()
     {
         var state = new Scenario().LastPlay(Scenario.LeftoverTarget.PileB).Hand(0, "AD").Table("3S,4B").Build();
 
         var step = state.Ok(new PlayCard(new Seat(0), C("AD"), Take("3S,4B")));
 
-        step.EventsOf<CardPlayed>().ShouldHaveSingleItem().IsSweep.ShouldBeFalse();
-        step.EventsOf<RoundScored>().ShouldHaveSingleItem().Ledger.Sweeps.ShouldBe(TeamScores.Zero);
+        step.EventsOf<CardPlayed>().ShouldHaveSingleItem().IsSweep.ShouldBeTrue();
+        step.EventsOf<RoundScored>().ShouldHaveSingleItem().Ledger.Sweeps.ShouldBe(new TeamScores(1, 0));
+    }
+
+    [Theory]
+    [InlineData(GameVariant.Spincio, "AC", "AD", "AC", true, 1)] // ace on the only ace: a sweep, on the last play too
+    [InlineData(GameVariant.Spincio, "AC,5S", "AD", "AC", false, 0)] // the 5S stays: no sweep
+    [InlineData(GameVariant.Spincione, "AD", "AD", "AD", true, 3)] // the twin ace empties the table: gemella con cappella
+    [InlineData(GameVariant.Spincione, "3S,5S", "AS", "3S,5S", true, 2)] // takes all, all swords: sweep + same suit
+    public void AT_52_on_the_last_play_an_ace_emptying_the_table_sweeps_in_both_modes(
+        GameVariant variant, string table, string played, string captured, bool sweep, int points)
+    {
+        var state = new Scenario { Variant = variant }.LastPlay(Scenario.LeftoverTarget.PileB).Hand(0, played).Table(table).Build();
+
+        var step = state.Ok(new PlayCard(new Seat(0), C(played), Take(captured)));
+
+        var play = step.EventsOf<CardPlayed>().ShouldHaveSingleItem();
+        play.IsSweep.ShouldBe(sweep);
+        play.Points.ShouldBe(points);
+        step.EventsOf<RoundScored>().ShouldHaveSingleItem().Ledger.Sweeps.A.ShouldBe(sweep ? 1 : 0);
     }
 
     [Fact]
