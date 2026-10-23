@@ -136,6 +136,9 @@ Tutte queste regole sono **verificate da test** in `tests/Spincio.Architecture.T
 - Asso all'ultima giocata (1.11.0, regole v1.7): `isSweep = tavola vuota && (non ultima giocata || asso)`; anche
   `GreedyBot.Evaluate` conta lo spazzino dell'asso all'ultima giocata. AT-50 ha la nuova impronta dello Spincio: con la
   regola spenta nello Spincio torna quella della 1.8.1, quindi la differenza viene solo da qui.
+- Spincione a 101 (1.11.0, SP11): `VariantRules.TargetScore(variant, matchNumber)` (101 nella partita, 31 negli
+  spareggi), passato a `MatchRules.Evaluate`. Una partita intera dura ~5 smazzate invece di ~2; il punto di ripristino
+  di una partita intera a 101 è di 3,8 KB (test in `CheckpointTests`), lontano dal limite di 32 KB dei messaggi.
 
 ### Una mossa, online
 Client: `RemoteGameSession.PlayAsync` → hub `Play(token, expectedSequence, "P0:7D>3S+4B")` → `GameRoom` (coda seriale) valida token, sequenza e regole → `AcceptAsync` → a ogni posto `GameUpdate(sequence, ViewFor(seat), EventsFor(seat))` → timer: pausa CPU oppure timeout di turno (30 s) → a fine partita `MatchReveal(seed, salt, log)` e il client verifica con `Commitment.Verify`.

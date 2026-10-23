@@ -66,5 +66,8 @@ Per eseguirli: `dotnet test Spincio.slnx --filter "FullyQualifiedName~AT_"`.
 | AT-51 | `AT_51_a_card_taking_its_twin_is_worth_2_points_and_3_with_the_sweep` | `SpincioneTests.cs` |
 | AT-51 | `AT_51_the_twin_counts_on_the_last_play_without_the_sweep` | `SpincioneTests.cs` |
 | AT-52 | `AT_52_on_the_last_play_an_ace_emptying_the_table_sweeps_in_both_modes` | `AceTests.cs` |
+| AT-53 | `AT_53_the_spincione_is_won_at_101_and_its_tiebreaks_at_31` | `SpincioneTests.cs` |
+| AT-53 | `AT_53_the_match_ends_at_the_target_of_its_mode_and_match` | `SpincioneTests.cs` |
+| AT-53 | `AT_53_whole_spincione_matches_end_at_101` | `SpincioneTests.cs` |
 
 Test aggiuntivi sui casi limite: `C1_…`, `C6_…`, `F7_all_coins_also_wins_a_tiebreak_match`. Invarianti property-based in `PropertyTests.cs`, anche per lo Spincione (80 carte conservate, determinismo, mosse legali, 6 distribuzioni e 76 giocate).

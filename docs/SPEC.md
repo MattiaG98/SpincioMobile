@@ -7,7 +7,7 @@
 
 | Versione | Data | Modifica |
 |---|---|---|
-| v1.7 | 22/10/2026 | **Asso all'ultima giocata** (dettata dal proprietario, Spincio e Spincione): l'asso che all'ultima giocata svuota la tavola fa spazzino (+1), sia prendendo tutta la tavola (P8) sia prendendo l'unico asso in tavola. Le altre carte all'ultima giocata restano senza spazzino (P6). AT-37 cambiato, AT-52 nuovo. |
+| v1.7 | 22/10/2026 | **Asso all'ultima giocata** (dettata dal proprietario, Spincio e Spincione): l'asso che all'ultima giocata svuota la tavola fa spazzino (+1), sia prendendo tutta la tavola (P8) sia prendendo l'unico asso in tavola. Le altre carte all'ultima giocata restano senza spazzino (P6). **Spincione a 101** (SP11, dettata dal proprietario): si vince a 101 come E1; lo spareggio si gioca a 31. AT-37 cambiato, AT-52 e AT-53 nuovi. |
 | v1.6 | 17/10/2026 | **Gemella** nello Spincione (SP10), dettata dal proprietario: la carta che prende la sua gemella vale **2 punti** al posto del punto dello stesso seme; se svuota la tavola si aggiunge lo spazzino (**3**, "gemella con cappella"); vale anche all'ultima giocata. AT-43 senza il caso della gemella, AT-51 nuovo. Lo Spincio non cambia. |
 | v1.5 | 17/10/2026 | **Nuova modalità Spincione** (§1.7), dettata dal proprietario: due mazzi, prima distribuzione da 4 carte, accusi in prima mano raddoppiati, accusi nuovi (**colore**, **scala**), punto in più per la **presa dello stesso seme**, settebello e rebello contati per copia, niente vittoria immediata con i denari. Il "bàgher" del backlog non esiste: il proprietario l'aveva chiamato così per errore. Lo Spincio non cambia. AT-41…AT-50. |
 | v1.1 | 24/09/2026 | Regolamento confermato (Fasi 0–3) |
@@ -69,7 +69,7 @@ Esempi: `KD` = re di denari (**rebello**), `7D` = **settebello**.
 ### 1.5 Fine partita
 | ID | Regola |
 |---|---|
-| E1 | Si controlla **solo a fine smazzata**. Si vince a **31**; se entrambe le squadre sono a 31 o più, vince chi ha di più. |
+| E1 | Si controlla **solo a fine smazzata**. Si vince a **31** (101 nello Spincione, SP11); se entrambe le squadre sono a 31 o più, vince chi ha di più. |
 | E2 | Pareggio esatto a 31 o più → **partita di spareggio** intera da 0–0 (il mazziere continua la rotazione), ripetuta finché qualcuno vince. |
 | E3 | Le carte prese **non sono visibili a nessuno**, nemmeno le proprie. Il **punteggio è sempre visibile** e si aggiorna subito per spazzini e accusi. A fine smazzata c'è un riepilogo dettagliato dei punti. |
 
@@ -91,7 +91,8 @@ all'inizio della partita, contro la CPU e online.
 | SP6 | **Accusi nuovi**, che si sommano a quelli dello Spincio: **colore** (tutte le carte in mano dello stesso seme) = **2**; **scala** (tutte le carte in mano in fila, senza ripetizioni) = **2**. La scala **gira**: dopo il re viene l'asso, quindi valgono anche fante-cavallo-re-asso e re-asso-2. In prima mano valgono il doppio (4). |
 | SP7 | Accusi con 3 carte (dalla seconda distribuzione): come lo Spincio (A1), più colore e scala (SP6), senza raddoppio. |
 | SP8 | **Fine smazzata:** carte (80), denari (20) e primiera (8 sette) come F1, F2, F5, cioè 1 punto a chi ne ha di più; in caso di pari, 0. **Settebello e rebello valgono 1 punto per ogni copia** presa (fino a 2 ciascuno). Lo spincio (F6) si conta come nello Spincio: le carte doppie non allungano la scala. |
-| SP9 | **Niente vittoria immediata con i denari** (F7 non vale nello Spincione), neanche prendendoli tutti. Si vince a 31 con lo spareggio come nello Spincio (E1, E2). |
+| SP9 | **Niente vittoria immediata con i denari** (F7 non vale nello Spincione), neanche prendendoli tutti. Si vince ai punti (SP11). |
+| SP11 | **Si vince a 101** (dalla v1.7): come E1 con 101 al posto di 31 (si controlla solo a fine smazzata; se entrambe le squadre sono a 101 o più vince chi ha di più). Pareggio esatto a 101 o più → **spareggio** da 0–0 come E2, ma **a 31**; anche gli spareggi successivi si giocano a 31. |
 | SP10 | **Gemella** (dalla v1.6): se la carta giocata prende la sua **gemella** (la stessa carta dell'altro mazzo, es. `5D` prende `5D`), la presa vale **2 punti** al posto del punto dello stesso seme (SP3). Se la presa svuota la tavola si aggiunge lo spazzino: **3 punti**, scritta "**Gemella con cappella**"; altrimenti la scritta è "**Gemella**". Vale **anche all'ultima giocata** (2 punti: lo spazzino non vale, P6; con l'asso gemello sì, quindi 3). Vale anche per l'asso che prende l'asso gemello (P8, eccezione). Con due carte uguali in tavola (P2) prendere la gemella o l'altra resta una scelta del giocatore. |
 
 **Mariana** (solo una scritta, nessun punto): quando un **fante** prende un **5** e un **3**, di qualunque seme, compare la scritta **MARIANA**, anche se in tavola restano altre carte. Se la presa svuota la tavola, MARIANA prende il posto della scritta "Spazzino!" e lo spazzino vale normalmente (P6).
@@ -267,6 +268,7 @@ Ogni test nel codice porta lo stesso ID (es. `AT_05_equal_value_forbids_sum`).
 - **AT-49** Due carte gemelle in tavola: tavola `[5D,5D]`, gioco `5S` → una sola opzione `{5D}`; dopo la presa in tavola resta un `5D`.
 - **AT-50** La modalità fa parte della partita: stesso seed e stessi comandi danno la stessa partita, e lo Spincio con lo stesso seed resta identico a prima della v1.5.
 - **AT-51** Gemella (SP10): tavola `[5D,KC]`, gioco `5D` → 2 punti, nessun punto dello stesso seme · tavola `[5D]`, gioco `5D` (non ultima giocata) → 3 punti (gemella con cappella) · tavola `[5D,5C,KC]`, gioco `5D`: prendendo `5D` → 2 punti, prendendo `5C` → 0 · tavola `[AD,3C]`, gioco `AD` → prende solo `AD`, 2 punti · all'ultima giocata, tavola `[5D]`, gioco `5D` → 2 punti, niente spazzino; il riepilogo della smazzata conta 2 punti di gemelle.
+- **AT-53** Spincione a 101 (SP11): 100–90 → si continua · 101–90 → vince A · 103–104 → vince B · 101–101 → spareggio. A fine smazzata da 50–20: nella partita si continua con un'altra smazzata, in uno spareggio vince A (si gioca a 31). Partite intere dello Spincione: finiscono con almeno 101 punti, o 31 se c'è stato uno spareggio.
 
 ### Informazioni nascoste
 - **AT-31** La `PlayerView` contiene: la propria mano, la tavola, il punteggio, gli accusi dichiarati (tipo e punti), il numero di carte in mano agli altri. **Non** contiene nessun mazzetto di carte prese.

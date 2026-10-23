@@ -340,7 +340,7 @@ public static partial class SpincioEngine
         var score = state.Score.Add(roundScore.Totals);
         events.Add(new RoundScored(roundScore, state.Ledger, score));
 
-        var outcome = MatchRules.Evaluate(score, roundScore.AllCoinsTeam);
+        var outcome = MatchRules.Evaluate(score, roundScore.AllCoinsTeam, state.Variant.TargetScore(state.MatchNumber));
         switch (outcome.Kind)
         {
             case MatchOutcomeKind.Win:

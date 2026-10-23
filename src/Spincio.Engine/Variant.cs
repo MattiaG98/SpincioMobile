@@ -40,6 +40,15 @@ public static class VariantRules
     /// <summary>SP3 and SP10: a capture all of one suit is worth a point, a card taking its twin 2.</summary>
     public static bool HasSameSuitBonus(this GameVariant variant) => variant == GameVariant.Spincione;
 
+    public const int SpincioneTargetScore = 101;
+
+    /// <summary>
+    /// E1 and SP11: the score that wins match <paramref name="matchNumber"/> (0 = the match, 1+ = tiebreaks). The Spincione
+    /// goes to 101, its tiebreaks to 31 like the Spincio.
+    /// </summary>
+    public static int TargetScore(this GameVariant variant, int matchNumber) =>
+        variant == GameVariant.Spincione && matchNumber == 0 ? SpincioneTargetScore : MatchRules.TargetScore;
+
     /// <summary>F7 applies to the Spincio only (SP9).</summary>
     public static bool AllCoinsWins(this GameVariant variant) => variant == GameVariant.Spincio;
 }

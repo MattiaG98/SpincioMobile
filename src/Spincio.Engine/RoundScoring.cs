@@ -103,16 +103,18 @@ public readonly record struct MatchOutcome(MatchOutcomeKind Kind, Team? Winner =
 /// <summary>End-of-match check E1, E2, F7 — evaluated only at the end of a round.</summary>
 public static class MatchRules
 {
+    /// <summary>E1: the Spincio's target, and every tiebreak's (the Spincione's first match goes to 101, SP11).</summary>
     public const int TargetScore = 31;
 
-    public static MatchOutcome Evaluate(TeamScores score, Team? allCoinsTeam)
+    /// <param name="targetScore">The score that wins: <see cref="VariantRules.TargetScore"/>.</param>
+    public static MatchOutcome Evaluate(TeamScores score, Team? allCoinsTeam, int targetScore = TargetScore)
     {
         if (allCoinsTeam is { } coins)
         {
             return new(MatchOutcomeKind.Win, coins, WinReason.AllCoins);
         }
 
-        if (Math.Max(score.A, score.B) < TargetScore)
+        if (Math.Max(score.A, score.B) < targetScore)
         {
             return new(MatchOutcomeKind.Continue);
         }

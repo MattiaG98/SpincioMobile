@@ -19,7 +19,7 @@
             </div>
         </div>
         <h1 class="title">Spincio</h1>
-        <p class="tagline">2 contro 2 · mazzo piacentino · si vince a 31</p>
+        <p class="tagline">2 contro 2 · @(_settings.Variant == GameVariant.Spincione ? "due mazzi piacentini" : "mazzo piacentino") · si vince a @_settings.Variant.TargetScore(matchNumber: 0)</p>
         <div class="menu-buttons">
             @if (_hasSave)
             {

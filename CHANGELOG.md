@@ -9,6 +9,9 @@ Versioni dell'app Spincio ([versionamento semantico](https://semver.org/lang/it/
   del proprietario: sia quando prende tutta la tavola sia quando prende l'unico asso in tavola. Le altre carte
   all'ultima giocata restano senza spazzino. Nello Spincione l'asso che prende l'asso gemello all'ultima giocata fa
   "Gemella con cappella" (3 punti).
+- **Lo Spincione si gioca a 101** (SP11), su indicazione del proprietario: come lo Spincio, ma con 101 al posto di 31;
+  in caso di pareggio esatto lo spareggio si gioca a 31. Il menu iniziale dice "si vince a 101" quando è scelto lo
+  Spincione.
 - La CPU conta lo spazzino dell'asso all'ultima giocata; la pagina Regole è aggiornata.
 - Le partite salvate con le regole precedenti non si riprendono, perché i punti sono cambiati.
 
