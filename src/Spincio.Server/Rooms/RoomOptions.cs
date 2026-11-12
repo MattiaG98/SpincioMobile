@@ -14,8 +14,8 @@ public sealed class RoomOptions
     /// <summary>Pause before each CPU move, so humans can follow the game.</summary>
     public TimeSpan BotDelay { get; set; } = TimeSpan.FromMilliseconds(700);
 
-    /// <summary>CPU level for empty seats; the server runs .NET natively, so L2 searches its full 16 worlds.</summary>
-    public BotLevel BotLevel { get; set; } = BotLevel.Pimc;
+    /// <summary>CPU level for empty seats: L3 with its default search (ADR 0019), the "Difficile" of the app.</summary>
+    public BotLevel BotLevel { get; set; } = BotLevel.Lookahead;
 
     /// <summary>Finished or abandoned rooms are dropped after this idle time.</summary>
     public TimeSpan IdleLifetime { get; set; } = TimeSpan.FromHours(2);

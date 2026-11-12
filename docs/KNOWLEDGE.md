@@ -17,7 +17,7 @@ Client ─────┘      Server
 | Progetto | Ruolo | Regola chiave |
 |---|---|---|
 | `Spincio.Engine` | Regole pure: `NewMatch`, `Apply`, `LegalCommands`, `ViewFor`, `Hypothetical` | Zero dipendenze, niente clock/RNG/I-O; tutta la casualità in `Pcg32` dentro lo stato |
-| `Spincio.Bots` | L0 casuale, L1 greedy, L2 PIMC (entrambi i livelli dell'app, ADR 0013) | Ricevono solo `PlayerView` + `BotMemory`; solo `PimcBot` tocca stati **ipotetici** (ADR 0008) |
+| `Spincio.Bots` | L0 casuale, L1 greedy, L2 PIMC, **L3 `LookaheadBot`** (entrambi i livelli dell'app e il server dalla 1.12.0, ADR 0019) | Ricevono solo `PlayerView` + `BotMemory`; solo i bot di ricerca (`PimcBot`, `LookaheadBot`/`DealSearch`) toccano stati **ipotetici** (ADR 0008, ADR 0019) |
 | `Spincio.Contracts` | DTO SignalR, `CommandCodec`, `SpincioJson`, `Commitment` | Condiviso da Client e Server; nessuna dipendenza da Bots/Client/Server |
 | `Spincio.Client` | PWA Blazor WebAssembly | La UI vede solo `IGameSession` (vista del giocatore); mai `MatchState` |
 | `Spincio.Server` | Stanze online autoritative | Una coda seriale per stanza; timer con `TimeProvider` |
@@ -143,6 +143,16 @@ Tutte queste regole sono **verificate da test** in `tests/Spincio.Architecture.T
 ### Una mossa, online
 Client: `RemoteGameSession.PlayAsync` → hub `Play(token, expectedSequence, "P0:7D>3S+4B")` → `GameRoom` (coda seriale) valida token, sequenza e regole → `AcceptAsync` → a ogni posto `GameUpdate(sequence, ViewFor(seat), EventsFor(seat))` → timer: pausa CPU oppure timeout di turno (30 s) → a fine partita `MatchReveal(seed, salt, log)` e il client verifica con `Commitment.Verify`.
 
+### Decisione di L3 (1.12.0, ADR 0019)
+Mosse legali dalla vista → se c'è un accuso lo dichiara → `WorldSampler` distribuisce le carte non viste (coerenti con
+accusi e silenzi) → per ogni mondo `SpincioEngine.Hypothetical` → `DealSearch.Load` (stato compatto) → per ogni mossa
+candidata minimax con alfa-beta fino a fine distribuzione + 1 giocata (al massimo 12) → valore = punti fatti nella ricerca +
+`RoundOutlook.Expected` (punti attesi a fine smazzata dalle carte prese) − lo stesso alla radice, o punti esatti se la smazzata
+finisce → dopo il primo mondo, numero di mondi = budget di posizioni / costo del primo mondo (tra 4 e il massimo) → media
+sui mondi → mossa migliore (pari: a caso). `DealSearch` riscrive le regole di una giocata (P1–P8, SP3, SP10, distribuzioni,
+fine smazzata): `LookaheadTests.The_compact_search_agrees_with_the_engine` lo confronta con la stessa ricerca giocata con
+il motore. **Se cambia una regola di gioco va cambiata anche lì.**
+
 ### Decisione di L2 (PIMC)
 Mosse legali dalla vista → se c'è un accuso lo dichiara → per N mondi: distribuisce a caso le carte non viste (coerenti con gli accusi della distribuzione) → `SpincioEngine.Hypothetical(view, guess)` → per ogni mossa candidata: rollout con L1 per tutti fino a fine smazzata → valore = differenza di punti (+ bonus tutti i denari) → media + `PriorWeight × L1.Evaluate` → mossa migliore.
 
@@ -165,6 +175,9 @@ Mosse legali dalla vista → se c'è un accuso lo dichiara → per N mondi: dist
 | Pesi di L1 (`GreedyWeights`) | carta 1, denaro +1, sette +1,5, settebello +5, rebello +4, spazzino 10, rischio spazzino 8, costo calata 0,3 | Ablazione M2: ogni componente fa vincere; ×2 e ×0,5 sul rischio peggiorano |
 | Asso calato a tavola vuota (`GreedyWeights.AceDrop`) | **4** (1.7.2) | Osservazione del proprietario: le CPU calavano l'asso a tavola vuota (L1 nel 60% dei casi possibili, L2 ~28%). Tenuto, l'asso prende tutta la tavola più avanti (P8). L1 con 4 contro L1 senza: 53,8% su 10.000 partite (1: 52,6%, 2: 53,1%, 3: 53,6%, 6 e 8: 53,8%). Ora l'asso è calato nell'1,2% dei casi (L1) e nel 2–3% (L2), quando le altre carte valgono molto di più. L2 con il nuovo peso contro L2 senza: "Normale" 50,5% su 3000 partite, "Difficile" 52,2% su 1000, cioè stessa forza e gioco più sensato |
 | Gemella per L1 (`GreedyWeights.Twin`) | **20** (1.10.0), lo stesso seme 10 | 2 punti = il doppio dello stesso seme. Spincione, L1 con il peso contro L1 senza (2000 partite, seed 777): 10 → 51,3%, 15 → 52,3%, 20 → 52,4%, 30 → 52,2% |
+| L3 "Normale" / "Difficile" / server | **8 mondi e 60.000 posizioni / 16 e 150.000 / 16 e 150.000**, al massimo 12 giocate (1.12.0) | Nel browser mediana ~30 ms e massimo ~0,3 s anche nello Spincione. Più mondi aiutano ancora (16 contro 8: 55,0%; 32 contro 16: 52,9%; 4 contro 8: 47,4%); il limite è il telefono. Limite e budget non tolgono forza (50,5% Spincione, 52,1% Spincio contro la ricerca senza limiti) |
+| Valore delle carte in L3 (`RoundOutlook`) | punti attesi a fine smazzata, ogni carta ancora da prendere 50/50 | Contro i pesi fissi di L1 (0,1 punti per unità): 54,6% (2000 partite). Rende dinamici maggioranze già decise e scala di denari |
+| Profondità di L3 | fine distribuzione + 1 giocata | +0 giocate: 48,4%; +2: 49,6% (1000 partite, con i pesi fissi): indifferente, tenuta la via di mezzo |
 | Mondi L2 | 16 nel simulatore/server; nel browser **4 ("Normale") e 12 ("Difficile")** (1.2.0, ADR 0013) | Nel browser (interpretato) 12 mondi stanno sotto ~0,4 s per mossa su desktop; oltre 16 mondi non si guadagna (16 contro 8: 52,2%) |
 | Silenzi in L2 (`InferSilence`) | attivo | Chi gioca la prima carta della distribuzione senza accusare non aveva accusi: 51,5% contro senza (1000 partite, non significativo), costo quasi nullo |
 | `PriorWeight` L2 | **1,0** | Senza prior, con 8 mondi L2 perde contro L1 (44,6%). Screening: 0 → 44%, 0,2 → 59%, 1 → 65%, 2 → 66%, 4 → 61% |
@@ -211,6 +224,10 @@ Mosse legali dalla vista → se c'è un accuso lo dichiara → per N mondi: dist
 | Server pubblicato avviato da un'altra cartella: nessun client si collega | `appsettings.json` (con `AllowedOrigins`) si legge dalla cartella di lavoro, non da quella della DLL: senza, il CORS rifiuta tutti | Avviare `dotnet Spincio.Server.dll` dalla sua cartella (`restart.mjs` usa `cwd`); nell'immagine Docker `WORKDIR /app` lo garantisce |
 | Con due mazzi le mosse legali si ripetevano (1.9.0, trovato da un property test) | Due carte identiche in mano davano due volte le stesse mosse; due carte identiche in tavola davano due volte la stessa presa per somma | `hand.Distinct()` e, nelle somme, si salta una carta uguale alla precedente nella stessa posizione. Il property test controlla che le mosse legali siano tutte diverse |
 | Dubbio: "lo Spincio è cambiato?" dopo un refactoring del motore (1.9.0) | Le modifiche toccavano mazzo, distribuzione e punteggio di tutte le modalità | Impronta (SHA-256) di 20 partite intere registrata con il motore di prima (`git worktree` di `main`) e confrontata in un test (AT-50) |
+| Il compagno "gioca senza senso" (1.11.0) | L2 era quasi solo L1: il suo aiuto a una mossa era in unità L1 (spazzino = 10) sommato a una media in punti (spazzino = 1), quindi pesava dieci volte la ricerca; e L1 non vede lo spazzino dell'asso pigliatutto | L3 (ADR 0019): ricerca fino a fine distribuzione in molti mondi, valori tutti in punti. Prima di cambiare una CPU, misurare con `--audit` (errori giudicati con le carte vere) e con tornei di almeno 1000 partite |
+| "Il compagno non fa lo spazzino" (atteso con L3) | Tiene l'asso per prendere più carte dopo | È voluto: fare sempre subito lo spazzino perde (39,6% contro L3). Da spiegare al proprietario se lo nota |
+| Test delle animazioni rosso con L3 (1.12.0) | Con la regola v1.7 un asso all'ultima giocata fa spazzino nello stesso momento in cui finisce la smazzata (L3 tiene l'asso, quindi capita); il test leggeva il punteggio con già i punti di fine smazzata | Il tabellone, a riepilogo aperto, mostra `PointsGain.ScoreBefore`: il test ora legge lo stesso punteggio |
+| Prototipo di L3 troppo lento (0,4 s sul server, secondi nel browser) | Ogni giocata della ricerca passava dal motore (stati immutabili, eventi) | Regole compatte in `DealSearch` (100 volte più veloce), verificate contro il motore da un test; budget di posizioni per avere un tempo stabile |
 | Controllo nel browser che segnalava carte "rimaste in volo" | Lo script misurava durante l'animazione della mia carta, quando il resto della mano sembrava ancora giocabile | Mano disattivata durante il volo (anche un difetto per l'utente); i controlli aspettano una carta `playable` visibile e chiudono il riepilogo "Continua" |
 
 ## 6. Strategia di test
@@ -220,7 +237,7 @@ Mosse legali dalla vista → se c'è un accuso lo dichiara → per N mondi: dist
 | Accettazione (AT-xx) | `Engine.Tests/Acceptance` | Le regole del proprietario (contratto) |
 | Property-based (FsCheck) | `Engine.Tests/PropertyTests`, `HypotheticalTests` | 40 carte conservate, determinismo, vista = stato per le mosse legali, stati ipotetici fedeli |
 | Architettura | `Architecture.Tests` | Dipendenze e confini di informazione (nessuno vede ciò che non deve) |
-| Bot | `Bots.Tests` | Comportamenti chiave + tornei (L1 ≥ 80% su L0) |
+| Bot | `Bots.Tests` | Comportamenti chiave + tornei (L1 ≥ 80% su L0, L3 "Normale" > 55% su L2) + regole compatte di L3 identiche al motore |
 | Client | `Client.Tests` | Sessione offline, salvataggi, bUnit smoke |
 | Server | `Server.Tests` | Stanza con tempo finto, contratti JSON, end-to-end con il vero client SignalR |
 | Mutation testing manuale | a ogni milestone | Rompere una regola deve far fallire almeno un test |

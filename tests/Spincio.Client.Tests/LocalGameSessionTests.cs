@@ -220,14 +220,15 @@ public class LocalGameSessionTests
         (await NewSession(store).TryResumeAsync()).ShouldBeFalse();
     }
 
+    /// <summary>ADR 0019: every CPU, partner included, plays L3; "Difficile" searches more.</summary>
     [Fact]
-    public void Both_cpu_levels_search_and_difficult_searches_more()
+    public void Both_cpu_levels_play_l3_and_difficult_searches_more()
     {
-        var normal = LocalGameSession.CpuFor(BotLevel.Greedy).ShouldBeOfType<PimcBot>();
-        var hard = LocalGameSession.CpuFor(BotLevel.Pimc).ShouldBeOfType<PimcBot>();
+        LocalGameSession.CpuFor(BotLevel.Greedy).ShouldBeOfType<LookaheadBot>();
+        LocalGameSession.CpuFor(BotLevel.Pimc).ShouldBeOfType<LookaheadBot>();
 
-        normal.ShouldNotBeSameAs(hard);
-        LocalGameSession.NormalPimc.Worlds.ShouldBeLessThan(LocalGameSession.BrowserPimc.Worlds);
+        LocalGameSession.NormalCpu.Worlds.ShouldBeLessThan(LocalGameSession.HardCpu.Worlds);
+        LocalGameSession.NormalCpu.NodeBudget.ShouldBeLessThan(LocalGameSession.HardCpu.NodeBudget);
     }
 
     [Fact]

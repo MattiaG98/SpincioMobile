@@ -189,15 +189,18 @@ public class GameRoomTests
         Commitment.Verify(commitment, reveal, h.State.Score with { A = h.State.Score.A + 1 }).ShouldBeFalse();
     }
 
-    [Fact]
-    public async Task Room_can_use_the_l2_bot()
+    [Theory]
+    [InlineData(BotLevel.Pimc)]
+    [InlineData(BotLevel.Lookahead)] // the server's CPU since 1.12.0 (ADR 0019)
+    public async Task Room_can_use_the_search_bots(BotLevel level)
     {
-        await using var h = new RoomHarness(botLevel: BotLevel.Pimc);
+        await using var h = new RoomHarness(botLevel: level);
         var ada = await h.JoinAsync("Ada", "c-ada");
         await h.Room.StartAsync(ada.Token!);
 
         await h.UntilTurnOfAsync(ada.Seat);
 
         h.State.ToPlay.Index.ShouldBe(ada.Seat);
+        new Spincio.Server.Rooms.RoomOptions().BotLevel.ShouldBe(BotLevel.Lookahead);
     }
 }

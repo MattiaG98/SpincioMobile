@@ -23,15 +23,19 @@ public enum BotLevel
 
     /// <summary>L2: Perfect Information Monte Carlo over sampled worlds with L1 rollouts.</summary>
     Pimc,
+
+    /// <summary>L3: sampled worlds searched to the end of the deal with every seat playing its best (ADR 0019).</summary>
+    Lookahead,
 }
 
 public static class BotFactory
 {
-    public static IBot Create(BotLevel level, PimcOptions? pimc = null) => level switch
+    public static IBot Create(BotLevel level, PimcOptions? pimc = null, LookaheadOptions? lookahead = null) => level switch
     {
         BotLevel.Random => new RandomBot(),
         BotLevel.Greedy => new GreedyBot(),
         BotLevel.Pimc => new PimcBot(pimc),
+        BotLevel.Lookahead => new LookaheadBot(lookahead),
         _ => throw new ArgumentOutOfRangeException(nameof(level), level, null),
     };
 }

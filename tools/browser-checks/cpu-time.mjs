@@ -1,11 +1,12 @@
 // CPU thinking time in the browser (WebAssembly), per level: animations off, so each CPU move takes the fixed
 // pause (450 ms, LocalGameSession.DefaultCpuDelay) plus the bot's decision. Prints the decision time per move.
-// Usage: serve the published wwwroot on http://localhost:8765, then `node tools/browser-checks/cpu-time.mjs`.
+// Usage: serve the published wwwroot on http://localhost:8765, then `node tools/browser-checks/cpu-time.mjs [spincione]`.
 // Needs Playwright (preinstalled in the cloud environment under /opt/node22/lib/node_modules).
 import { createRequire } from 'module';
 const require = createRequire('/opt/node22/lib/node_modules/');
 const { chromium } = require('playwright');
 const PAUSE = 450;
+const spincione = process.argv[2] === 'spincione';
 const browser = await chromium.launch();
 for (const level of ['Normale', 'Difficile']) {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
@@ -16,6 +17,7 @@ for (const level of ['Normale', 'Difficile']) {
   await page.getByRole('radio', { name: level, exact: true }).click();
   await page.getByRole('radio', { name: 'No', exact: true }).click();
   await page.getByRole('button', { name: 'Fatto' }).click();
+  if (spincione) await page.getByRole('radio', { name: 'Spincione', exact: true }).click();
   await page.getByText('Nuova partita').click();
   await page.waitForSelector('.hand .card');
   // Time between consecutive CPU moves, measured in the page (feed line changes while it is not my turn).
@@ -38,7 +40,7 @@ for (const level of ['Normale', 'Difficile']) {
   const pause = PAUSE;
   const think = (await page.evaluate(() => window.cpu)).map(ms => Math.max(0, ms - pause)).sort((a, b) => a - b);
   const pct = p => Math.round(think[Math.min(think.length - 1, Math.floor(p * think.length))] ?? 0);
-  console.log(`${level}: ${think.length} CPU moves, decision median ${pct(0.5)} ms, p90 ${pct(0.9)} ms, max ${pct(1)} ms`, errors.length ? errors : '');
+  console.log(`${spincione ? 'Spincione ' : ''}${level}: ${think.length} CPU moves, decision median ${pct(0.5)} ms, p90 ${pct(0.9)} ms, max ${pct(1)} ms`, errors.length ? errors : '');
   await page.close();
 }
 await browser.close();

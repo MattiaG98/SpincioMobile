@@ -1,6 +1,6 @@
 # ADR 0013 — Entrambi i livelli della CPU usano la ricerca (L2)
 
-- **Stato:** Accettato (08/10/2026, versione 1.2.0) — richiesta del proprietario: "migliora il livello di intelligenza artificiale dei bot"
+- **Stato:** Superato da ADR 0019 (12/11/2026, versione 1.12.0: i due livelli e il server usano L3). Era: Accettato (08/10/2026, versione 1.2.0) — richiesta del proprietario: "migliora il livello di intelligenza artificiale dei bot"
 - **Modifica:** ADR 0005 (L1 come avversario dell'MVP)
 
 ## Contesto
