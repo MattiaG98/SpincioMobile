@@ -4,6 +4,23 @@ Versioni dell'app Spincio ([versionamento semantico](https://semver.org/lang/it/
 `Directory.Build.props` (`<Version>`) e si vede nel menu iniziale e nel menu di pausa. Le regole hanno una versione propria
 (`docs/SPEC.md`, "regole v1.7" nel menu di pausa).
 
+## 1.12.0 — 12/11/2026
+- **CPU nuove, compagno compreso** (ADR 0019), su richiesta del proprietario: "il compagno deve giocare le carte che
+  conviene giocare in base a quelle che non sono ancora uscite".
+  - Ragionano sulle carte non ancora uscite.
+  - Per ogni carta che potrebbero giocare provano tutte le risposte possibili di avversari e compagno fino a fine
+    distribuzione.
+  - Valutano le carte prese per i punti che porteranno davvero a fine smazzata (carte, denari, sette, settebello,
+    rebello, scala di denari).
+- **Più forti a parità di tempo:**
+  - "Normale" nuovo contro "Normale" di prima: 62% delle partite vinte.
+  - "Difficile" nuovo contro "Difficile" di prima: 64%, sia nello Spincio sia nello Spincione.
+  - Nel browser una mossa della CPU resta sui 30 ms.
+- Il compagno ora a volte **tiene l'asso** invece di fare subito uno spazzino da una carta, per prendere una tavola più
+  ricca dopo: provato, fare sempre subito lo spazzino fa perdere molto di più.
+- Anche le CPU del server online sono le nuove.
+- Le partite salvate si riprendono: le regole non cambiano.
+
 ## 1.11.0 — 22/10/2026
 - **L'asso fa spazzino anche all'ultima giocata** (regolamento v1.7), nello Spincio e nello Spincione, su indicazione
   del proprietario: sia quando prende tutta la tavola sia quando prende l'unico asso in tavola. Le altre carte

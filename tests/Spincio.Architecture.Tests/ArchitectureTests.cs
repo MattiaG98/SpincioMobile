@@ -54,16 +54,18 @@ public class ArchitectureTests
     }
 
     /// <summary>
-    /// CLAUDE.md rule 5 / ADR 0008: bots never receive the real state. Only the L2 search bot handles
-    /// <c>MatchState</c>, and only hypothetical ones it builds from its own view via <c>SpincioEngine.Hypothetical</c>.
+    /// CLAUDE.md rule 5 / ADR 0008, ADR 0019: bots never receive the real state. Only the search bots (L2, and L3 with
+    /// its compact search) handle <c>MatchState</c>, and only hypothetical ones built from their own view via
+    /// <c>SpincioEngine.Hypothetical</c>.
     /// </summary>
     [Fact]
-    public void Only_the_search_bot_handles_match_states()
+    public void Only_the_search_bots_handle_match_states()
     {
+        string[] searchBots = ["Spincio.Bots.PimcBot", "Spincio.Bots.LookaheadBot", "Spincio.Bots.DealSearch"];
         var result = Types.InAssembly(Bots).ShouldNot().HaveDependencyOn("Spincio.Engine.MatchState").GetResult();
 
         (result.FailingTypeNames ?? [])
-            .Where(n => !n.StartsWith("Spincio.Bots.PimcBot", StringComparison.Ordinal))
+            .Where(n => !searchBots.Any(b => n.StartsWith(b, StringComparison.Ordinal)))
             .ShouldBeEmpty();
     }
 

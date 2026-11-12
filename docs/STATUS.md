@@ -31,13 +31,17 @@
 | M20 | Modalità Spincione (1.9.0, regole v1.5) | ✅ Fatto | Regole dettate dal proprietario (SPEC §1.7, AT-41…AT-50, ADR 0018); motore con due mazzi e Spincio identico al bit (AT-50); CPU e simulatore; menu, pagina Online, inviti, Regole; online con punto di ripristino; `layout.mjs … spincione` su 3 schermi |
 | M21 | Gemella nello Spincione (1.10.0, regole v1.6) | ✅ Fatto | Dettata dal proprietario (SP10, AT-51): la carta che prende la gemella vale 2, con lo spazzino 3 ("Gemella con cappella"); riepilogo, pagina Regole, CPU (peso 20); salvataggi di Spincione 1.9.0 non ripresi |
 | M22 | Asso che fa spazzino all'ultima giocata e Spincione a 101 (1.11.0, regole v1.7) | ✅ Fatto | Dettate dal proprietario. Asso: Spincio e Spincione (P6, P8, AT-37 cambiato, AT-52), anche asso su asso, le altre carte no. Spincione a 101 con spareggio a 31 (SP11, AT-53); il menu dice "si vince a 101". CPU, pagina Regole; salvataggi delle regole precedenti non ripresi |
+| M23 | CPU L3: il compagno ragiona sulle carte non uscite (1.12.0) | ✅ Fatto | Richiesta del proprietario (ADR 0019). Mondi possibili delle carte non viste, ricerca minimax fino a fine distribuzione, valore dei punti attesi a fine smazzata, regole compatte verificate contro il motore. Nuovo "Normale" contro vecchio 62%, nuovo "Difficile" contro vecchio 64% (anche nello Spincione); nel browser ~30 ms a mossa. Giudice degli errori nel simulatore (`--audit`) |
 | — | Regola P8 "asso pigliatutto" (SPEC v1.3 → v1.4, dettata dal proprietario) | ✅ v1.3 (PR #6); v1.4 in revisione: con un asso in tavola si prende solo quello | AT-33…AT-39; versione delle regole nel piè di pagina | AT-33…AT-38; salvataggi v1.2 non ripresi |
 
 ## Metriche
 
 | Voce | Valore | Come si rimisura |
 |---|---|---|
-| Test automatici | **362** (Engine 145, Bots 40, Client 113, Architecture 23, Server 41) | `dotnet test Spincio.slnx` |
+| Test automatici | **377** (Engine 145, Bots 54, Client 113, Architecture 23, Server 42) | `dotnet test Spincio.slnx` |
+| **L3 (CPU dell'app dalla 1.12.0) contro L2** | "Normale" (8 mondi, 60.000 posizioni) contro il vecchio "Normale" (L2, 4 mondi): **62,2%** nello Spincio (2000 partite, seed 20000), **62,8%** nello Spincione (600). "Difficile" (16 mondi, 150.000) contro il vecchio "Difficile" (L2, 12 mondi): **64,1%** (1500, seed 21000) e **63,8%** (600). "Difficile" contro "Normale": 53,7%. "Normale" contro L1: 62,7% | `--x Lookahead --worlds 8 --budget 60000 --y Pimc --yworlds 4 [--variant Spincione]` |
+| Tempo di decisione L3 | Browser (Chromium desktop): mediana 30–32 ms, massimo 0,15–0,2 s nello Spincio e 0,31–0,34 s nello Spincione. .NET: ~0,1 µs a posizione, media 2 ms a decisione | `cpu-time.mjs [spincione]`; `--timing Lookahead` |
+| Errori giudicati con le carte vere (`--audit`, 150 partite contro L1) | L1: spazzino lasciato 3,2% delle scelte, mancato 0%, 7 calato 1,9%. L2 "Normale": 3,2%, 0,1%, 3,6%. L3: 5,5%, 13% (quasi sempre tiene l'asso apposta), 4,4%. Il giudice vede solo la mossa dopo: L3 vince comunque il 62–64% | `--audit 1 --x … --y Greedy` |
 | L1 vs L0 | 93,8% (seed 1, regole v1.7); 92,9% con la v1.3, 99,3% con la v1.2. Spincione: 99,9% a 101 (regole v1.7; 96,0% quando si giocava a 31) | `--x Greedy --y Random [--variant Spincione]` |
 | L2 vs L1, Spincione | A 101 (regole v1.7, ~5 smazzate a partita): **50,5% (4 mondi, "Normale") / 59,5% (12 mondi, "Difficile")** su 400 partite, seed 1. A 31 (~2 smazzate): 53,2% (v1.6, 4 mondi); 51,2% / 52,7% (v1.5) | `--x Pimc --y Greedy --variant Spincione` |
 | L2 vs L1 | 56,1% (4 mondi, 800 partite, seed 9000, regole v1.7; 57,8% con la v1.4); 55,5% (8) / 60,3% (16) / 60,3% (32) su 400 partite, seed 5000 | `--x Pimc --y Greedy --worlds N` |
@@ -87,3 +91,4 @@
 | 13/10–15/10/2026 | CPU che tengono l'asso a tavola vuota (1.7.2); partite che sopravvivono a un riavvio del server e aggiornamento di sicurezza SignalR (1.8.0, M19); server Render attivo e nell'app (1.8.1) |
 | 17/10/2026 | Modalità Spincione, regole v1.5 (M20, versione 1.9.0); gemella, regole v1.6 (M21, versione 1.10.0) |
 | 22–23/10/2026 | Asso che fa spazzino all'ultima giocata e Spincione a 101, regole v1.7 (M22, versione 1.11.0) |
+| 12/11/2026 | CPU L3 per tutte le CPU, compagno compreso (M23, versione 1.12.0, ADR 0019) |

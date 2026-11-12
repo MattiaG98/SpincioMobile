@@ -33,7 +33,10 @@ public class MoveAnimationTests
         public Task SettleAsync()
         {
             Settles++;
-            Points.AddRange(_flying.Select(f => (f.Gain, f.Before, session.View.Score)));
+            // What the board shows: while the round summary is open, the score without the end-of-round points (Home.razor).
+            // A sweep on the last play (the ace, P6) lands just as the round ends.
+            var shown = session.PendingSummary is { } pending ? PointsGain.ScoreBefore(pending) : session.View.Score;
+            Points.AddRange(_flying.Select(f => (f.Gain, f.Before, shown)));
             _flying.Clear();
             return Task.CompletedTask;
         }

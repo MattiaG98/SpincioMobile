@@ -19,13 +19,13 @@ public sealed class LocalGameSession : IGameSession
     public static readonly TimeSpan DefaultCpuDelay = TimeSpan.FromMilliseconds(450);
 
     /// <summary>
-    /// "Difficile": L2 with the browser budget (WebAssembly runs interpreted, so fewer worlds than the simulator).
-    /// 12 worlds: at most ~0.5 s per decision in desktop Chromium (tools/browser-checks/cpu-time.mjs).
+    /// "Difficile" (1.12.0, ADR 0019): L3 with 16 worlds and at most 150,000 positions per decision, so a move takes about
+    /// the same time on every phone (tools/browser-checks/cpu-time.mjs).
     /// </summary>
-    public static readonly PimcOptions BrowserPimc = PimcOptions.Default with { Worlds = 12 };
+    public static readonly LookaheadOptions HardCpu = LookaheadOptions.Default with { Worlds = 16, NodeBudget = 150_000 };
 
-    /// <summary>"Normale" (1.2.0): L2 with a small search; it beats the L1 used before in 58% of matches.</summary>
-    public static readonly PimcOptions NormalPimc = PimcOptions.Default with { Worlds = 4 };
+    /// <summary>"Normale" (1.12.0, ADR 0019): L3 with 8 worlds and at most 60,000 positions per decision.</summary>
+    public static readonly LookaheadOptions NormalCpu = LookaheadOptions.Default with { Worlds = 8, NodeBudget = 60_000 };
 
     private readonly ISavedGameStore _store;
     private readonly Func<TimeSpan, Task> _delay;
@@ -216,14 +216,15 @@ public sealed class LocalGameSession : IGameSession
     }
 
     /// <summary>
-    /// The three CPUs' level. "Normale" is still stored as <see cref="BotLevel.Greedy"/>, so saved options and games stay
-    /// valid (a saved game replays its commands, whatever the bot), but since 1.2.0 it searches too, with fewer worlds.
+    /// The three CPUs' level, partner included. The options still store "Normale" as <see cref="BotLevel.Greedy"/> and
+    /// "Difficile" as <see cref="BotLevel.Pimc"/>, so saved options and games stay valid (a saved game replays its
+    /// commands, whatever the bot); since 1.12.0 both play L3 (ADR 0019), "Difficile" with a larger search.
     /// </summary>
     public static IBot CpuFor(BotLevel difficulty) => difficulty switch
     {
-        BotLevel.Pimc => new PimcBot(BrowserPimc),
+        BotLevel.Pimc or BotLevel.Lookahead => new LookaheadBot(HardCpu),
         BotLevel.Random => new RandomBot(),
-        _ => new PimcBot(NormalPimc),
+        _ => new LookaheadBot(NormalCpu),
     };
 
     private void Reset(ulong seed, BotLevel difficulty, GameVariant variant)

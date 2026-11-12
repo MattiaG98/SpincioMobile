@@ -1,4 +1,3 @@
-using System.Collections.Immutable;
 using Spincio.Engine;
 
 namespace Spincio.Bots;
@@ -40,6 +39,8 @@ public sealed class PimcBot(PimcOptions? options = null, GreedyBot? rolloutPolic
 {
     private readonly PimcOptions _options = options ?? PimcOptions.Default;
     private readonly GreedyBot _rollout = rolloutPolicy ?? new GreedyBot();
+    private readonly WorldSampler _sampler = new(
+        (options ?? PimcOptions.Default).SamplingAttempts, (options ?? PimcOptions.Default).InferSilence);
 
     public string Name => "L2-PIMC";
 
@@ -66,8 +67,7 @@ public sealed class PimcBot(PimcOptions? options = null, GreedyBot? rolloutPolic
         }
 
         var unseen = memory.Unseen().ToArray();
-        int hiddenInHands = view.HandCounts.Where((_, i) => i != view.Seat.Index).Sum();
-        if (unseen.Length != hiddenInHands + view.DeckCount)
+        if (!WorldSampler.Fits(view, unseen))
         {
             // Memory does not match the view (e.g. a bot that joined mid-round): fall back to L1.
             return _rollout.Choose(view, memory, ref rng);
@@ -102,67 +102,9 @@ public sealed class PimcBot(PimcOptions? options = null, GreedyBot? rolloutPolic
         return bestMoves[rng.NextInt(bestMoves.Count)];
     }
 
-    /// <summary>
-    /// Deals the unseen cards to the other hands and the deck at random, retrying to honour the
-    /// declarations (A1) other seats made in the current deal, and their silences (<see cref="PimcOptions.InferSilence"/>):
-    /// their dealt hand is what they have already played this deal plus what we guess they still hold.
-    /// </summary>
-    internal HiddenGuess SampleWorld(PlayerView view, BotMemory memory, Card[] unseen, ref Pcg32 rng)
-    {
-        var declared = view.Declarations
-            .Where(d => d.DealNumber == view.DealNumber && d.Seat != view.Seat)
-            .ToList();
-        var silent = _options.InferSilence
-            ? Seat.All.Where(s => s != view.Seat && !memory.PlayedThisDeal(s).IsEmpty && !declared.Exists(d => d.Seat == s)).ToList()
-            : [];
-
-        HiddenGuess? guess = null;
-        for (int attempt = 0; attempt < Math.Max(1, _options.SamplingAttempts); attempt++)
-        {
-            guess = Deal(view, memory, rng.Shuffle(unseen));
-            if (declared.TrueForAll(d => Consistent(d, guess, memory, view.Variant))
-                && silent.TrueForAll(s => NothingToDeclare(s, guess, memory, view.Variant, view.DealNumber)))
-            {
-                return guess;
-            }
-        }
-
-        return guess!; // best effort: an unconstrained world
-    }
-
-    private static bool NothingToDeclare(Seat seat, HiddenGuess guess, BotMemory memory, GameVariant variant, int dealNumber) =>
-        Declarations.Evaluate(memory.PlayedThisDeal(seat).AddRange(guess.Hands[seat.Index]), variant, dealNumber).Points == 0;
-
-    private static bool Consistent(DeclarationRecord declaration, HiddenGuess guess, BotMemory memory, GameVariant variant)
-    {
-        var dealtHand = memory.PlayedThisDeal(declaration.Seat).AddRange(guess.Hands[declaration.Seat.Index]);
-        var value = Declarations.Evaluate(dealtHand, variant, declaration.DealNumber);
-        return value.Kind == declaration.Kind && value.Points == declaration.Points;
-    }
-
-    private static HiddenGuess Deal(PlayerView view, BotMemory memory, Card[] shuffled)
-    {
-        var hands = new ImmutableArray<Card>[Seat.Count];
-        int position = 0;
-        foreach (var seat in Seat.All)
-        {
-            if (seat == view.Seat)
-            {
-                hands[seat.Index] = view.Hand;
-                continue;
-            }
-
-            int count = view.HandCounts[seat.Index];
-            hands[seat.Index] = [.. shuffled.AsSpan(position, count)];
-            position += count;
-        }
-
-        return new HiddenGuess(
-            [.. hands],
-            [.. shuffled.AsSpan(position)],
-            [memory.CapturedBy(Team.A), memory.CapturedBy(Team.B)],
-            memory.LastCapturingTeam);
-    }
+    /// <summary>One world of hidden cards consistent with what the seat knows (<see cref="WorldSampler"/>).</summary>
+    internal HiddenGuess SampleWorld(PlayerView view, BotMemory memory, Card[] unseen, ref Pcg32 rng) =>
+        _sampler.Sample(view, memory, unseen, ref rng);
 
     /// <summary>Plays <paramref name="first"/>, then L1 for everyone until the round is scored.</summary>
     private double Rollout(MatchState world, Command first, Team us, BotMemory memory, ref Pcg32 rng)
