@@ -165,6 +165,7 @@ Mosse legali dalla vista → se c'è un accuso lo dichiara → per N mondi: dist
 | Salvataggio offline | JSON `{RulesVersion, Seed, Commands[], Difficulty}` in `localStorage["spincio.savedGame"]` | `SavedGame` |
 | Seat online | `localStorage["spincio.onlineSeat"]` = token segreto del posto | `LocalStorageOnlineSeatStore` |
 | Statistiche | JSON `PlayerStats` (con `Version`) in `localStorage["spincio.stats"]`; versione diversa o JSON illeggibile = statistiche vuote | `StatsService` |
+| Novità lette | versione dell'ultima nota aperta in `localStorage["spincio.notesSeen"]`; se manca o è più vecchia, "Novità" si illumina | `ReleaseNotesService` |
 | Eventi su SignalR | JSON con discriminatore `$kind`; `Seat` come numero | `SpincioJson` |
 | Impegno del seed | `SHA-256("{seed}:{salt}")` in esadecimale minuscolo | `Commitment.Of` |
 

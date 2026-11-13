@@ -5,6 +5,7 @@
 @inject IJSRuntime JS
 @inject SettingsService Settings
 @inject StatsService Stats
+@inject ReleaseNotesService News
 
 <PageTitle>Spincio</PageTitle>
 
@@ -46,7 +47,11 @@
                 <button type="button" class="btn btn-dark" @onclick="() => _creditsOpen = true">🤝 Contributi</button>
             </div>
         </div>
-        <p class="app-version">v@(AppInfo.Version)</p>
+        <div class="menu-foot">
+            <p class="app-version">v@(AppInfo.Version)</p>
+            @* The release notes; lit up until the newest one has been opened on this device. *@
+            <button type="button" class="news-link @(_newsUnread ? "unread" : "")" @onclick="OpenNewsAsync">🆕 Novità</button>
+        </div>
     </section>
 }
 else
@@ -216,6 +221,11 @@ else
     <RulesPanel OnClose="() => _rulesOpen = false" />
 }
 
+@if (_newsOpen)
+{
+    <NewsPanel OnClose="() => _newsOpen = false" />
+}
+
 @if (_creditsOpen)
 {
     <CreditsPanel OnClose="() => _creditsOpen = false" />
@@ -247,6 +257,8 @@ else
     private bool _rulesOpen;
     private bool _statsOpen;
     private bool _creditsOpen;
+    private bool _newsOpen;
+    private bool _newsUnread;
     private bool _landingPoints;
     private Card? _choosing;
     private IReadOnlyList<PlayCard> _choices = [];
@@ -260,6 +272,15 @@ else
         {
             _hasSave = await Host.Local.HasSavedGameAsync();
         }
+
+        _newsUnread = await News.HasUnreadAsync();
+    }
+
+    private async Task OpenNewsAsync()
+    {
+        _newsOpen = true;
+        _newsUnread = false;
+        await News.MarkReadAsync();
     }
 
     private RenderFragment SeatAt(PlayerView view, int position)

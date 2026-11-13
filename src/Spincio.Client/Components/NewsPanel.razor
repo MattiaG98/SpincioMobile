@@ -1,0 +1,36 @@
+@using Spincio.Client.Game
+@* "Novità": what changed in each version, newest first (ReleaseNotes). *@
+<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="news-title">
+    <div class="panel game-panel news">
+        <header class="panel-head">
+            <h2 id="news-title">Novità</h2>
+            <button type="button" class="close" aria-label="Chiudi" @onclick="OnClose">✕</button>
+        </header>
+
+        @foreach (var note in ReleaseNotes.All)
+        {
+            <section class="release" @key="note.Version">
+                <h3>@note.Title</h3>
+                <p class="release-version">
+                    Versione @note.Version · @note.DateText
+                    @if (note.Version == AppInfo.Version)
+                    {
+                        <span class="badge">in uso</span>
+                    }
+                </p>
+                <ul>
+                    @foreach (var change in note.Changes)
+                    {
+                        <li>@change</li>
+                    }
+                </ul>
+            </section>
+        }
+
+        <button type="button" class="btn btn-gold" @onclick="OnClose">Chiudi</button>
+    </div>
+</div>
+
+@code {
+    [Parameter] public EventCallback OnClose { get; set; }
+}

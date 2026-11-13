@@ -120,6 +120,18 @@ button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 .stat-table td:last-child { text-align: right; font-weight: 700; }
 .stats-empty { text-align: center; opacity: .75; }
 .app-version { margin: 0; font-size: .75rem; opacity: .6; text-align: center; }
+/* Version and "Novità" share the last line of the menu: no extra row, so the menu never scrolls (iPhone SE). */
+.menu-foot { display: flex; align-items: center; justify-content: center; gap: 10px; }
+.news-link { position: relative; font-size: .8rem; font-weight: 700; padding: 4px 12px; border-radius: 999px;
+             color: #fff; background: #0003; box-shadow: inset 0 0 0 1px #fff4; }
+.news-link.unread { color: #3b2600; background: linear-gradient(#ffe27a, #f2b705); box-shadow: 0 2px 8px #0006; }
+.news-link.unread::after { content: ""; position: absolute; top: -3px; right: -3px; width: 10px; height: 10px; border-radius: 50%;
+                           background: #e0574c; box-shadow: 0 0 0 2px #1f5d3a; }
+.news .panel-head { position: sticky; top: 0; z-index: 1; }
+.news section { display: flex; flex-direction: column; gap: 4px; }
+.news h3 { margin: 6px 0 0; font-size: 1rem; color: #1f5d3a; border-bottom: 2px solid #e9c46a; padding-bottom: 2px; }
+.news .release-version { margin: 0; font-size: .78rem; opacity: .7; display: flex; align-items: center; gap: 6px; }
+.news ul { margin: 0; padding-left: 1.1em; display: flex; flex-direction: column; gap: 4px; font-size: .92rem; line-height: 1.4; }
 .result .final-score { display: flex; justify-content: center; gap: 24px; font-size: 1.1rem; margin: 6px 0 0; }
 .result .final-score strong { font-size: 2rem; display: block; text-align: center; }
 .result .reason { margin: 0; text-align: center; opacity: .75; }
