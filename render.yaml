@@ -17,6 +17,9 @@ services:
       # and keeps it across deploys; nobody needs to know it.
       - key: Rooms__CheckpointKey
         generateValue: true
+      # Not declared here on purpose: Feedback__GitHubRepository and Feedback__GitHubToken (players' reports about CPU
+      # moves become issues, ADR 0020) are added by the owner in Render → Environment (docs/RUNBOOK.md), so a Blueprint
+      # sync never waits for a secret. Until they exist, reports wait on the phones.
     buildFilter:
       paths:
         - src/Spincio.Server/**

@@ -87,6 +87,37 @@ Funzionamento:
   scaricare le immagini Microsoft:
   `docker build -f src/Spincio.Server/Dockerfile -t spincio-server . && docker run -e PORT=10000 -p 10000:10000 spincio-server`.
 
+## Segnalazioni delle mosse della CPU (ADR 0020)
+Nell'app (partite contro la CPU) il giocatore segnala una mossa del compagno dal menu di pausa, dal riepilogo di fine
+smazzata o dalla schermata di fine partita. La segnalazione resta sul telefono finché il server non la prende; il server
+la ricontrolla rigiocando la partita e apre una **issue** su GitHub con l'etichetta `cpu-report`.
+
+**Attivazione (una volta sola, dal computer).** Finché non è fatta, le segnalazioni aspettano sui telefoni e partono
+da sole dopo:
+1. Su GitHub crea un repository **privato**, per esempio `SpincioFeedback` (New repository → Private). Privato perché
+   contiene i testi scritti dai giocatori.
+2. Crea un token: avatar → **Settings → Developer settings → Personal access tokens → Fine-grained tokens → Generate
+   new token**. Nome "spincio-server", scadenza a scelta (poi va rinnovato), **Repository access: Only select
+   repositories → SpincioFeedback**, **Permissions → Repository → Issues: Read and write**. Nient'altro. Copia il token.
+3. Su Render, servizio **spincio-server** → **Environment** → aggiungi:
+   - `Feedback__GitHubRepository` = `MattiaG98/SpincioFeedback`
+   - `Feedback__GitHubToken` = il token (Render lo tiene segreto)
+
+   Poi **Save changes**: il server si riavvia da solo.
+4. Prova: dall'app segnala una mossa; in pochi secondi (fino a un minuto se il server dormiva) compare la issue.
+   Se non arriva, nei **Logs** di Render c'è "GitHub refused a CPU report … HTTP 401/403/404" (token o nome sbagliati).
+
+**Lettura e analisi.**
+- Ogni issue riporta il testo del giocatore, i motivi scelti, la carta suggerita, tavola e mano della CPU in quel
+  momento, e in fondo la segnalazione in JSON.
+- Per vedere come ragionava la CPU: salva il blocco JSON in un file e lancia
+  `dotnet run --project tools/Spincio.Simulator -c Release -- --report file.json` (64 mondi; `--worlds N` per cambiare).
+  Stampa ogni giocata possibile con il suo valore in punti, la giocata fatta (`<- played`) e quella suggerita
+  (`<- suggested`).
+- Un suggerimento diventa una modifica della CPU solo se vince nei tornei del simulatore (almeno 1000 partite): i
+  giocatori a volte hanno ragione e a volte no (ADR 0019, lo spazzino immediato con l'asso).
+- Limite: 10 segnalazioni all'ora per indirizzo (`Feedback__PerClientPerHour`).
+
 ## Giocare online con gli amici (server temporaneo, ADR 0014)
 Chi ospita la partita:
 1. da un computer (o dal telefono in "versione desktop") apre `https://github.com/MattiaG98/SpincioMobile`, pulsante

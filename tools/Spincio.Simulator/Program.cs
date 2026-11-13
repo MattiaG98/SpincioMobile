@@ -7,6 +7,7 @@ using Spincio.Simulator;
 // Usage: Spincio.Simulator [--x Greedy] [--y Random] [--matches 1000] [--seed 1] [--worlds 16] [--yworlds N] [--variant Spincione]
 //        (levels: Random, Greedy, Pimc, Lookahead; L3 also takes --budget N --plies N, --ybudget N --yplies N)
 //        Spincio.Simulator --timing Pimc [--worlds 16]   (average decision time)
+//        Spincio.Simulator --report report.json [--worlds 64]   (how the CPU weighed a reported move)
 //        Spincio.Simulator --audit 1 --x Pimc --worlds 4 --y Greedy --matches 200   (mistakes judged with the real hands)
 var options = args.Chunk(2).Where(p => p.Length == 2).ToDictionary(p => p[0].TrimStart('-'), p => p[1], StringComparer.OrdinalIgnoreCase);
 
@@ -32,6 +33,13 @@ var lookaheadY = lookahead with
     NodeBudget = (long)Number("ybudget", lookahead.NodeBudget),
     MaxPlies = (int)Number("yplies", lookahead.MaxPlies),
 };
+
+if (options.TryGetValue("report", out var reportFile))
+{
+    // A player's report about a CPU move (ADR 0020), saved from the issue's JSON block.
+    Console.Write(ReportReplay.Explain(File.ReadAllText(reportFile), options.ContainsKey("worlds") ? worlds : 64));
+    return;
+}
 
 var variant = Enum.Parse<GameVariant>(options.GetValueOrDefault("variant", nameof(GameVariant.Spincio)), ignoreCase: true);
 

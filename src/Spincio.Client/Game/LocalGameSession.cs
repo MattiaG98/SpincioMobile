@@ -15,6 +15,9 @@ public sealed class LocalGameSession : IGameSession
     public const string RulesVersion = "1.7";
     public const int FeedLength = 60;
     public static readonly Seat Human = new(0);
+
+    /// <summary>The human's partner, a CPU (Titti): the moves the player can report (ADR 0020).</summary>
+    public static readonly Seat Partner = new(2);
     /// <summary>CPU "thinking" pause; the card animation (about 0.4–1.3 s) comes on top of it.</summary>
     public static readonly TimeSpan DefaultCpuDelay = TimeSpan.FromMilliseconds(450);
 
@@ -58,6 +61,9 @@ public sealed class LocalGameSession : IGameSession
     public bool IsStarted => _state is not null;
 
     public ulong Seed { get; private set; }
+
+    /// <summary>The match so far as encoded commands (ADR 0003): with <see cref="Seed"/> and <see cref="Variant"/> it replays it.</summary>
+    public IReadOnlyList<string> Commands => _commands;
 
     /// <summary>Level of the three CPUs (partner included).</summary>
     public BotLevel Difficulty { get; private set; } = BotLevel.Greedy;

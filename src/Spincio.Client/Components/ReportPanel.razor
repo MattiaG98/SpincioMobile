@@ -1,0 +1,221 @@
+@using Spincio.Bots
+@using Spincio.Client.Game
+@using Spincio.Contracts
+@using Spincio.Engine
+@inject CpuReportService Reports
+
+@* ADR 0020: the player picks a move of the partner and says how it should have reasoned; the report carries the match. *@
+<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="report-title">
+    <div class="panel game-panel report">
+        <header class="panel-head">
+            <h2 id="report-title">@(_sent is null ? $"Segnala una mossa di {_partner}" : "Grazie!")</h2>
+            <button type="button" class="close" aria-label="Chiudi" @onclick="OnClose">✕</button>
+        </header>
+
+        @if (_sent is { } sent)
+        {
+            <div class="report-done">
+                <p class="report-done-icon" aria-hidden="true">🙏</p>
+                <p>La segnalazione su <strong>«@MoveReview.Describe(sent.Play)»</strong> è salvata e partirà da sola, anche se ora sei offline.</p>
+                <p>La rigiochiamo con le stesse carte per capire l'errore; i miglioramenti della CPU arrivano con le prossime versioni (li trovi in «Novità»).</p>
+                @if (_pending > 1)
+                {
+                    <p class="hint">Segnalazioni in attesa di invio: @_pending</p>
+                }
+                <button type="button" class="btn btn-gold" @onclick="Again">Segnala un'altra mossa</button>
+                <button type="button" class="btn btn-dark" @onclick="OnClose">Torna alla partita</button>
+            </div>
+        }
+        else if (_moves.Count == 0)
+        {
+            <p>@_partner non ha ancora giocato in questa partita: quando avrà giocato, ritrovi qui le sue mosse.</p>
+            <button type="button" class="btn btn-gold" @onclick="OnClose">Torna alla partita</button>
+        }
+        else
+        {
+            <p class="report-intro">
+                @_partner ha giocato una carta che non ti convince? Scegli la mossa e spiega come avrebbe dovuto ragionare:
+                la segnalazione arriva con la partita esatta, così possiamo rigiocarla e migliorare la CPU.
+            </p>
+
+            <section>
+                <h3><span class="step">1</span>Quale mossa?</h3>
+                @* Once a move is chosen the list folds to it, so the next steps come right below without scrolling. *@
+                <ul class="report-moves" role="radiogroup" aria-label="Mosse di @_partner, dalla più recente">
+                    @foreach (var move in Visible)
+                    {
+                        bool on = move == _selected;
+                        <li @key="move.CommandCount">
+                            <button type="button" role="radio" aria-checked="@(on ? "true" : "false")" class="report-move @(on ? "on" : "")" @onclick="() => Select(move)">
+                                <CardView Card="move.Play.Card" Small="true" />
+                                <span class="report-move-text">
+                                    <strong>@MoveReview.Describe(move.Play)</strong>
+                                    <small>@MoveReview.When(move)@(move == _moves[0] ? " · l'ultima" : "")</small>
+                                </span>
+                            </button>
+                        </li>
+                    }
+                </ul>
+                @if (_selected is not null)
+                {
+                    <button type="button" class="report-more" @onclick="() => _selected = null">Cambia mossa</button>
+                }
+                else if (!_showAll && _moves.Count > FirstMoves)
+                {
+                    <button type="button" class="report-more" @onclick="() => _showAll = true">Mostra le mosse precedenti (@(_moves.Count - FirstMoves))</button>
+                }
+            </section>
+
+            @if (_selected is { } chosen)
+            {
+                <div class="report-situation">
+                    <p>Sul tavolo c'era:</p>
+                    <div class="mini-cards">
+                        @if (chosen.TableBefore.IsEmpty)
+                        {
+                            <span class="hint">niente</span>
+                        }
+                        @foreach (var card in chosen.TableBefore)
+                        {
+                            <CardView Card="card" Small="true" />
+                        }
+                    </div>
+                    @if (chosen.HandBefore is { } hand)
+                    {
+                        <p>@_partner aveva:</p>
+                        <div class="mini-cards">
+                            @foreach (var card in hand)
+                            {
+                                <CardView Card="card" Small="true" Highlighted="card == chosen.Play.Card" />
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="hint">Le altre carte di @_partner si vedono a fine mano.</p>
+                    }
+                </div>
+
+                <section>
+                    <h3><span class="step">2</span>Cosa non va?</h3>
+                    <div class="chips">
+                        @foreach (var (key, label) in CpuMoveReports.ReasonLabels)
+                        {
+                            bool on = _reasons.Contains(key);
+                            <button type="button" class="chip @(on ? "on" : "")" aria-pressed="@(on ? "true" : "false")" @onclick="() => Toggle(key)">@label</button>
+                        }
+                    </div>
+                </section>
+
+                @if (chosen.HandBefore is { } options && options.Distinct().Count(c => c != chosen.Play.Card) > 0)
+                {
+                    <section>
+                        <h3><span class="step">3</span>Quale carta doveva giocare? <small>facoltativo</small></h3>
+                        <div class="mini-cards pick">
+                            @foreach (var card in options.Distinct().Where(c => c != chosen.Play.Card))
+                            {
+                                <CardView Card="card" Small="true" Playable="true" Highlighted="card == _better" OnClick="Pick" />
+                            }
+                        </div>
+                    </section>
+                }
+
+                <section>
+                    <h3><span class="step">@(chosen.HandBefore is null ? 3 : 4)</span>Come avrebbe dovuto ragionare?</h3>
+                    <textarea @bind="_text" @bind:event="oninput" maxlength="@CpuMoveReports.MaxTextLength" rows="3" aria-label="Come avrebbe dovuto ragionare"
+                              placeholder="Es. «Doveva prendere il settebello con il suo 7, non calare il re: il 7 di denari era ancora fuori»"></textarea>
+                    <p class="counter">@_text.Length/@CpuMoveReports.MaxTextLength</p>
+                </section>
+            }
+
+            <div class="report-actions">
+                @* The button names the next step until the report can go. *@
+                <button type="button" class="btn btn-gold" disabled="@(!CanSend)" @onclick="SendAsync">
+                    @(_selected is null ? "Scegli una mossa" : CanSend ? "Invia segnalazione" : "Dicci cosa non va")
+                </button>
+                <p class="hint">Inviamo carte, mosse e il tuo testo, mai il tuo nome. Non scrivere dati personali.</p>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private const int FirstMoves = 6;
+    private string _partner = "";
+    private IReadOnlyList<string> _commands = [];
+    private IReadOnlyList<ReviewableMove> _moves = [];
+    private ReviewableMove? _selected;
+    private ReviewableMove? _sent;
+    private readonly HashSet<string> _reasons = [];
+    private Card? _better;
+    private string _text = "";
+    private bool _showAll;
+    private int _pending;
+
+    /// <summary>The offline match; the panel works on the moves played so far when it opens.</summary>
+    [Parameter, EditorRequired] public LocalGameSession Session { get; set; } = default!;
+
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    private IEnumerable<ReviewableMove> Visible =>
+        _selected is { } chosen ? [chosen] : _showAll ? _moves : _moves.Take(FirstMoves);
+
+    private bool CanSend => _selected is not null && (_text.Trim().Length >= 3 || _reasons.Count > 0 || _better is not null);
+
+    protected override void OnInitialized()
+    {
+        _partner = Session.SeatName(LocalGameSession.Partner);
+        _commands = [.. Session.Commands];
+        _moves = MoveReview.MovesOf(LocalGameSession.Partner, Session.Seed, Session.Variant, _commands);
+    }
+
+    private void Select(ReviewableMove move)
+    {
+        if (move != _selected)
+        {
+            _selected = move;
+            _better = null;
+        }
+    }
+
+    private void Toggle(string reason)
+    {
+        if (!_reasons.Remove(reason))
+        {
+            _reasons.Add(reason);
+        }
+    }
+
+    private void Pick(Card card) => _better = _better == card ? null : card;
+
+    private async Task SendAsync()
+    {
+        if (!CanSend || _selected is not { } move)
+        {
+            return;
+        }
+
+        var report = new CpuMoveReport(
+            AppInfo.Version,
+            LocalGameSession.RulesVersion,
+            Session.Variant,
+            Session.Difficulty == BotLevel.Pimc ? "Difficile" : "Normale",
+            Session.Seed,
+            [.. _commands.Take(move.CommandCount)],
+            [.. CpuMoveReports.ReasonKeys.Where(_reasons.Contains)],
+            _better?.ToString(),
+            _text.Trim());
+        await Reports.SubmitAsync(report);
+        _pending = await Reports.PendingAsync();
+        _sent = move;
+    }
+
+    private void Again()
+    {
+        _sent = null;
+        _selected = null;
+        _reasons.Clear();
+        _better = null;
+        _text = "";
+    }
+}

@@ -84,6 +84,25 @@ public sealed class LookaheadBot(LookaheadOptions? options = null) : IBot
         return bestMoves[rng.NextInt(bestMoves.Count)];
     }
 
+    /// <summary>
+    /// Why it plays what it plays: every legal play with its average value over the sampled worlds (in points for its
+    /// team), best first. Empty when there is nothing to weigh (a declaration, a single play, a memory started mid-round).
+    /// Used to study the moves players report (ADR 0020).
+    /// </summary>
+    public IReadOnlyList<(PlayCard Play, double Value)> Explain(PlayerView view, BotMemory memory, ref Pcg32 rng)
+    {
+        ArgumentNullException.ThrowIfNull(view);
+        ArgumentNullException.ThrowIfNull(memory);
+        var legal = SpincioEngine.LegalCommands(view).OfType<PlayCard>().Cast<Command>().ToList();
+        var unseen = memory.Unseen().ToArray();
+        if (legal.Count < 2 || !WorldSampler.Fits(view, unseen) || Values(view, memory, unseen, legal, ref rng) is not { } values)
+        {
+            return [];
+        }
+
+        return [.. legal.Select((c, i) => ((PlayCard)c, values[i])).OrderByDescending(p => p.Item2)];
+    }
+
     /// <summary>Average value of each legal play over the sampled worlds, or null if a world does not fit the search.</summary>
     internal double[]? Values(PlayerView view, BotMemory memory, Card[] unseen, IReadOnlyList<Command> legal, ref Pcg32 rng)
     {
