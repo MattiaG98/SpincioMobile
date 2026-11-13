@@ -4,6 +4,11 @@ Versioni dell'app Spincio ([versionamento semantico](https://semver.org/lang/it/
 `Directory.Build.props` (`<Version>`) e si vede nel menu iniziale e nel menu di pausa. Le regole hanno una versione propria
 (`docs/SPEC.md`, "regole v1.7" nel menu di pausa).
 
+## 1.14.2 — 13/11/2026
+- Il pulsante per segnalare le mosse del compagno, accanto al ritratto di Titti, ha la scritta **"Titti dioporco"**
+  (scelta del proprietario) al posto di "🤔 Segnala". Per i lettori di schermo il nome comincia con la stessa scritta e
+  dice che cosa fa ("… segnala una mossa di Titti"). Il resto è invariato.
+
 ## 1.14.1 — 13/11/2026
 - Il pulsante **"🤔 Segnala"** è accanto al ritratto di Titti, in alto sul tavolo, su richiesta del proprietario. Non
   è più nel menu di pausa; restano i collegamenti nel riepilogo di fine smazzata e a fine partita.

@@ -14,7 +14,8 @@
         @if (OnReport.HasDelegate)
         {
             @* ADR 0020: next to the partner's picture, where the move to report was just played. *@
-            <button type="button" class="report-btn" aria-label="Segnala una mossa di @Name" @onclick="OnReport">🤔 Segnala</button>
+            @* The label is the owner's (1.14.2); the accessible name starts with it and says what the button does. *@
+            <button type="button" class="report-btn" aria-label="@Name dioporco: segnala una mossa di @Name" @onclick="OnReport">@Name dioporco</button>
         }
     </div>
     <div class="seat-cards">
