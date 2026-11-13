@@ -156,4 +156,5 @@ Variabili d'ambiente: `DOTNET_ROOT=/root/.dotnet`, `DOTNET_CLI_TELEMETRY_OPTOUT=
 - [ ] Verifica nel browser se è cambiata la UI
 - [ ] Aggiornati `docs/STATUS.md`, `docs/KNOWLEDGE.md` (lezioni apprese), `docs/AT-MAP.md`, gli ADR
 - [ ] Versione aumentata in `Directory.Build.props` e voce in `CHANGELOG.md` (ADR 0012); dopo il merge, tag `vX.Y.Z`
+- [ ] Nota per i giocatori in cima a `src/Spincio.Client/Game/ReleaseNotes.cs` (pannello "Novità"): titolo breve e frasi semplici, senza termini tecnici; il test `ReleaseNotesTests` fallisce se la versione nuova non ce l'ha
 - [ ] Commit con messaggio in inglese, push, CI verde

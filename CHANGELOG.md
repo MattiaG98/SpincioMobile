@@ -4,6 +4,17 @@ Versioni dell'app Spincio ([versionamento semantico](https://semver.org/lang/it/
 `Directory.Build.props` (`<Version>`) e si vede nel menu iniziale e nel menu di pausa. Le regole hanno una versione propria
 (`docs/SPEC.md`, "regole v1.7" nel menu di pausa).
 
+## 1.13.0 — 13/11/2026
+- **Novità**, su richiesta del proprietario: una sezione dell'app con le note di versione per i giocatori.
+  - Si apre dal pulsante **"🆕 Novità"** nel menu iniziale, accanto al numero di versione: niente riga in più, così il
+    menu resta senza scorrimento anche su iPhone SE.
+  - Mostra ogni versione, dalla più recente: titolo, data e le modifiche in parole semplici. La versione in uso ha
+    l'etichetta "in uso".
+  - Quando arriva una versione nuova il pulsante si illumina, con un pallino rosso, finché non lo si apre. Il telefono
+    ricorda l'ultima nota letta.
+- Da ora ogni versione ha la sua nota per i giocatori (`src/Spincio.Client/Game/ReleaseNotes.cs`), oltre a questo
+  changelog tecnico: un test controlla che la versione in uso ce l'abbia.
+
 ## 1.12.0 — 12/11/2026
 - **CPU nuove, compagno compreso** (ADR 0019), su richiesta del proprietario: "il compagno deve giocare le carte che
   conviene giocare in base a quelle che non sono ancora uscite".

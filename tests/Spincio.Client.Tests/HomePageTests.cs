@@ -20,6 +20,7 @@ public class HomePageTests : BunitContext
         Services.AddSingleton<IConfiguration>(new ConfigurationBuilder().Build());
         Services.AddSingleton<SettingsService>();
         Services.AddSingleton<StatsService>();
+        Services.AddSingleton<ReleaseNotesService>();
         JSInterop.Mode = JSRuntimeMode.Loose; // card animations call into JS (js/moves.js)
     }
 
@@ -168,8 +169,37 @@ public class HomePageTests : BunitContext
     {
         var page = Render<Home>();
 
-        AppInfo.Version.ShouldBe("1.12.0");
-        page.Find("section.start .app-version").TextContent.ShouldBe("v1.12.0");
+        AppInfo.Version.ShouldBe("1.13.0");
+        page.Find("section.start .app-version").TextContent.ShouldBe("v1.13.0");
+    }
+
+    /// <summary>"Novità": lit up until the newest note is opened, then remembered on the device.</summary>
+    [Fact]
+    public void News_light_up_until_read()
+    {
+        var seen = JSInterop.Setup<string?>("localStorage.getItem", "spincio.notesSeen");
+        seen.SetResult(null); // first visit, or an older version read
+        var page = Render<Home>();
+
+        page.Find(".news-link").ClassList.ShouldContain("unread");
+        page.Find(".news-link").Click();
+
+        page.Find("#news-title").TextContent.ShouldBe("Novità");
+        page.FindAll(".news .release").Count.ShouldBe(ReleaseNotes.All.Count);
+        page.Find(".news .release h3").TextContent.ShouldBe(ReleaseNotes.Latest.Title);
+        page.Find(".news .release .badge").TextContent.ShouldBe("in uso");
+        page.Find(".news-link").ClassList.ShouldNotContain("unread");
+        JSInterop.VerifyInvoke("localStorage.setItem").Arguments.ShouldBe(["spincio.notesSeen", ReleaseNotes.Latest.Version]);
+    }
+
+    [Fact]
+    public void News_already_read_stay_quiet()
+    {
+        JSInterop.Setup<string?>("localStorage.getItem", "spincio.notesSeen").SetResult(ReleaseNotes.Latest.Version);
+
+        var page = Render<Home>();
+
+        page.Find(".news-link").ClassList.ShouldNotContain("unread");
     }
 
     /// <summary>Seed 3: the CPUs empty the table before my first turn; seed 7: there are cards on it.</summary>
