@@ -20,7 +20,7 @@ Client ─────┘      Server
 | `Spincio.Bots` | L0 casuale, L1 greedy, L2 PIMC, **L3 `LookaheadBot`** (entrambi i livelli dell'app e il server dalla 1.12.0, ADR 0019) | Ricevono solo `PlayerView` + `BotMemory`; solo i bot di ricerca (`PimcBot`, `LookaheadBot`/`DealSearch`) toccano stati **ipotetici** (ADR 0008, ADR 0019) |
 | `Spincio.Contracts` | DTO SignalR, `CommandCodec`, `SpincioJson`, `Commitment` | Condiviso da Client e Server; nessuna dipendenza da Bots/Client/Server |
 | `Spincio.Client` | PWA Blazor WebAssembly | La UI vede solo `IGameSession` (vista del giocatore); mai `MatchState` |
-| `Spincio.Server` | Stanze online autoritative | Una coda seriale per stanza; timer con `TimeProvider` |
+| `Spincio.Server` | Stanze online autoritative; `POST /api/cpu-reports` (segnalazioni → issue GitHub, ADR 0020) | Una coda seriale per stanza; timer con `TimeProvider`; il token GitHub solo nelle impostazioni di Render |
 | `tools/Spincio.Simulator` | Tornei tra bot, tempi di decisione | Contiene `MatchRunner` (usa `MatchState`, quindi non sta in Bots) |
 
 Tutte queste regole sono **verificate da test** in `tests/Spincio.Architecture.Tests`.
@@ -143,6 +143,14 @@ Tutte queste regole sono **verificate da test** in `tests/Spincio.Architecture.T
 ### Una mossa, online
 Client: `RemoteGameSession.PlayAsync` → hub `Play(token, expectedSequence, "P0:7D>3S+4B")` → `GameRoom` (coda seriale) valida token, sequenza e regole → `AcceptAsync` → a ogni posto `GameUpdate(sequence, ViewFor(seat), EventsFor(seat))` → timer: pausa CPU oppure timeout di turno (30 s) → a fine partita `MatchReveal(seed, salt, log)` e il client verifica con `Commitment.Verify`.
 
+### Segnalazione di una mossa della CPU (1.14.0, ADR 0020)
+`ReportPanel` (solo `LocalGameSession`) → `MoveReview.MovesOf(Partner, seed, variant, commands)` rigioca la partita e
+dà, per ogni giocata del compagno, tavola e mano di prima (la mano solo a distribuzione finita) → `CpuMoveReport` con le
+mosse fino a quella → `CpuReportService` la salva in `localStorage` e la manda (`HttpCpuReportTransport`, `ServerUrl`) →
+server `POST /api/cpu-reports` (limite per indirizzo da `X-Forwarded-For`) → `CpuMoveReports.Problem` la rigioca →
+`GitHubIssueSink` apre la issue (`CpuReportIssue.Format`) → 202. Risposte: 400 scartata dal telefono, 429/503/502
+riprovata più tardi. Analisi: `Spincio.Simulator --report file.json` (`ReportReplay`, `LookaheadBot.Explain`).
+
 ### Decisione di L3 (1.12.0, ADR 0019)
 Mosse legali dalla vista → se c'è un accuso lo dichiara → `WorldSampler` distribuisce le carte non viste (coerenti con
 accusi e silenzi) → per ogni mondo `SpincioEngine.Hypothetical` → `DealSearch.Load` (stato compatto) → per ogni mossa
@@ -165,6 +173,8 @@ Mosse legali dalla vista → se c'è un accuso lo dichiara → per N mondi: dist
 | Salvataggio offline | JSON `{RulesVersion, Seed, Commands[], Difficulty}` in `localStorage["spincio.savedGame"]` | `SavedGame` |
 | Seat online | `localStorage["spincio.onlineSeat"]` = token segreto del posto | `LocalStorageOnlineSeatStore` |
 | Statistiche | JSON `PlayerStats` (con `Version`) in `localStorage["spincio.stats"]`; versione diversa o JSON illeggibile = statistiche vuote | `StatsService` |
+| Segnalazioni in attesa | JSON (lista di `CpuMoveReport`, opzioni `SpincioJson`) in `localStorage["spincio.cpuReports"]`; si svuota quando il server le prende | `CpuReportService` |
+| Segnalazione di una mossa | `CpuMoveReport`: versioni, modalità, livello, seed, mosse **fino a quella segnalata compresa**, motivi (`CpuMoveReports.ReasonLabels`), carta suggerita, testo ≤ 500 | `Contracts/CpuMoveReport.cs`, ADR 0020 |
 | Novità lette | versione dell'ultima nota aperta in `localStorage["spincio.notesSeen"]`; se manca o è più vecchia, "Novità" si illumina | `ReleaseNotesService` |
 | Eventi su SignalR | JSON con discriminatore `$kind`; `Seat` come numero | `SpincioJson` |
 | Impegno del seed | `SHA-256("{seed}:{salt}")` in esadecimale minuscolo | `Commitment.Of` |

@@ -21,6 +21,8 @@ public class HomePageTests : BunitContext
         Services.AddSingleton<SettingsService>();
         Services.AddSingleton<StatsService>();
         Services.AddSingleton<ReleaseNotesService>();
+        Services.AddSingleton<ICpuReportTransport>(new NoServer());
+        Services.AddSingleton<CpuReportService>();
         JSInterop.Mode = JSRuntimeMode.Loose; // card animations call into JS (js/moves.js)
     }
 
@@ -169,8 +171,27 @@ public class HomePageTests : BunitContext
     {
         var page = Render<Home>();
 
-        AppInfo.Version.ShouldBe("1.13.0");
-        page.Find("section.start .app-version").TextContent.ShouldBe("v1.13.0");
+        AppInfo.Version.ShouldBe("1.14.0");
+        page.Find("section.start .app-version").TextContent.ShouldBe("v1.14.0");
+    }
+
+    /// <summary>ADR 0020: in an offline match the pause menu offers to report a move of the partner.</summary>
+    [Fact]
+    public void The_pause_menu_opens_the_report_of_a_partner_move()
+    {
+        var page = Render<Home>();
+        StartNewGame(page);
+        page.WaitForAssertion(() => page.FindAll(".hand .card").Count.ShouldBe(3));
+
+        page.Find("button[aria-label='Menu']").Click();
+        page.FindAll("button").Single(b => b.TextContent.Contains("Segnala una mossa di Titti", StringComparison.Ordinal)).Click();
+
+        page.Find("#report-title").TextContent.ShouldBe("Segnala una mossa di Titti");
+    }
+
+    private sealed class NoServer : ICpuReportTransport
+    {
+        public Task<ReportDelivery> SendAsync(Spincio.Contracts.CpuMoveReport report) => Task.FromResult(ReportDelivery.RetryLater);
     }
 
     /// <summary>"Novità": lit up until the newest note is opened, then remembered on the device.</summary>

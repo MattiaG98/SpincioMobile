@@ -21,6 +21,15 @@ public static class ReleaseNotes
 {
     public static IReadOnlyList<ReleaseNote> All { get; } =
     [
+        new("1.14.0", new(2026, 11, 13), "Segnala le mosse di Titti",
+        [
+            "Titti ha giocato una carta che non ti convince? Dal menu di pausa, o alla fine di una smazzata, tocca "
+                + "«Segnala una mossa di Titti»: scegli la mossa, tocca cosa non va, la carta che avrebbe dovuto giocare e "
+                + "spiega in due parole come avrebbe dovuto ragionare.",
+            "La segnalazione arriva con la partita esatta: la rigiochiamo con le stesse carte e, se la CPU sbagliava "
+                + "davvero, la correggiamo nelle prossime versioni.",
+            "Funziona anche offline: la segnalazione parte da sola appena c'è connessione. Non inviamo il tuo nome.",
+        ]),
         new("1.13.0", new(2026, 11, 13), "Le novità, a portata di mano",
         [
             "Nuova sezione «Novità»: dal menu iniziale vedi che cosa cambia a ogni versione di Spincio.",

@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Options;
 using Spincio.Contracts;
+using Spincio.Server.Feedback;
 using Spincio.Server.Hubs;
 using Spincio.Server.Lobby;
 using Spincio.Server.Rooms;
@@ -14,6 +15,7 @@ builder.Services.AddSingleton<RoomRegistry>();
 builder.Services.AddSingleton<ILobbyNotifier, HubLobbyNotifier>();
 builder.Services.AddSingleton<LobbyRegistry>();
 builder.Services.AddHostedService<ActivityHeartbeat>();
+builder.Services.AddCpuReports(builder.Configuration);
 builder.Services.AddSignalR().AddJsonProtocol(o => SpincioJson.Configure(o.PayloadSerializerOptions));
 
 // The PWA is served from another origin (e.g. GitHub Pages): allow the configured origins only.
@@ -23,7 +25,9 @@ builder.Services.AddCors(o => o.AddDefaultPolicy(p => p.WithOrigins(origins).All
 var app = builder.Build();
 
 app.UseCors();
+app.UseRateLimiter();
 app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
+app.MapCpuReports();
 app.MapHub<GameHub>(HubPaths.Game);
 app.MapHub<LobbyHub>(HubPaths.Lobby);
 

@@ -6,6 +6,7 @@
 @inject SettingsService Settings
 @inject StatsService Stats
 @inject ReleaseNotesService News
+@inject CpuReportService Reports
 
 <PageTitle>Spincio</PageTitle>
 
@@ -166,7 +167,14 @@ else
     {
         @if (!_landingPoints)
         {
-            <RoundSummary Scored="scored" Us="us" OnClose="CloseSummaryAsync" />
+            @if (Session is LocalGameSession)
+            {
+                <RoundSummary Scored="scored" Us="us" OnClose="CloseSummaryAsync" OnReport="() => _reportOpen = true" Partner="@PartnerName" />
+            }
+            else
+            {
+                <RoundSummary Scored="scored" Us="us" OnClose="CloseSummaryAsync" />
+            }
         }
     }
     else if (Session.Result is { } result)
@@ -183,6 +191,10 @@ else
                     <button type="button" class="btn btn-gold" @onclick="NewGameAsync">Nuova partita</button>
                 }
                 <button type="button" class="btn btn-dark" @onclick="LeaveAsync">Menu principale</button>
+                @if (Session is LocalGameSession)
+                {
+                    <button type="button" class="report-link" @onclick="() => _reportOpen = true">🤔 @PartnerName ha sbagliato una mossa? Segnalala</button>
+                }
             </div>
         </div>
     }
@@ -207,6 +219,10 @@ else
                     <button type="button" class="btn btn-green" @onclick="() => _rulesOpen = true">📖 Regole</button>
                     <button type="button" class="btn btn-green" @onclick="() => _statsOpen = true">📊 Statistiche</button>
                     <button type="button" class="btn btn-green" @onclick="() => _optionsOpen = true">⚙ Opzioni</button>
+                    @if (Session is LocalGameSession)
+                    {
+                        <button type="button" class="btn btn-green" @onclick="OpenReportFromMenu">🤔 Segnala una mossa di @PartnerName</button>
+                    }
                     <button type="button" class="btn btn-red" @onclick="() => _confirmLeave = true">@(Session.CanRestart ? "Abbandona la partita" : "Esci dalla stanza")</button>
                     <p class="menu-info">@Session.Footer</p>
                     <p class="app-version">Spincio v@(AppInfo.Version)</p>
@@ -219,6 +235,11 @@ else
 @if (_rulesOpen)
 {
     <RulesPanel OnClose="() => _rulesOpen = false" />
+}
+
+@if (_reportOpen && Session is LocalGameSession local)
+{
+    <ReportPanel Session="local" OnClose="() => _reportOpen = false" />
 }
 
 @if (_newsOpen)
@@ -258,6 +279,7 @@ else
     private bool _statsOpen;
     private bool _creditsOpen;
     private bool _newsOpen;
+    private bool _reportOpen;
     private bool _newsUnread;
     private bool _landingPoints;
     private Card? _choosing;
@@ -274,6 +296,16 @@ else
         }
 
         _newsUnread = await News.HasUnreadAsync();
+        _ = Reports.FlushAsync(); // reports kept on the phone go as soon as the server answers (ADR 0020)
+    }
+
+    private string PartnerName => Session.SeatName(LocalGameSession.Partner);
+
+    /// <summary>The pause menu closes, so "Torna alla partita" really goes back to the match.</summary>
+    private void OpenReportFromMenu()
+    {
+        _menuOpen = false;
+        _reportOpen = true;
     }
 
     private async Task OpenNewsAsync()

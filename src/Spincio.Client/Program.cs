@@ -15,6 +15,8 @@ builder.Services.AddSingleton<IOnlineSeatStore, LocalStorageOnlineSeatStore>();
 builder.Services.AddSingleton<OnlineService>();
 builder.Services.AddSingleton<StatsService>();
 builder.Services.AddSingleton<ReleaseNotesService>();
+builder.Services.AddSingleton<ICpuReportTransport, HttpCpuReportTransport>();
+builder.Services.AddSingleton<CpuReportService>();
 builder.Services.AddSingleton<ProfileService>();
 builder.Services.AddSingleton<ILobby>(_ => new LobbyClient());
 

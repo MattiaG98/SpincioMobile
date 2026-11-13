@@ -4,6 +4,23 @@ Versioni dell'app Spincio ([versionamento semantico](https://semver.org/lang/it/
 `Directory.Build.props` (`<Version>`) e si vede nel menu iniziale e nel menu di pausa. Le regole hanno una versione propria
 (`docs/SPEC.md`, "regole v1.7" nel menu di pausa).
 
+## 1.14.0 — 13/11/2026
+- **Segnala una mossa della CPU** (ADR 0020), su richiesta del proprietario. Nelle partite contro la CPU si apre dal
+  menu di pausa, dal riepilogo di fine smazzata o dalla schermata di fine partita.
+  - **Passi:** la mossa di Titti, tra le sue mosse dalla più recente; cosa non va (motivi rapidi); la carta giusta
+    (facoltativa, fra quelle che aveva); come avrebbe dovuto ragionare (testo).
+  - **Mossa scelta:** l'elenco si richiude su di lei e mostra tavola e carte di Titti di quel momento. Le carte di una
+    mano in corso restano nascoste.
+  - **Pulsante in fondo:** è sempre visibile e dice il passo successivo.
+- **Invio:**
+  - La segnalazione contiene la partita esatta (seme e mosse fino a quella segnalata), mai il nome del giocatore.
+  - Resta sul telefono finché il server non la prende (offline, server addormentato).
+  - Il server la ricontrolla rigiocando la partita, ne accetta al massimo 10 all'ora per indirizzo e apre una issue
+    GitHub (etichetta `cpu-report`) nel repository indicato su Render.
+  - Finché il proprietario non attiva repository e token (RUNBOOK), le segnalazioni aspettano sui telefoni.
+- **Simulatore:** `--report file.json` rigioca una segnalazione e mostra quanto valeva per la CPU ogni giocata,
+  quella fatta e quella suggerita (`LookaheadBot.Explain`).
+
 ## 1.13.0 — 13/11/2026
 - **Novità**, su richiesta del proprietario: una sezione dell'app con le note di versione per i giocatori.
   - Si apre dal pulsante **"🆕 Novità"** nel menu iniziale, accanto al numero di versione: niente riga in più, così il
