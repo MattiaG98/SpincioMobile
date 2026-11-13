@@ -171,20 +171,20 @@ public class HomePageTests : BunitContext
     {
         var page = Render<Home>();
 
-        AppInfo.Version.ShouldBe("1.14.0");
-        page.Find("section.start .app-version").TextContent.ShouldBe("v1.14.0");
+        AppInfo.Version.ShouldBe("1.14.1");
+        page.Find("section.start .app-version").TextContent.ShouldBe("v1.14.1");
     }
 
-    /// <summary>ADR 0020: in an offline match the pause menu offers to report a move of the partner.</summary>
+    /// <summary>ADR 0020: in an offline match the button next to the partner's picture opens the report; only there.</summary>
     [Fact]
-    public void The_pause_menu_opens_the_report_of_a_partner_move()
+    public void The_button_next_to_the_partner_opens_the_report_of_its_moves()
     {
         var page = Render<Home>();
         StartNewGame(page);
         page.WaitForAssertion(() => page.FindAll(".hand .card").Count.ShouldBe(3));
 
-        page.Find("button[aria-label='Menu']").Click();
-        page.FindAll("button").Single(b => b.TextContent.Contains("Segnala una mossa di Titti", StringComparison.Ordinal)).Click();
+        page.FindAll(".report-btn").ShouldHaveSingleItem().GetAttribute("aria-label").ShouldBe("Segnala una mossa di Titti");
+        page.Find(".seat-2 .seat-who .report-btn").Click();
 
         page.Find("#report-title").TextContent.ShouldBe("Segnala una mossa di Titti");
     }

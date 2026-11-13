@@ -11,6 +11,11 @@
             <span class="avatar initial @(Ours ? "ours" : "theirs")" aria-hidden="true">@Initial</span>
         }
         <div class="seat-name">@Name@if (IsDealer) {<small>mazziere</small>}</div>
+        @if (OnReport.HasDelegate)
+        {
+            @* ADR 0020: next to the partner's picture, where the move to report was just played. *@
+            <button type="button" class="report-btn" aria-label="Segnala una mossa di @Name" @onclick="OnReport">🤔 Segnala</button>
+        }
     </div>
     <div class="seat-cards">
         @for (int i = 0; i < CardCount; i++)
@@ -45,4 +50,7 @@
     [Parameter] public bool IsTurn { get; set; }
     [Parameter] public bool IsDealer { get; set; }
     [Parameter] public IEnumerable<DeclarationRecord> Declarations { get; set; } = [];
+
+    /// <summary>Opens the report of one of this CPU's moves (the partner, offline); no button when not bound.</summary>
+    [Parameter] public EventCallback OnReport { get; set; }
 }

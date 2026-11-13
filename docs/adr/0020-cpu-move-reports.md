@@ -1,6 +1,7 @@
 # ADR 0020 — Segnalazioni delle mosse della CPU: dal telefono a una issue che si può rigiocare
 
-- **Stato:** Accettato (13/11/2026, versione 1.14.0)
+- **Stato:** Accettato (13/11/2026, versione 1.14.0). Dalla 1.14.1, su richiesta del proprietario, il pulsante è
+  accanto al ritratto del compagno, al posto della voce nel menu di pausa (il resto è invariato).
 - **Integra:** ADR 0003 (seed + mosse), ADR 0016 (server su Render), ADR 0019 (CPU L3)
 - **Richiesta del proprietario:** una sezione in gioco per avvisare quando la CPU "sbaglia": l'elenco delle mosse del
   compagno, e per ognuna un box di testo con il ragionamento giusto, "così che l'app evolva il proprio modo di

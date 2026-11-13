@@ -88,8 +88,8 @@ Funzionamento:
   `docker build -f src/Spincio.Server/Dockerfile -t spincio-server . && docker run -e PORT=10000 -p 10000:10000 spincio-server`.
 
 ## Segnalazioni delle mosse della CPU (ADR 0020)
-Nell'app (partite contro la CPU) il giocatore segnala una mossa del compagno dal menu di pausa, dal riepilogo di fine
-smazzata o dalla schermata di fine partita. La segnalazione resta sul telefono finché il server non la prende; il server
+Nell'app (partite contro la CPU) il giocatore segnala una mossa del compagno con il pulsante "🤔 Segnala" accanto al
+ritratto di Titti, o dai collegamenti nel riepilogo di fine smazzata e a fine partita. La segnalazione resta sul telefono finché il server non la prende; il server
 la ricontrolla rigiocando la partita e apre una **issue** su GitHub con l'etichetta `cpu-report`.
 
 **Attivazione (una volta sola, dal computer).** Finché non è fatta, le segnalazioni aspettano sui telefoni e partono
