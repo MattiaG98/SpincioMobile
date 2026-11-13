@@ -21,6 +21,10 @@ public static class ReleaseNotes
 {
     public static IReadOnlyList<ReleaseNote> All { get; } =
     [
+        new("1.14.2", new(2026, 11, 13), "Un nome nuovo per il pulsante",
+        [
+            "Il pulsante accanto a Titti, quello per segnalare le sue mosse, ora si chiama «Titti dioporco».",
+        ]),
         new("1.14.1", new(2026, 11, 13), "Segnala, accanto a Titti",
         [
             "Il pulsante «🤔 Segnala» ora è accanto alla foto di Titti, in alto sul tavolo: lo trovi subito, proprio "

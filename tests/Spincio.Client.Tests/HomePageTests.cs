@@ -171,8 +171,8 @@ public class HomePageTests : BunitContext
     {
         var page = Render<Home>();
 
-        AppInfo.Version.ShouldBe("1.14.1");
-        page.Find("section.start .app-version").TextContent.ShouldBe("v1.14.1");
+        AppInfo.Version.ShouldBe("1.14.2");
+        page.Find("section.start .app-version").TextContent.ShouldBe("v1.14.2");
     }
 
     /// <summary>ADR 0020: in an offline match the button next to the partner's picture opens the report; only there.</summary>
@@ -183,7 +183,9 @@ public class HomePageTests : BunitContext
         StartNewGame(page);
         page.WaitForAssertion(() => page.FindAll(".hand .card").Count.ShouldBe(3));
 
-        page.FindAll(".report-btn").ShouldHaveSingleItem().GetAttribute("aria-label").ShouldBe("Segnala una mossa di Titti");
+        var button = page.FindAll(".report-btn").ShouldHaveSingleItem();
+        button.TextContent.ShouldBe("Titti dioporco");
+        button.GetAttribute("aria-label").ShouldBe("Titti dioporco: segnala una mossa di Titti");
         page.Find(".seat-2 .seat-who .report-btn").Click();
 
         page.Find("#report-title").TextContent.ShouldBe("Segnala una mossa di Titti");
