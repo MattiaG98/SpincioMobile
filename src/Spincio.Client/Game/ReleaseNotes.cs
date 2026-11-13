@@ -21,6 +21,12 @@ public static class ReleaseNotes
 {
     public static IReadOnlyList<ReleaseNote> All { get; } =
     [
+        new("1.14.1", new(2026, 11, 13), "Segnala, accanto a Titti",
+        [
+            "Il pulsante «🤔 Segnala» ora è accanto alla foto di Titti, in alto sul tavolo: lo trovi subito, proprio "
+                + "dove ha giocato la carta che non ti convince.",
+            "Su schermi piccoli il menu iniziale non si muove più quando lo tocchi.",
+        ]),
         new("1.14.0", new(2026, 11, 13), "Segnala le mosse di Titti",
         [
             "Titti ha giocato una carta che non ti convince? Dal menu di pausa, o alla fine di una smazzata, tocca "

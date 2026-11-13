@@ -54,7 +54,9 @@ for (const screen of screens) {
 
     const mine = await page.locator('.hand .card.playable').all();
     if (mine.length) {
-      await mine[0].click();
+      // The round summary can open between the check above and this click (I played the last card of a round and lead
+      // the next one): then the click is blocked, and the next loop closes the summary.
+      try { await mine[0].click({ timeout: 2000 }); } catch { continue; }
       if (await page.locator('.choice').count()) await page.locator('.choice').first().click();
       moves++;
       if (!flightShot) {

@@ -122,8 +122,10 @@ button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 .app-version { margin: 0; font-size: .75rem; opacity: .6; text-align: center; }
 /* Version and "Novità" share the last line of the menu: no extra row, so the menu never scrolls (iPhone SE). */
 .menu-foot { display: flex; align-items: center; justify-content: center; gap: 10px; }
-.news-link { position: relative; font-size: .8rem; font-weight: 700; padding: 4px 12px; border-radius: 999px;
+.news-link { position: relative; font-size: .78rem; line-height: 1.2; font-weight: 700; padding: 2px 12px; border-radius: 999px;
              color: #fff; background: #0003; box-shadow: inset 0 0 0 1px #fff4; }
+/* The pill is short to keep the menu still on an iPhone SE (layout.mjs); this widens the touch area to about 44 px. */
+.news-link::before { content: ""; position: absolute; inset: -12px -6px; }
 .news-link.unread { color: #3b2600; background: linear-gradient(#ffe27a, #f2b705); box-shadow: 0 2px 8px #0006; }
 .news-link.unread::after { content: ""; position: absolute; top: -3px; right: -3px; width: 10px; height: 10px; border-radius: 50%;
                            background: #e0574c; box-shadow: 0 0 0 2px #1f5d3a; }
@@ -238,6 +240,11 @@ section.online h1 { margin: 0; text-align: center; }
 .seat-name { font-size: .8rem; text-align: center; overflow-wrap: anywhere; display: flex; flex-direction: column; align-items: center; }
 .seat-name small { font-size: .62rem; opacity: .8; white-space: nowrap; }
 .seat-2 .seat-name { flex-direction: row; align-items: baseline; gap: 6px; }
+/* "🤔 Segnala" next to the partner's picture (ADR 0020): no taller than the picture, so the table keeps its size;
+   the invisible ::before widens the touch area to about 44 px. */
+.report-btn { position: relative; height: 28px; padding: 0 10px; border-radius: 999px; font-size: .75rem; font-weight: 700;
+              color: #fff; background: #0003; box-shadow: inset 0 0 0 1px #fff5; white-space: nowrap; }
+.report-btn::before { content: ""; position: absolute; inset: -8px -4px; }
 .seat-cards { display: flex; gap: 2px; min-height: calc(var(--small-w) * var(--card-ratio)); }
 .seat-badges { position: absolute; z-index: 3; display: flex; flex-direction: column; align-items: center; gap: 2px; pointer-events: none; white-space: nowrap; }
 .seat-2 .seat-badges { left: calc(50% + 2.5 * var(--small-w)); bottom: 6px; }

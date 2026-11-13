@@ -219,10 +219,6 @@ else
                     <button type="button" class="btn btn-green" @onclick="() => _rulesOpen = true">📖 Regole</button>
                     <button type="button" class="btn btn-green" @onclick="() => _statsOpen = true">📊 Statistiche</button>
                     <button type="button" class="btn btn-green" @onclick="() => _optionsOpen = true">⚙ Opzioni</button>
-                    @if (Session is LocalGameSession)
-                    {
-                        <button type="button" class="btn btn-green" @onclick="OpenReportFromMenu">🤔 Segnala una mossa di @PartnerName</button>
-                    }
                     <button type="button" class="btn btn-red" @onclick="() => _confirmLeave = true">@(Session.CanRestart ? "Abbandona la partita" : "Esci dalla stanza")</button>
                     <p class="menu-info">@Session.Footer</p>
                     <p class="app-version">Spincio v@(AppInfo.Version)</p>
@@ -301,12 +297,7 @@ else
 
     private string PartnerName => Session.SeatName(LocalGameSession.Partner);
 
-    /// <summary>The pause menu closes, so "Torna alla partita" really goes back to the match.</summary>
-    private void OpenReportFromMenu()
-    {
-        _menuOpen = false;
-        _reportOpen = true;
-    }
+
 
     private async Task OpenNewsAsync()
     {
@@ -318,9 +309,13 @@ else
     private RenderFragment SeatAt(PlayerView view, int position)
     {
         var seat = GameText.AtPosition(Session.Me, position);
+        // Only the offline partner gets the report button (ADR 0020).
+        var report = Session is LocalGameSession && seat == LocalGameSession.Partner
+            ? EventCallback.Factory.Create(this, () => _reportOpen = true)
+            : default;
         return @<SeatView Seat="seat" Position="position" Name="@Session.SeatName(seat)" Avatar="@Session.SeatAvatar(seat)" Ours="seat.Team == Session.Me.Team"
                           CardCount="view.HandCounts[seat.Index]" IsTurn="view.ToPlay == seat" IsDealer="view.Dealer == seat"
-                          Declarations="GameText.DeclarationsThisDeal(view, seat)" />;
+                          Declarations="GameText.DeclarationsThisDeal(view, seat)" OnReport="report" />;
     }
 
     // The table keeps its size: its cards shrink to fit (.table in app.css). For 1–4 rows of cards, the columns needed.

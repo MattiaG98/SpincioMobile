@@ -4,6 +4,16 @@ Versioni dell'app Spincio ([versionamento semantico](https://semver.org/lang/it/
 `Directory.Build.props` (`<Version>`) e si vede nel menu iniziale e nel menu di pausa. Le regole hanno una versione propria
 (`docs/SPEC.md`, "regole v1.7" nel menu di pausa).
 
+## 1.14.1 — 13/11/2026
+- Il pulsante **"🤔 Segnala"** è accanto al ritratto di Titti, in alto sul tavolo, su richiesta del proprietario. Non
+  è più nel menu di pausa; restano i collegamenti nel riepilogo di fine smazzata e a fine partita.
+  - È alto come il ritratto, quindi la tavola non cambia misura (controllato con `layout.mjs`), e l'area toccabile è
+    più grande del pulsante.
+  - C'è solo nelle partite contro la CPU e solo accanto al compagno.
+- Corretto: dalla 1.13.0 il menu iniziale scorreva di 3 px su iPhone SE (il pulsante "Novità" era un po' troppo alto).
+  Ora è più basso, con la stessa area da toccare.
+- `layout.mjs` non si blocca più se il riepilogo di fine smazzata si apre mentre tocca una carta.
+
 ## 1.14.0 — 13/11/2026
 - **Segnala una mossa della CPU** (ADR 0020), su richiesta del proprietario. Nelle partite contro la CPU si apre dal
   menu di pausa, dal riepilogo di fine smazzata o dalla schermata di fine partita.
